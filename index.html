@@ -13,450 +13,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="Cuentas Claras" />
 <style>
-  html, body { margin:0; padding:0; background:#F2F2F7; }
-</style>
-</head>
-<body>
-<div id="root"></div>
-
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-<script type="text/babel" data-presets="react">
-const { useState, useEffect, useRef, useCallback } = React;
-
-// ---------- utilidades ----------
-const fmt0 = (n) =>
-  Math.round(isFinite(n) ? n : 0).toLocaleString("es-ES", { maximumFractionDigits: 0 });
-const fmt10 = (n) => {
-  const r = Math.round((isFinite(n) ? n : 0) / 10) * 10;
-  return r.toLocaleString("es-ES", { maximumFractionDigits: 0 });
-};
-
-let uidCounter = 1;
-const uid = () => `id_${Date.now()}_${uidCounter++}`;
-
-const STORAGE_KEY = "cuentas-claras:datos-v2";
-
-const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-const monthKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-const monthLabel = (key) => { const [y, m] = key.split("-").map(Number); return `${MESES[m - 1]} ${y}`; };
-
-function statusFromRatio(ratio, insuficiente) {
-  if (insuficiente || ratio > 0.9) return { key: "rojo", label: "Peligroso" };
-  if (ratio > 0.6) return { key: "amarillo", label: "Apretado" };
-  return { key: "verde", label: "Correcto" };
-}
-
-const snapshotOf = (s) => JSON.parse(JSON.stringify(s));
-
-async function actualizarApp() {
-  try {
-    if ("caches" in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map((k) => caches.delete(k)));
-    }
-    if ("serviceWorker" in navigator) {
-      const regs = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(regs.map((r) => r.unregister()));
-    }
-  } catch (e) {}
-  location.reload();
-}
-
-function loadData() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch (e) { return null; }
-}
-function saveData(data) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    return true;
-  } catch (e) { return false; }
-}
-
-function CuentasClaras() {
-  const initial = loadData() || {};
-  const [ingreso, setIngreso] = useState(initial.ingreso ?? 0);
-  const [subs, setSubs] = useState(initial.subs ?? []);
-  const [cards, setCards] = useState(initial.cards ?? []);
-  const [savingsRate, setSavingsRate] = useState(initial.savingsRate ?? 20);
-  const [ahorroActual, setAhorroActual] = useState(initial.ahorroActual ?? 0);
-  const [metaAhorro, setMetaAhorro] = useState(initial.metaAhorro ?? 0);
-  const [history, setHistory] = useState(initial.history ?? []);
-
-  const [resultado, setResultado] = useState(null);
-  const [confirmReset, setConfirmReset] = useState(false);
-  const [savedFlash, setSavedFlash] = useState(false);
-  const [storageError, setStorageError] = useState(false);
-
-  const saveTimeout = useRef(null);
-  const undoStack = useRef([]);
-  const [canUndo, setCanUndo] = useState(false);
-
-  useEffect(() => {
-    if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    saveTimeout.current = setTimeout(() => {
-      const ok = saveData({ ingreso, subs, cards, savingsRate, ahorroActual, metaAhorro, history });
-      setStorageError(!ok);
-    }, 400);
-    return () => clearTimeout(saveTimeout.current);
-  }, [ingreso, subs, cards, savingsRate, ahorroActual, metaAhorro, history]);
-
-  const pushUndo = useCallback(() => {
-    undoStack.current.push(snapshotOf({ subs, cards, ingreso, savingsRate, ahorroActual, metaAhorro, history }));
-    if (undoStack.current.length > 15) undoStack.current.shift();
-    setCanUndo(true);
-  }, [subs, cards, ingreso, savingsRate, ahorroActual, metaAhorro, history]);
-
-  const undo = () => {
-    const prev = undoStack.current.pop();
-    if (!prev) return;
-    setSubs(prev.subs); setCards(prev.cards); setIngreso(prev.ingreso);
-    setSavingsRate(prev.savingsRate); setAhorroActual(prev.ahorroActual);
-    setMetaAhorro(prev.metaAhorro); setHistory(prev.history);
-    setCanUndo(undoStack.current.length > 0);
-  };
-
-  const addSub = () => setSubs((s) => [...s, { id: uid(), nombre: "", monto: 0 }]);
-  const updateSub = (id, field, value) => setSubs((s) => s.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
-  const removeSub = (id) => { pushUndo(); setSubs((s) => s.filter((x) => x.id !== id)); };
-
-  const addCard = () => setCards((c) => [...c, { id: uid(), nombre: "", saldo: 0, limite: 0, apr: 0, minimo: 0 }]);
-  const updateCard = (id, field, value) => setCards((c) => c.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
-  const removeCard = (id) => { pushUndo(); setCards((c) => c.filter((x) => x.id !== id)); };
-
-  const resetAll = () => {
-    pushUndo();
-    setIngreso(0); setSubs([]); setCards([]); setSavingsRate(20);
-    setAhorroActual(0); setMetaAhorro(0); setResultado(null); setConfirmReset(false);
-  };
-
-  const removeHistory = (key) => { pushUndo(); setHistory((h) => h.filter((x) => x.month !== key)); };
-
-  const totalSubs = subs.reduce((a, s) => a + (Number(s.monto) || 0), 0);
-  const totalMinimos = cards.reduce((a, c) => a + (Number(c.minimo) || 0), 0);
-  const totalDeuda = cards.reduce((a, c) => a + (Number(c.saldo) || 0), 0);
-  const disponibleBruto = (Number(ingreso) || 0) - totalSubs;
-  const ratioComprometido = (Number(ingreso) || 0) > 0
-    ? (totalSubs + totalMinimos) / Number(ingreso)
-    : (totalSubs + totalMinimos > 0 ? 1.5 : 0);
-  const insuficienteLive = disponibleBruto - totalMinimos < 0;
-  const liveStatus = statusFromRatio(ratioComprometido, insuficienteLive);
-
-  const guardarMes = () => {
-    if (!resultado) return;
-    pushUndo();
-    const key = monthKey();
-    const entry = {
-      month: key,
-      ingreso: Number(ingreso) || 0,
-      deudaTotal: totalDeuda,
-      comprometido: totalSubs + totalMinimos,
-      ratio: ingreso > 0 ? (totalSubs + totalMinimos) / ingreso : 1,
-      ahorro: resultado.insuficiente ? 0 : resultado.ahorro,
-      insuficiente: !!resultado.insuficiente,
-      status: liveStatus.key,
-    };
-    setHistory((h) => {
-      const rest = h.filter((x) => x.month !== key);
-      return [...rest, entry].sort((a, b) => (a.month < b.month ? 1 : -1));
-    });
-    setSavedFlash(true);
-    setTimeout(() => setSavedFlash(false), 1800);
-  };
-
-  const calcular = useCallback(() => {
-    const dispo = disponibleBruto;
-    const restoTrasMinimos = dispo - totalMinimos;
-
-    if (restoTrasMinimos < 0) {
-      setResultado({ insuficiente: true, faltante: Math.abs(restoTrasMinimos), dispo, totalMinimos });
-      return;
-    }
-
-    const ahorroCrudo = restoTrasMinimos * (savingsRate / 100);
-    const ahorro = Math.round(ahorroCrudo / 10) * 10;
-    let extraParaTarjetas = Math.round((restoTrasMinimos - ahorro) * 100) / 100;
-    if (extraParaTarjetas < 0) extraParaTarjetas = 0;
-
-    const ordenAvalancha = [...cards]
-      .map((c) => ({ ...c, saldo: Number(c.saldo) || 0, apr: Number(c.apr) || 0, minimo: Number(c.minimo) || 0 }))
-      .filter((c) => c.saldo > 0 || c.minimo > 0 || c.nombre)
-      .sort((a, b) => b.apr - a.apr);
-
-    let restante = extraParaTarjetas;
-    const asignaciones = ordenAvalancha.map((c) => {
-      const espacio = Math.max(c.saldo - c.minimo, 0);
-      const pagoExtra = Math.min(restante, espacio);
-      restante = Math.round((restante - pagoExtra) * 100) / 100;
-      return { ...c, pagoExtra, pagoTotal: Math.round((c.minimo + pagoExtra) * 100) / 100 };
-    });
-
-    const ahorroFinal = Math.round((ahorro + restante) / 10) * 10;
-    setResultado({ insuficiente: false, dispo, totalMinimos, ahorro: ahorroFinal, extraParaTarjetas, asignaciones });
-  }, [cards, disponibleBruto, totalMinimos, savingsRate]);
-
-  const sugerencias = [];
-  if (resultado) {
-    if (resultado.insuficiente) {
-      sugerencias.push(`Este mes no te alcanza para cubrir tus pagos fijos y los mínimos de tarjeta. Te faltan €${fmt0(resultado.faltante)}.`);
-      if (ahorroActual > 0) {
-        sugerencias.push(`Es un momento razonable para usar parte de tu ahorro (tienes €${fmt0(ahorroActual)}) y cubrir el faltante sin dejar de pagar tus tarjetas.`);
-      } else {
-        sugerencias.push("Antes de que la deuda crezca, revisa si puedes recortar algún pago fijo este mes.");
-      }
-    } else {
-      const conExtra = resultado.asignaciones.filter((c) => c.pagoExtra > 0);
-      const prioridad = conExtra[0] || resultado.asignaciones[0];
-      if (prioridad) {
-        sugerencias.push(`Paga primero "${prioridad.nombre || "tu tarjeta"}": tiene la tasa más alta (${fmt0(prioridad.apr)}%). Destínale €${fmt0(prioridad.pagoTotal)} este mes.`);
-      }
-      if (liveStatus.key === "verde") {
-        sugerencias.push("Este mes va bien. No necesitas tocar tu ahorro; es buen momento para seguir sumando a él.");
-      } else if (liveStatus.key === "amarillo") {
-        sugerencias.push("Vas ajustado este mes. Evita retirar ahorro salvo necesidad real; mantén los mínimos al día.");
-      } else {
-        sugerencias.push("Mes apretado: casi todo tu ingreso está comprometido. No es momento de gastos extra ni de nuevas deudas.");
-      }
-      if (metaAhorro > 0) {
-        const falta = metaAhorro - ahorroActual;
-        if (falta <= 0) {
-          sugerencias.push(`Ya cumpliste tu meta de ahorro de €${fmt0(metaAhorro)}.`);
-        } else if (resultado.ahorro > 0) {
-          const meses = Math.ceil(falta / resultado.ahorro);
-          sugerencias.push(`A €${fmt0(resultado.ahorro)} por mes, llegas a tu meta de €${fmt0(metaAhorro)} en ${meses} ${meses === 1 ? "mes" : "meses"}.`);
-        } else {
-          sugerencias.push("No estás generando ahorro hacia tu meta este mes; revisa tus pagos fijos o mínimos de tarjeta.");
-        }
-      }
-    }
-  }
-
-  const metaProgreso = metaAhorro > 0 ? Math.min((ahorroActual / metaAhorro) * 100, 100) : 0;
-
-  return (
-    <div className="page">
-      <div className="wrap">
-        <h1>Cuentas Claras</h1>
-        <p className="subtitle">Ingreso, pagos fijos, tarjetas y ahorro — todo en un solo lugar.</p>
-
-        <div className="top-actions">
-          <button className="pill-btn update" onClick={actualizarApp}>⟳ Actualizar app</button>
-          <button className="pill-btn" onClick={undo} disabled={!canUndo}>↶ Deshacer</button>
-          {!confirmReset ? (
-            <button className="pill-btn danger" onClick={() => setConfirmReset(true)}>Restablecer todo</button>
-          ) : (
-            <>
-              <span style={{ fontSize: 12.5, color: "#8E8E93", alignSelf: "center" }}>¿Borrar todos los datos?</span>
-              <button className="pill-btn confirm" onClick={resetAll}>Sí, borrar</button>
-              <button className="pill-btn" onClick={() => setConfirmReset(false)}>Cancelar</button>
-            </>
-          )}
-        </div>
-
-        <div className="summary">
-          <div className="sum-card">
-            <div className="sum-label">Debes en total</div>
-            <div className="sum-val red">€{fmt0(totalDeuda)}</div>
-          </div>
-          <div className="sum-card">
-            <div className="sum-label">Disponible este mes</div>
-            <div className={`sum-val ${disponibleBruto >= 0 ? "green" : "red"}`}>
-              {disponibleBruto >= 0 ? "" : "-"}€{fmt0(Math.abs(disponibleBruto))}
-            </div>
-            <span className={`status-pill ${liveStatus.key}`}>{liveStatus.label}</span>
-          </div>
-          <div className="sum-card">
-            <div className="sum-label">Ahorrado actual</div>
-            <div className="sum-val blue">€{fmt0(ahorroActual)}</div>
-          </div>
-        </div>
-
-        <div className="panel">
-          <h2>Ingreso de este mes</h2>
-          <p className="hint">Lo que ganas en total este mes.</p>
-          <input type="number" inputMode="decimal" min="0" placeholder="0"
-            value={ingreso || ""}
-            onChange={(e) => setIngreso(e.target.value === "" ? 0 : Number(e.target.value))}
-            style={{ width: "100%", fontSize: 20, fontWeight: 700 }} />
-        </div>
-
-        <div className="panel">
-          <h2>Suscripciones y pagos fijos</h2>
-          <p className="hint">Renta, luz, streaming, cuotas…</p>
-          {subs.map((s) => (
-            <div className="sub-row" key={s.id}>
-              <input type="text" placeholder="Nombre (ej. Alquiler)" value={s.nombre}
-                onChange={(e) => updateSub(s.id, "nombre", e.target.value)} />
-              <input type="number" inputMode="decimal" min="0" placeholder="€"
-                value={s.monto || ""}
-                onChange={(e) => updateSub(s.id, "monto", Number(e.target.value) || 0)} />
-              <button className="icon-del" onClick={() => removeSub(s.id)}>×</button>
-            </div>
-          ))}
-          {subs.length === 0 && <div className="empty-state">Aún no has añadido pagos fijos.</div>}
-          <button className="add-btn" onClick={addSub}>+ Añadir pago</button>
-          <div className="mini-total"><span>Total pagos fijos</span><b>€{fmt0(totalSubs)}</b></div>
-        </div>
-
-        <div className="panel">
-          <h2>Tarjetas de crédito</h2>
-          <p className="hint">Saldo, límite (opcional), interés anual y pago mínimo.</p>
-          {cards.map((c) => {
-            const lim = Number(c.limite) || 0;
-            const saldo = Number(c.saldo) || 0;
-            const uso = lim > 0 ? Math.min((saldo / lim) * 100, 100) : null;
-            const usoNivel = uso === null ? null : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
-            return (
-              <div className="card-entry" key={c.id}>
-                <div className="card-entry-top">
-                  <input type="text" placeholder="Nombre (ej. Visa)" value={c.nombre}
-                    onChange={(e) => updateCard(c.id, "nombre", e.target.value)} />
-                  <button className="icon-del" onClick={() => removeCard(c.id)}>×</button>
-                </div>
-                <div className="card-fields">
-                  <div><span className="field-label">Saldo €</span>
-                    <input type="number" inputMode="decimal" min="0" placeholder="0" value={c.saldo || ""}
-                      onChange={(e) => updateCard(c.id, "saldo", Number(e.target.value) || 0)} /></div>
-                  <div><span className="field-label">Límite €</span>
-                    <input type="number" inputMode="decimal" min="0" placeholder="opcional" value={c.limite || ""}
-                      onChange={(e) => updateCard(c.id, "limite", Number(e.target.value) || 0)} /></div>
-                  <div><span className="field-label">TAE %</span>
-                    <input type="number" inputMode="decimal" min="0" placeholder="0" value={c.apr || ""}
-                      onChange={(e) => updateCard(c.id, "apr", Number(e.target.value) || 0)} /></div>
-                  <div><span className="field-label">Mínimo €</span>
-                    <input type="number" inputMode="decimal" min="0" placeholder="0" value={c.minimo || ""}
-                      onChange={(e) => updateCard(c.id, "minimo", Number(e.target.value) || 0)} /></div>
-                </div>
-                {uso !== null && (
-                  <>
-                    <div className="util-bar-track"><div className={`util-bar-fill ${usoNivel}`} style={{ width: `${uso}%` }} /></div>
-                    <div className="util-label">Uso del límite: {Math.round(uso)}%</div>
-                  </>
-                )}
-              </div>
-            );
-          })}
-          {cards.length === 0 && <div className="empty-state">Aún no has añadido tarjetas.</div>}
-          <button className="add-btn" onClick={addCard}>+ Añadir tarjeta</button>
-          <div className="mini-total"><span>Suma de pagos mínimos</span><b>€{fmt0(totalMinimos)}</b></div>
-        </div>
-
-        <div className="panel">
-          <h2>¿Qué % de lo que sobre quieres ahorrar?</h2>
-          <p className="hint">Se aplica sobre lo que queda tras pagos fijos y mínimos de tarjeta.</p>
-          <div className="slider-row">
-            <input type="range" min="0" max="100" value={savingsRate}
-              onChange={(e) => setSavingsRate(Number(e.target.value))} />
-            <div className="slider-val">{savingsRate}%</div>
-          </div>
-        </div>
-
-        <div className="panel">
-          <h2>Tu ahorro</h2>
-          <p className="hint">Cuánto tienes guardado y cuánto quieres llegar a tener.</p>
-          <div className="goal-grid">
-            <div className="goal-field">
-              <label>Ahorro actual €</label>
-              <input type="number" inputMode="decimal" min="0" placeholder="0" value={ahorroActual || ""}
-                onChange={(e) => setAhorroActual(Number(e.target.value) || 0)} />
-            </div>
-            <div className="goal-field">
-              <label>Meta de ahorro €</label>
-              <input type="number" inputMode="decimal" min="0" placeholder="0" value={metaAhorro || ""}
-                onChange={(e) => setMetaAhorro(Number(e.target.value) || 0)} />
-            </div>
-          </div>
-          {metaAhorro > 0 && (
-            <>
-              <div className="progress-track"><div className="progress-fill" style={{ width: `${metaProgreso}%` }} /></div>
-              <div className="goal-caption">
-                <span>€{fmt0(ahorroActual)} de €{fmt0(metaAhorro)}</span>
-                <span>{Math.round(metaProgreso)}%</span>
-              </div>
-            </>
-          )}
-        </div>
-
-        <button className="calc-btn" onClick={calcular}>Calcular mi mes</button>
-
-        {resultado && resultado.insuficiente && (
-          <div className="warn-box">
-            <b>No te alcanza este mes.</b><br />
-            Con tus pagos fijos y los mínimos de tarjeta te faltan <b>€{fmt0(resultado.faltante)}</b>.
-          </div>
-        )}
-
-        {resultado && !resultado.insuficiente && (
-          <div className="result-card">
-            <div className="result-line"><span>Ingreso</span><span>€{fmt0(Number(ingreso) || 0)}</span></div>
-            <div className="result-line"><span>Pagos fijos</span><span>−€{fmt0(totalSubs)}</span></div>
-            {resultado.asignaciones.map((c) => (
-              <div className="result-line" key={c.id}>
-                <span className="name">{c.nombre || "Tarjeta"}{c.pagoExtra > 0 && <span className="badge">extra</span>}</span>
-                <span>−€{fmt0(c.pagoTotal)}</span>
-              </div>
-            ))}
-            {cards.length === 0 && <div className="result-line"><span>Sin tarjetas</span><span>—</span></div>}
-            <div className="result-line"><span>Ahorro sugerido</span><span>€{fmt10(resultado.ahorro)}</span></div>
-            <div className="result-total"><span>Total ingreso repartido</span><span>€{fmt0(Number(ingreso) || 0)}</span></div>
-          </div>
-        )}
-
-        {sugerencias.length > 0 && (
-          <div className="sugerencias">
-            <h2>Sugerencias para este mes</h2>
-            <ul>{sugerencias.map((s, i) => <li key={i}>{s}</li>)}</ul>
-          </div>
-        )}
-
-        {resultado && <button className="save-month-btn" onClick={guardarMes}>Guardar este mes en el historial</button>}
-        {savedFlash && <div className="flash">Mes guardado ✓</div>}
-
-        <div className="panel">
-          <h2>Historial mensual</h2>
-          <p className="hint">Cuánto de tu ingreso estuvo comprometido cada mes.</p>
-          {history.length === 0 && <div className="empty-state">Todavía no hay meses guardados.</div>}
-          {history.map((h) => (
-            <div className="history-row" key={h.month}>
-              <div className="history-top">
-                <span className="history-month">{monthLabel(h.month)}</span>
-                <span className={`status-pill ${h.status}`}>{h.status === "verde" ? "Correcto" : h.status === "amarillo" ? "Apretado" : "Peligroso"}</span>
-              </div>
-              <div className="hbar-track">
-                <div className={`hbar-fill util-bar-fill ${h.status}`} style={{ width: `${Math.min(h.ratio * 100, 100)}%` }} />
-              </div>
-              <div className="history-meta">
-                <span>Comprometido €{fmt0(h.comprometido)} de €{fmt0(h.ingreso)} · Ahorro €{fmt0(h.ahorro)}</span>
-                <button className="history-del" onClick={() => removeHistory(h.month)}>Eliminar</button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <p className="save-note">
-          {storageError ? "No se pudo guardar en este dispositivo." : "Tus datos se guardan automáticamente en este dispositivo."}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<CuentasClaras />);
-</script>
-
-<style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin:0; padding:0; }
 body {
   min-height: 100vh;
   background: #F2F2F7;
   color: #1C1C1E;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 }
 .page { padding: 20px 14px 70px; padding-top: max(20px, env(safe-area-inset-top)); }
 .wrap { max-width: 760px; margin: 0 auto; }
@@ -465,11 +28,11 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 2
 .subtitle { color: #8E8E93; font-size: 13.5px; margin: 0 0 18px; }
 
 .top-actions { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 10px; flex-wrap: wrap; }
-.pill-btn { background: #E9E9EB; color: #1C1C1E; border: none; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.pill-btn { background: #E9E9EB; color: #1C1C1E; border: none; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .pill-btn:disabled { opacity: 0.4; cursor: default; }
 .pill-btn.danger { color: #FF3B30; }
-.pill-btn.update { background: #EAF3FF; color: #007AFF; }
 .pill-btn.confirm { background: #FF3B30; color: #fff; }
+.pill-btn.update { background: #EAF3FF; color: #007AFF; }
 
 .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
 @media (max-width: 600px) { .summary { grid-template-columns: 1fr 1fr; } }
@@ -500,7 +63,7 @@ input::placeholder { color: #B8B8BD; }
 .icon-del { background: #F7F7F9; border: none; color: #8E8E93; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0; }
 .icon-del:hover { background: #FFE5E3; color: #FF3B30; }
 
-.add-btn { margin-top: 10px; width: 100%; background: #EAF3FF; color: #007AFF; border: none; border-radius: 10px; padding: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.add-btn { margin-top: 10px; width: 100%; background: #EAF3FF; color: #007AFF; border: none; border-radius: 10px; padding: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .add-btn:hover { background: #DCEBFF; }
 
 .mini-total { display: flex; justify-content: space-between; font-size: 13px; color: #8E8E93; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F0F0F2; }
@@ -532,9 +95,9 @@ input::placeholder { color: #B8B8BD; }
 .progress-fill { height: 100%; background: linear-gradient(90deg,#5AC8FA,#007AFF); border-radius: 6px; transition: width 0.4s; }
 .goal-caption { display: flex; justify-content: space-between; font-size: 12px; color: #8E8E93; margin-top: 6px; }
 
-.calc-btn { width: 100%; background: #007AFF; color: #fff; border: none; border-radius: 12px; padding: 14px; font-weight: 700; font-size: 15px; cursor: pointer; margin: 4px 0 12px; }
+.calc-btn { width: 100%; background: #007AFF; color: #fff; border: none; border-radius: 12px; padding: 14px; font-weight: 700; font-size: 15px; cursor: pointer; margin: 4px 0 12px; font-family: inherit; }
 .calc-btn:hover { background: #0066D6; }
-.save-month-btn { width: 100%; background: #1C1C1E; color: #fff; border: none; border-radius: 12px; padding: 12px; font-weight: 700; font-size: 14px; cursor: pointer; margin-bottom: 16px; }
+.save-month-btn { width: 100%; background: #1C1C1E; color: #fff; border: none; border-radius: 12px; padding: 12px; font-weight: 700; font-size: 14px; cursor: pointer; margin-bottom: 16px; font-family: inherit; }
 .flash { text-align: center; color: #34C759; font-size: 13px; font-weight: 600; margin: -8px 0 14px; }
 
 .sugerencias { background: #EAF3FF; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
@@ -556,7 +119,7 @@ input::placeholder { color: #B8B8BD; }
 .history-row:last-child { border-bottom: none; }
 .history-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .history-month { font-weight: 700; font-size: 13.5px; text-transform: capitalize; }
-.history-del { background: none; border: none; color: #C7C7CC; cursor: pointer; font-size: 14px; }
+.history-del { background: none; border: none; color: #C7C7CC; cursor: pointer; font-size: 14px; font-family: inherit; }
 .history-del:hover { color: #FF3B30; }
 .hbar-track { height: 10px; background: #EFEFF1; border-radius: 6px; overflow: hidden; }
 .hbar-fill { height: 100%; border-radius: 6px; }
@@ -565,8 +128,431 @@ input::placeholder { color: #B8B8BD; }
 .empty-state { text-align: center; color: #B8B8BD; font-size: 12.5px; padding: 10px 0; }
 .save-note { text-align: center; font-size: 11px; color: #B8B8BD; margin-top: 24px; }
 </style>
+</head>
+<body>
+<div id="root"></div>
 
 <script>
+"use strict";
+
+/* ---------- utilidades ---------- */
+const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString("es-ES", { maximumFractionDigits: 0 });
+const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString("es-ES", { maximumFractionDigits: 0 });
+
+let uidCounter = 1;
+const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
+
+const STORAGE_KEY = "cuentas-claras:datos-v2";
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const monthKey = (d) => { d = d || new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); };
+const monthLabel = (key) => { const p = key.split("-").map(Number); return MESES[p[1] - 1] + " " + p[0]; };
+
+function statusFromRatio(ratio, insuficiente) {
+  if (insuficiente || ratio > 0.9) return { key: "rojo", label: "Peligroso" };
+  if (ratio > 0.6) return { key: "amarillo", label: "Apretado" };
+  return { key: "verde", label: "Correcto" };
+}
+
+function esc(v) {
+  return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) || {};
+  } catch (e) { return {}; }
+}
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      ingreso: state.ingreso, subs: state.subs, cards: state.cards,
+      savingsRate: state.savingsRate, ahorroActual: state.ahorroActual,
+      metaAhorro: state.metaAhorro, history: state.history,
+    }));
+    state.storageError = false;
+  } catch (e) { state.storageError = true; }
+}
+
+/* ---------- estado ---------- */
+const initial = loadData();
+const state = {
+  ingreso: initial.ingreso || 0,
+  subs: initial.subs || [],
+  cards: initial.cards || [],
+  savingsRate: initial.savingsRate != null ? initial.savingsRate : 20,
+  ahorroActual: initial.ahorroActual || 0,
+  metaAhorro: initial.metaAhorro || 0,
+  history: initial.history || [],
+  resultado: null,
+  confirmReset: false,
+  savedFlash: false,
+  storageError: false,
+};
+const undoStack = [];
+let saveTimeout = null;
+
+function scheduleSave() {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(saveData, 300);
+}
+
+function pushUndo() {
+  undoStack.push(JSON.parse(JSON.stringify({
+    subs: state.subs, cards: state.cards, ingreso: state.ingreso,
+    savingsRate: state.savingsRate, ahorroActual: state.ahorroActual,
+    metaAhorro: state.metaAhorro, history: state.history,
+  })));
+  if (undoStack.length > 15) undoStack.shift();
+}
+
+function undo() {
+  const prev = undoStack.pop();
+  if (!prev) return;
+  Object.assign(state, prev);
+  scheduleSave();
+  rerenderPreservingFocus();
+}
+
+/* ---------- acciones ---------- */
+function addSub() { state.subs.push({ id: uid(), nombre: "", monto: 0 }); scheduleSave(); rerenderPreservingFocus(); }
+function removeSub(id) { pushUndo(); state.subs = state.subs.filter((x) => x.id !== id); scheduleSave(); rerenderPreservingFocus(); }
+function addCard() { state.cards.push({ id: uid(), nombre: "", saldo: 0, limite: 0, apr: 0, minimo: 0 }); scheduleSave(); rerenderPreservingFocus(); }
+function removeCard(id) { pushUndo(); state.cards = state.cards.filter((x) => x.id !== id); scheduleSave(); rerenderPreservingFocus(); }
+
+function resetAll() {
+  pushUndo();
+  state.ingreso = 0; state.subs = []; state.cards = []; state.savingsRate = 20;
+  state.ahorroActual = 0; state.metaAhorro = 0; state.resultado = null; state.confirmReset = false;
+  scheduleSave(); rerenderPreservingFocus();
+}
+
+function removeHistory(key) { pushUndo(); state.history = state.history.filter((x) => x.month !== key); scheduleSave(); rerenderPreservingFocus(); }
+
+function computeTotals() {
+  const totalSubs = state.subs.reduce((a, s) => a + (Number(s.monto) || 0), 0);
+  const totalMinimos = state.cards.reduce((a, c) => a + (Number(c.minimo) || 0), 0);
+  const totalDeuda = state.cards.reduce((a, c) => a + (Number(c.saldo) || 0), 0);
+  const disponibleBruto = (Number(state.ingreso) || 0) - totalSubs;
+  const ratioComprometido = (Number(state.ingreso) || 0) > 0
+    ? (totalSubs + totalMinimos) / Number(state.ingreso)
+    : (totalSubs + totalMinimos > 0 ? 1.5 : 0);
+  const insuficienteLive = disponibleBruto - totalMinimos < 0;
+  const liveStatus = statusFromRatio(ratioComprometido, insuficienteLive);
+  return { totalSubs, totalMinimos, totalDeuda, disponibleBruto, ratioComprometido, liveStatus };
+}
+
+function calcular() {
+  const t = computeTotals();
+  const restoTrasMinimos = t.disponibleBruto - t.totalMinimos;
+
+  if (restoTrasMinimos < 0) {
+    state.resultado = { insuficiente: true, faltante: Math.abs(restoTrasMinimos) };
+    rerenderPreservingFocus();
+    return;
+  }
+
+  const ahorroCrudo = restoTrasMinimos * (state.savingsRate / 100);
+  const ahorro = Math.round(ahorroCrudo / 10) * 10;
+  let extraParaTarjetas = Math.round((restoTrasMinimos - ahorro) * 100) / 100;
+  if (extraParaTarjetas < 0) extraParaTarjetas = 0;
+
+  const ordenAvalancha = state.cards
+    .map((c) => ({ ...c, saldo: Number(c.saldo) || 0, apr: Number(c.apr) || 0, minimo: Number(c.minimo) || 0 }))
+    .filter((c) => c.saldo > 0 || c.minimo > 0 || c.nombre)
+    .sort((a, b) => b.apr - a.apr);
+
+  let restante = extraParaTarjetas;
+  const asignaciones = ordenAvalancha.map((c) => {
+    const espacio = Math.max(c.saldo - c.minimo, 0);
+    const pagoExtra = Math.min(restante, espacio);
+    restante = Math.round((restante - pagoExtra) * 100) / 100;
+    return Object.assign({}, c, { pagoExtra, pagoTotal: Math.round((c.minimo + pagoExtra) * 100) / 100 });
+  });
+
+  const ahorroFinal = Math.round((ahorro + restante) / 10) * 10;
+  state.resultado = { insuficiente: false, ahorro: ahorroFinal, asignaciones };
+  rerenderPreservingFocus();
+}
+
+function guardarMes() {
+  if (!state.resultado) return;
+  pushUndo();
+  const t = computeTotals();
+  const key = monthKey();
+  const entry = {
+    month: key,
+    ingreso: Number(state.ingreso) || 0,
+    comprometido: t.totalSubs + t.totalMinimos,
+    ratio: t.ratioComprometido,
+    ahorro: state.resultado.insuficiente ? 0 : state.resultado.ahorro,
+    insuficiente: !!state.resultado.insuficiente,
+    status: t.liveStatus.key,
+  };
+  state.history = state.history.filter((x) => x.month !== key);
+  state.history.push(entry);
+  state.history.sort((a, b) => (a.month < b.month ? 1 : -1));
+  state.savedFlash = true;
+  scheduleSave();
+  rerenderPreservingFocus();
+  setTimeout(() => { state.savedFlash = false; rerenderPreservingFocus(); }, 1800);
+}
+
+async function actualizarApp() {
+  try {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+    }
+  } catch (e) {}
+  location.reload();
+}
+
+/* ---------- sugerencias ---------- */
+function buildSugerencias(t) {
+  const s = [];
+  const r = state.resultado;
+  if (!r) return s;
+  if (r.insuficiente) {
+    s.push("Este mes no te alcanza para cubrir tus pagos fijos y los mínimos de tarjeta. Te faltan €" + fmt0(r.faltante) + ".");
+    if (state.ahorroActual > 0) {
+      s.push("Es un momento razonable para usar parte de tu ahorro (tienes €" + fmt0(state.ahorroActual) + ") y cubrir el faltante sin dejar de pagar tus tarjetas.");
+    } else {
+      s.push("Antes de que la deuda crezca, revisa si puedes recortar algún pago fijo este mes.");
+    }
+  } else {
+    const conExtra = r.asignaciones.filter((c) => c.pagoExtra > 0);
+    const prioridad = conExtra[0] || r.asignaciones[0];
+    if (prioridad) {
+      s.push('Paga primero "' + (prioridad.nombre || "tu tarjeta") + '": tiene la tasa más alta (' + fmt0(prioridad.apr) + '%). Destínale €' + fmt0(prioridad.pagoTotal) + " este mes.");
+    }
+    if (t.liveStatus.key === "verde") {
+      s.push("Este mes va bien. No necesitas tocar tu ahorro; es buen momento para seguir sumando a él.");
+    } else if (t.liveStatus.key === "amarillo") {
+      s.push("Vas ajustado este mes. Evita retirar ahorro salvo necesidad real; mantén los mínimos al día.");
+    } else {
+      s.push("Mes apretado: casi todo tu ingreso está comprometido. No es momento de gastos extra ni de nuevas deudas.");
+    }
+    if (state.metaAhorro > 0) {
+      const falta = state.metaAhorro - state.ahorroActual;
+      if (falta <= 0) {
+        s.push("Ya cumpliste tu meta de ahorro de €" + fmt0(state.metaAhorro) + ".");
+      } else if (r.ahorro > 0) {
+        const meses = Math.ceil(falta / r.ahorro);
+        s.push("A €" + fmt0(r.ahorro) + " por mes, llegas a tu meta de €" + fmt0(state.metaAhorro) + " en " + meses + (meses === 1 ? " mes." : " meses."));
+      } else {
+        s.push("No estás generando ahorro hacia tu meta este mes; revisa tus pagos fijos o mínimos de tarjeta.");
+      }
+    }
+  }
+  return s;
+}
+
+/* ---------- render ---------- */
+const root = document.getElementById("root");
+
+function render() {
+  const t = computeTotals();
+  const metaProgreso = state.metaAhorro > 0 ? Math.min((state.ahorroActual / state.metaAhorro) * 100, 100) : 0;
+  const sugerencias = buildSugerencias(t);
+
+  let html = '<div class="page"><div class="wrap">';
+  html += '<h1>Cuentas Claras</h1><p class="subtitle">Ingreso, pagos fijos, tarjetas y ahorro — todo en un solo lugar.</p>';
+
+  // acciones superiores
+  html += '<div class="top-actions">';
+  html += '<button class="pill-btn update" data-action="actualizar">⟳ Actualizar app</button>';
+  html += '<button class="pill-btn" data-action="undo"' + (undoStack.length === 0 ? " disabled" : "") + '>↶ Deshacer</button>';
+  if (!state.confirmReset) {
+    html += '<button class="pill-btn danger" data-action="confirmReset">Restablecer todo</button>';
+  } else {
+    html += '<span style="font-size:12.5px;color:#8E8E93;align-self:center;">¿Borrar todos los datos?</span>';
+    html += '<button class="pill-btn confirm" data-action="resetAll">Sí, borrar</button>';
+    html += '<button class="pill-btn" data-action="cancelReset">Cancelar</button>';
+  }
+  html += '</div>';
+
+  // resumen
+  html += '<div class="summary">';
+  html += '<div class="sum-card"><div class="sum-label">Debes en total</div><div class="sum-val red">€' + fmt0(t.totalDeuda) + '</div></div>';
+  html += '<div class="sum-card"><div class="sum-label">Disponible este mes</div><div class="sum-val ' + (t.disponibleBruto >= 0 ? "green" : "red") + '">' + (t.disponibleBruto >= 0 ? "" : "-") + '€' + fmt0(Math.abs(t.disponibleBruto)) + '</div><span class="status-pill ' + t.liveStatus.key + '">' + t.liveStatus.label + '</span></div>';
+  html += '<div class="sum-card"><div class="sum-label">Ahorrado actual</div><div class="sum-val blue">€' + fmt0(state.ahorroActual) + '</div></div>';
+  html += '</div>';
+
+  // ingreso
+  html += '<div class="panel"><h2>Ingreso de este mes</h2><p class="hint">Lo que ganas en total este mes.</p>';
+  html += '<input type="number" inputmode="decimal" min="0" placeholder="0" id="ingreso-input" data-scope="ingreso" value="' + (state.ingreso || "") + '" style="width:100%;font-size:20px;font-weight:700;"></div>';
+
+  // pagos fijos
+  html += '<div class="panel"><h2>Suscripciones y pagos fijos</h2><p class="hint">Renta, luz, streaming, cuotas…</p>';
+  state.subs.forEach((s) => {
+    html += '<div class="sub-row">';
+    html += '<input type="text" placeholder="Nombre (ej. Alquiler)" id="sub-nombre-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="nombre" value="' + esc(s.nombre) + '">';
+    html += '<input type="number" inputmode="decimal" min="0" placeholder="€" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + (s.monto || "") + '">';
+    html += '<button class="icon-del" data-action="removeSub" data-id="' + s.id + '">×</button></div>';
+  });
+  if (state.subs.length === 0) html += '<div class="empty-state">Aún no has añadido pagos fijos.</div>';
+  html += '<button class="add-btn" data-action="addSub">+ Añadir pago</button>';
+  html += '<div class="mini-total"><span>Total pagos fijos</span><b>€' + fmt0(t.totalSubs) + '</b></div></div>';
+
+  // tarjetas
+  html += '<div class="panel"><h2>Tarjetas de crédito</h2><p class="hint">Saldo, límite (opcional), interés anual y pago mínimo.</p>';
+  state.cards.forEach((c) => {
+    const lim = Number(c.limite) || 0;
+    const saldo = Number(c.saldo) || 0;
+    const uso = lim > 0 ? Math.min((saldo / lim) * 100, 100) : null;
+    const usoNivel = uso === null ? "" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
+    html += '<div class="card-entry">';
+    html += '<div class="card-entry-top"><input type="text" placeholder="Nombre (ej. Visa)" id="card-nombre-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="nombre" value="' + esc(c.nombre) + '">';
+    html += '<button class="icon-del" data-action="removeCard" data-id="' + c.id + '">×</button></div>';
+    html += '<div class="card-fields">';
+    html += '<div><span class="field-label">Saldo €</span><input type="number" inputmode="decimal" min="0" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + (c.saldo || "") + '"></div>';
+    html += '<div><span class="field-label">Límite €</span><input type="number" inputmode="decimal" min="0" placeholder="opcional" id="card-limite-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="limite" value="' + (c.limite || "") + '"></div>';
+    html += '<div><span class="field-label">TAE %</span><input type="number" inputmode="decimal" min="0" placeholder="0" id="card-apr-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="apr" value="' + (c.apr || "") + '"></div>';
+    html += '<div><span class="field-label">Mínimo €</span><input type="number" inputmode="decimal" min="0" placeholder="0" id="card-minimo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="minimo" value="' + (c.minimo || "") + '"></div>';
+    html += '</div>';
+    if (uso !== null) {
+      html += '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div></div>';
+      html += '<div class="util-label">Uso del límite: ' + Math.round(uso) + '%</div>';
+    }
+    html += '</div>';
+  });
+  if (state.cards.length === 0) html += '<div class="empty-state">Aún no has añadido tarjetas.</div>';
+  html += '<button class="add-btn" data-action="addCard">+ Añadir tarjeta</button>';
+  html += '<div class="mini-total"><span>Suma de pagos mínimos</span><b>€' + fmt0(t.totalMinimos) + '</b></div></div>';
+
+  // % ahorro
+  html += '<div class="panel"><h2>¿Qué % de lo que sobre quieres ahorrar?</h2><p class="hint">Se aplica sobre lo que queda tras pagos fijos y mínimos de tarjeta.</p>';
+  html += '<div class="slider-row"><input type="range" min="0" max="100" id="savings-rate-input" data-scope="savingsRate" value="' + state.savingsRate + '"><div class="slider-val">' + state.savingsRate + '%</div></div></div>';
+
+  // ahorro y meta
+  html += '<div class="panel"><h2>Tu ahorro</h2><p class="hint">Cuánto tienes guardado y cuánto quieres llegar a tener.</p>';
+  html += '<div class="goal-grid">';
+  html += '<div class="goal-field"><label>Ahorro actual €</label><input type="number" inputmode="decimal" min="0" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + (state.ahorroActual || "") + '"></div>';
+  html += '<div class="goal-field"><label>Meta de ahorro €</label><input type="number" inputmode="decimal" min="0" placeholder="0" id="meta-ahorro-input" data-scope="metaAhorro" value="' + (state.metaAhorro || "") + '"></div>';
+  html += '</div>';
+  if (state.metaAhorro > 0) {
+    html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
+    html += '<div class="goal-caption"><span>€' + fmt0(state.ahorroActual) + ' de €' + fmt0(state.metaAhorro) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
+  }
+  html += '</div>';
+
+  html += '<button class="calc-btn" data-action="calcular">Calcular mi mes</button>';
+
+  if (state.resultado && state.resultado.insuficiente) {
+    html += '<div class="warn-box"><b>No te alcanza este mes.</b><br>Con tus pagos fijos y los mínimos de tarjeta te faltan <b>€' + fmt0(state.resultado.faltante) + '</b>.</div>';
+  }
+
+  if (state.resultado && !state.resultado.insuficiente) {
+    html += '<div class="result-card">';
+    html += '<div class="result-line"><span>Ingreso</span><span>€' + fmt0(Number(state.ingreso) || 0) + '</span></div>';
+    html += '<div class="result-line"><span>Pagos fijos</span><span>−€' + fmt0(t.totalSubs) + '</span></div>';
+    state.resultado.asignaciones.forEach((c) => {
+      html += '<div class="result-line"><span class="name">' + esc(c.nombre || "Tarjeta") + (c.pagoExtra > 0 ? '<span class="badge">extra</span>' : '') + '</span><span>−€' + fmt0(c.pagoTotal) + '</span></div>';
+    });
+    if (state.cards.length === 0) html += '<div class="result-line"><span>Sin tarjetas</span><span>—</span></div>';
+    html += '<div class="result-line"><span>Ahorro sugerido</span><span>€' + fmt10(state.resultado.ahorro) + '</span></div>';
+    html += '<div class="result-total"><span>Total ingreso repartido</span><span>€' + fmt0(Number(state.ingreso) || 0) + '</span></div>';
+    html += '</div>';
+  }
+
+  if (sugerencias.length > 0) {
+    html += '<div class="sugerencias"><h2>Sugerencias para este mes</h2><ul>';
+    sugerencias.forEach((s) => { html += '<li>' + esc(s) + '</li>'; });
+    html += '</ul></div>';
+  }
+
+  if (state.resultado) html += '<button class="save-month-btn" data-action="guardarMes">Guardar este mes en el historial</button>';
+  if (state.savedFlash) html += '<div class="flash">Mes guardado ✓</div>';
+
+  html += '<div class="panel"><h2>Historial mensual</h2><p class="hint">Cuánto de tu ingreso estuvo comprometido cada mes.</p>';
+  if (state.history.length === 0) html += '<div class="empty-state">Todavía no hay meses guardados.</div>';
+  state.history.forEach((h) => {
+    const label = h.status === "verde" ? "Correcto" : h.status === "amarillo" ? "Apretado" : "Peligroso";
+    html += '<div class="history-row"><div class="history-top"><span class="history-month">' + esc(monthLabel(h.month)) + '</span><span class="status-pill ' + h.status + '">' + label + '</span></div>';
+    html += '<div class="hbar-track"><div class="hbar-fill util-bar-fill ' + h.status + '" style="width:' + Math.min(h.ratio * 100, 100) + '%"></div></div>';
+    html += '<div class="history-meta"><span>Comprometido €' + fmt0(h.comprometido) + ' de €' + fmt0(h.ingreso) + ' · Ahorro €' + fmt0(h.ahorro) + '</span><button class="history-del" data-action="removeHistory" data-id="' + h.month + '">Eliminar</button></div></div>';
+  });
+  html += '</div>';
+
+  html += '<p class="save-note">' + (state.storageError ? "No se pudo guardar en este dispositivo." : "Tus datos se guardan automáticamente en este dispositivo.") + '</p>';
+  html += '</div></div>';
+
+  root.innerHTML = html;
+}
+
+function rerenderPreservingFocus() {
+  const active = document.activeElement;
+  let info = null;
+  if (active && active.id && root.contains(active)) {
+    info = { id: active.id, start: active.selectionStart, end: active.selectionEnd };
+  }
+  render();
+  if (info) {
+    const el = document.getElementById(info.id);
+    if (el) {
+      el.focus();
+      if (typeof info.start === "number" && el.setSelectionRange) {
+        try { el.setSelectionRange(info.start, info.end); } catch (e) {}
+      }
+    }
+  }
+}
+
+/* ---------- eventos (delegación) ---------- */
+root.addEventListener("input", (e) => {
+  const t = e.target;
+  const scope = t.dataset.scope;
+  if (!scope) return;
+
+  if (scope === "ingreso") { state.ingreso = t.value === "" ? 0 : Number(t.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "ahorroActual") { state.ahorroActual = Number(t.value) || 0; scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "metaAhorro") { state.metaAhorro = Number(t.value) || 0; scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "savingsRate") { state.savingsRate = Number(t.value); scheduleSave(); rerenderPreservingFocus(); return; }
+
+  if (scope === "sub") {
+    const item = state.subs.find((x) => x.id === t.dataset.id);
+    if (!item) return;
+    item[t.dataset.field] = t.dataset.field === "monto" ? (Number(t.value) || 0) : t.value;
+    scheduleSave(); rerenderPreservingFocus(); return;
+  }
+  if (scope === "card") {
+    const item = state.cards.find((x) => x.id === t.dataset.id);
+    if (!item) return;
+    item[t.dataset.field] = t.dataset.field === "nombre" ? t.value : (Number(t.value) || 0);
+    scheduleSave(); rerenderPreservingFocus(); return;
+  }
+});
+
+root.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+  const map = {
+    actualizar: actualizarApp,
+    undo: undo,
+    confirmReset: () => { state.confirmReset = true; render(); },
+    cancelReset: () => { state.confirmReset = false; render(); },
+    resetAll: resetAll,
+    addSub: addSub,
+    removeSub: () => removeSub(id),
+    addCard: addCard,
+    removeCard: () => removeCard(id),
+    calcular: calcular,
+    guardarMes: guardarMes,
+    removeHistory: () => removeHistory(id),
+  };
+  if (map[action]) map[action]();
+});
+
+render();
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("sw.js").catch(() => {});
