@@ -51,6 +51,20 @@ function statusFromRatio(ratio, insuficiente) {
 
 const snapshotOf = (s) => JSON.parse(JSON.stringify(s));
 
+async function actualizarApp() {
+  try {
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+    }
+    if ("serviceWorker" in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister()));
+    }
+  } catch (e) {}
+  location.reload();
+}
+
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -232,6 +246,7 @@ function CuentasClaras() {
         <p className="subtitle">Ingreso, pagos fijos, tarjetas y ahorro — todo en un solo lugar.</p>
 
         <div className="top-actions">
+          <button className="pill-btn update" onClick={actualizarApp}>⟳ Actualizar app</button>
           <button className="pill-btn" onClick={undo} disabled={!canUndo}>↶ Deshacer</button>
           {!confirmReset ? (
             <button className="pill-btn danger" onClick={() => setConfirmReset(true)}>Restablecer todo</button>
@@ -453,6 +468,7 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 2
 .pill-btn { background: #E9E9EB; color: #1C1C1E; border: none; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
 .pill-btn:disabled { opacity: 0.4; cursor: default; }
 .pill-btn.danger { color: #FF3B30; }
+.pill-btn.update { background: #EAF3FF; color: #007AFF; }
 .pill-btn.confirm { background: #FF3B30; color: #fff; }
 
 .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }

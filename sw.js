@@ -1,4 +1,4 @@
-const CACHE = "cuentas-claras-v1";
+const CACHE = "cuentas-claras-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,10 @@ const ASSETS = [
   "./icon-192.png",
   "./icon-512.png",
 ];
+
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") self.skipWaiting();
+});
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
