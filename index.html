@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Cuentas Claras</title>
+<meta name="description" content="Controla tu ingreso mensual, pagos fijos, tarjetas y ahorro." />
+<meta name="theme-color" content="#007AFF" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Cuentas Claras" />
+<style>
+  html, body { margin:0; padding:0; background:#F2F2F7; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ---------- utilidades ----------
+const fmt0 = (n) =>
+  Math.round(isFinite(n) ? n : 0).toLocaleString("es-ES", { maximumFractionDigits: 0 });
+const fmt10 = (n) => {
+  const r = Math.round((isFinite(n) ? n : 0) / 10) * 10;
+  return r.toLocaleString("es-ES", { maximumFractionDigits: 0 });
+};
+
+let uidCounter = 1;
+const uid = () => `id_${Date.now()}_${uidCounter++}`;
+
+const STORAGE_KEY = "cuentas-claras:datos-v2";
+
+const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const monthKey = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+const monthLabel = (key) => { const [y, m] = key.split("-").map(Number); return `${MESES[m - 1]} ${y}`; };
+
+function statusFromRatio(ratio, insuficiente) {
+  if (insuficiente || ratio > 0.9) return { key: "rojo", label: "Peligroso" };
+  if (ratio > 0.6) return { key: "amarillo", label: "Apretado" };
+  return { key: "verde", label: "Correcto" };
+}
+
+const snapshotOf = (s) => JSON.parse(JSON.stringify(s));
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) { return null; }
+}
+function saveData(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    return true;
+  } catch (e) { return false; }
+}
+
+function CuentasClaras() {
+  const initial = loadData() || {};
+  const [ingreso, setIngreso] = useState(initial.ingreso ?? 0);
+  const [subs, setSubs] = useState(initial.subs ?? []);
+  const [cards, setCards] = useState(initial.cards ?? []);
+  const [savingsRate, setSavingsRate] = useState(initial.savingsRate ?? 20);
+  const [ahorroActual, setAhorroActual] = useState(initial.ahorroActual ?? 0);
+  const [metaAhorro, setMetaAhorro] = useState(initial.metaAhorro ?? 0);
+  const [history, setHistory] = useState(initial.history ?? []);
+
+  const [resultado, setResultado] = useState(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const [storageError, setStorageError] = useState(false);
+
+  const saveTimeout = useRef(null);
+  const undoStack = useRef([]);
+  const [canUndo, setCanUndo] = useState(false);
+
+  useEffect(() => {
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(() => {
+      const ok = saveData({ ingreso, subs, cards, savingsRate, ahorroActual, metaAhorro, history });
+      setStorageError(!ok);
+    }, 400);
+    return () => clearTimeout(saveTimeout.current);
+  }, [ingreso, subs, cards, savingsRate, ahorroActual, metaAhorro, history]);
+
+  const pushUndo = useCallback(() => {
+    undoStack.current.push(snapshotOf({ subs, cards, ingreso, savingsRate, ahorroActual, metaAhorro, history }));
+    if (undoStack.current.length > 15) undoStack.current.shift();
+    setCanUndo(true);
+  }, [subs, cards, ingreso, savingsRate, ahorroActual, metaAhorro, history]);
+
+  const undo = () => {
+    const prev = undoStack.current.pop();
+    if (!prev) return;
+    setSubs(prev.subs); setCards(prev.cards); setIngreso(prev.ingreso);
+    setSavingsRate(prev.savingsRate); setAhorroActual(prev.ahorroActual);
+    setMetaAhorro(prev.metaAhorro); setHistory(prev.history);
+    setCanUndo(undoStack.current.length > 0);
+  };
+
+  const addSub = () => setSubs((s) => [...s, { id: uid(), nombre: "", monto: 0 }]);
+  const updateSub = (id, field, value) => setSubs((s) => s.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
+  const removeSub = (id) => { pushUndo(); setSubs((s) => s.filter((x) => x.id !== id)); };
+
+  const addCard = () => setCards((c) => [...c, { id: uid(), nombre: "", saldo: 0, limite: 0, apr: 0, minimo: 0 }]);
+  const updateCard = (id, field, value) => setCards((c) => c.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
+  const removeCard = (id) => { pushUndo(); setCards((c) => c.filter((x) => x.id !== id)); };
+
+  const resetAll = () => {
+    pushUndo();
+    setIngreso(0); setSubs([]); setCards([]); setSavingsRate(20);
+    setAhorroActual(0); setMetaAhorro(0); setResultado(null); setConfirmReset(false);
+  };
+
+  const removeHistory = (key) => { pushUndo(); setHistory((h) => h.filter((x) => x.month !== key)); };
+
+  const totalSubs = subs.reduce((a, s) => a + (Number(s.monto) || 0), 0);
+  const totalMinimos = cards.reduce((a, c) => a + (Number(c.minimo) || 0), 0);
+  const totalDeuda = cards.reduce((a, c) => a + (Number(c.saldo) || 0), 0);
+  const disponibleBruto = (Number(ingreso) || 0) - totalSubs;
+  const ratioComprometido = (Number(ingreso) || 0) > 0
+    ? (totalSubs + totalMinimos) / Number(ingreso)
+    : (totalSubs + totalMinimos > 0 ? 1.5 : 0);
+  const insuficienteLive = disponibleBruto - totalMinimos < 0;
+  const liveStatus = statusFromRatio(ratioComprometido, insuficienteLive);
+
+  const guardarMes = () => {
+    if (!resultado) return;
+    pushUndo();
+    const key = monthKey();
+    const entry = {
+      month: key,
+      ingreso: Number(ingreso) || 0,
+      deudaTotal: totalDeuda,
+      comprometido: totalSubs + totalMinimos,
+      ratio: ingreso > 0 ? (totalSubs + totalMinimos) / ingreso : 1,
+      ahorro: resultado.insuficiente ? 0 : resultado.ahorro,
+      insuficiente: !!resultado.insuficiente,
+      status: liveStatus.key,
+    };
+    setHistory((h) => {
+      const rest = h.filter((x) => x.month !== key);
+      return [...rest, entry].sort((a, b) => (a.month < b.month ? 1 : -1));
+    });
+    setSavedFlash(true);
+    setTimeout(() => setSavedFlash(false), 1800);
+  };
+
+  const calcular = useCallback(() => {
+    const dispo = disponibleBruto;
+    const restoTrasMinimos = dispo - totalMinimos;
+
+    if (restoTrasMinimos < 0) {
+      setResultado({ insuficiente: true, faltante: Math.abs(restoTrasMinimos), dispo, totalMinimos });
+      return;
+    }
+
+    const ahorroCrudo = restoTrasMinimos * (savingsRate / 100);
+    const ahorro = Math.round(ahorroCrudo / 10) * 10;
+    let extraParaTarjetas = Math.round((restoTrasMinimos - ahorro) * 100) / 100;
+    if (extraParaTarjetas < 0) extraParaTarjetas = 0;
+
+    const ordenAvalancha = [...cards]
+      .map((c) => ({ ...c, saldo: Number(c.saldo) || 0, apr: Number(c.apr) || 0, minimo: Number(c.minimo) || 0 }))
+      .filter((c) => c.saldo > 0 || c.minimo > 0 || c.nombre)
+      .sort((a, b) => b.apr - a.apr);
+
+    let restante = extraParaTarjetas;
+    const asignaciones = ordenAvalancha.map((c) => {
+      const espacio = Math.max(c.saldo - c.minimo, 0);
+      const pagoExtra = Math.min(restante, espacio);
+      restante = Math.round((restante - pagoExtra) * 100) / 100;
+      return { ...c, pagoExtra, pagoTotal: Math.round((c.minimo + pagoExtra) * 100) / 100 };
+    });
+
+    const ahorroFinal = Math.round((ahorro + restante) / 10) * 10;
+    setResultado({ insuficiente: false, dispo, totalMinimos, ahorro: ahorroFinal, extraParaTarjetas, asignaciones });
+  }, [cards, disponibleBruto, totalMinimos, savingsRate]);
+
+  const sugerencias = [];
+  if (resultado) {
+    if (resultado.insuficiente) {
+      sugerencias.push(`Este mes no te alcanza para cubrir tus pagos fijos y los mínimos de tarjeta. Te faltan €${fmt0(resultado.faltante)}.`);
+      if (ahorroActual > 0) {
+        sugerencias.push(`Es un momento razonable para usar parte de tu ahorro (tienes €${fmt0(ahorroActual)}) y cubrir el faltante sin dejar de pagar tus tarjetas.`);
+      } else {
+        sugerencias.push("Antes de que la deuda crezca, revisa si puedes recortar algún pago fijo este mes.");
+      }
+    } else {
+      const conExtra = resultado.asignaciones.filter((c) => c.pagoExtra > 0);
+      const prioridad = conExtra[0] || resultado.asignaciones[0];
+      if (prioridad) {
+        sugerencias.push(`Paga primero "${prioridad.nombre || "tu tarjeta"}": tiene la tasa más alta (${fmt0(prioridad.apr)}%). Destínale €${fmt0(prioridad.pagoTotal)} este mes.`);
+      }
+      if (liveStatus.key === "verde") {
+        sugerencias.push("Este mes va bien. No necesitas tocar tu ahorro; es buen momento para seguir sumando a él.");
+      } else if (liveStatus.key === "amarillo") {
+        sugerencias.push("Vas ajustado este mes. Evita retirar ahorro salvo necesidad real; mantén los mínimos al día.");
+      } else {
+        sugerencias.push("Mes apretado: casi todo tu ingreso está comprometido. No es momento de gastos extra ni de nuevas deudas.");
+      }
+      if (metaAhorro > 0) {
+        const falta = metaAhorro - ahorroActual;
+        if (falta <= 0) {
+          sugerencias.push(`Ya cumpliste tu meta de ahorro de €${fmt0(metaAhorro)}.`);
+        } else if (resultado.ahorro > 0) {
+          const meses = Math.ceil(falta / resultado.ahorro);
+          sugerencias.push(`A €${fmt0(resultado.ahorro)} por mes, llegas a tu meta de €${fmt0(metaAhorro)} en ${meses} ${meses === 1 ? "mes" : "meses"}.`);
+        } else {
+          sugerencias.push("No estás generando ahorro hacia tu meta este mes; revisa tus pagos fijos o mínimos de tarjeta.");
+        }
+      }
+    }
+  }
+
+  const metaProgreso = metaAhorro > 0 ? Math.min((ahorroActual / metaAhorro) * 100, 100) : 0;
+
+  return (
+    <div className="page">
+      <div className="wrap">
+        <h1>Cuentas Claras</h1>
+        <p className="subtitle">Ingreso, pagos fijos, tarjetas y ahorro — todo en un solo lugar.</p>
+
+        <div className="top-actions">
+          <button className="pill-btn" onClick={undo} disabled={!canUndo}>↶ Deshacer</button>
+          {!confirmReset ? (
+            <button className="pill-btn danger" onClick={() => setConfirmReset(true)}>Restablecer todo</button>
+          ) : (
+            <>
+              <span style={{ fontSize: 12.5, color: "#8E8E93", alignSelf: "center" }}>¿Borrar todos los datos?</span>
+              <button className="pill-btn confirm" onClick={resetAll}>Sí, borrar</button>
+              <button className="pill-btn" onClick={() => setConfirmReset(false)}>Cancelar</button>
+            </>
+          )}
+        </div>
+
+        <div className="summary">
+          <div className="sum-card">
+            <div className="sum-label">Debes en total</div>
+            <div className="sum-val red">€{fmt0(totalDeuda)}</div>
+          </div>
+          <div className="sum-card">
+            <div className="sum-label">Disponible este mes</div>
+            <div className={`sum-val ${disponibleBruto >= 0 ? "green" : "red"}`}>
+              {disponibleBruto >= 0 ? "" : "-"}€{fmt0(Math.abs(disponibleBruto))}
+            </div>
+            <span className={`status-pill ${liveStatus.key}`}>{liveStatus.label}</span>
+          </div>
+          <div className="sum-card">
+            <div className="sum-label">Ahorrado actual</div>
+            <div className="sum-val blue">€{fmt0(ahorroActual)}</div>
+          </div>
+        </div>
+
+        <div className="panel">
+          <h2>Ingreso de este mes</h2>
+          <p className="hint">Lo que ganas en total este mes.</p>
+          <input type="number" inputMode="decimal" min="0" placeholder="0"
+            value={ingreso || ""}
+            onChange={(e) => setIngreso(e.target.value === "" ? 0 : Number(e.target.value))}
+            style={{ width: "100%", fontSize: 20, fontWeight: 700 }} />
+        </div>
+
+        <div className="panel">
+          <h2>Suscripciones y pagos fijos</h2>
+          <p className="hint">Renta, luz, streaming, cuotas…</p>
+          {subs.map((s) => (
+            <div className="sub-row" key={s.id}>
+              <input type="text" placeholder="Nombre (ej. Alquiler)" value={s.nombre}
+                onChange={(e) => updateSub(s.id, "nombre", e.target.value)} />
+              <input type="number" inputMode="decimal" min="0" placeholder="€"
+                value={s.monto || ""}
+                onChange={(e) => updateSub(s.id, "monto", Number(e.target.value) || 0)} />
+              <button className="icon-del" onClick={() => removeSub(s.id)}>×</button>
+            </div>
+          ))}
+          {subs.length === 0 && <div className="empty-state">Aún no has añadido pagos fijos.</div>}
+          <button className="add-btn" onClick={addSub}>+ Añadir pago</button>
+          <div className="mini-total"><span>Total pagos fijos</span><b>€{fmt0(totalSubs)}</b></div>
+        </div>
+
+        <div className="panel">
+          <h2>Tarjetas de crédito</h2>
+          <p className="hint">Saldo, límite (opcional), interés anual y pago mínimo.</p>
+          {cards.map((c) => {
+            const lim = Number(c.limite) || 0;
+            const saldo = Number(c.saldo) || 0;
+            const uso = lim > 0 ? Math.min((saldo / lim) * 100, 100) : null;
+            const usoNivel = uso === null ? null : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
+            return (
+              <div className="card-entry" key={c.id}>
+                <div className="card-entry-top">
+                  <input type="text" placeholder="Nombre (ej. Visa)" value={c.nombre}
+                    onChange={(e) => updateCard(c.id, "nombre", e.target.value)} />
+                  <button className="icon-del" onClick={() => removeCard(c.id)}>×</button>
+                </div>
+                <div className="card-fields">
+                  <div><span className="field-label">Saldo €</span>
+                    <input type="number" inputMode="decimal" min="0" placeholder="0" value={c.saldo || ""}
+                      onChange={(e) => updateCard(c.id, "saldo", Number(e.target.value) || 0)} /></div>
+                  <div><span className="field-label">Límite €</span>
+                    <input type="number" inputMode="decimal" min="0" placeholder="opcional" value={c.limite || ""}
+                      onChange={(e) => updateCard(c.id, "limite", Number(e.target.value) || 0)} /></div>
+                  <div><span className="field-label">TAE %</span>
+                    <input type="number" inputMode="decimal" min="0" placeholder="0" value={c.apr || ""}
+                      onChange={(e) => updateCard(c.id, "apr", Number(e.target.value) || 0)} /></div>
+                  <div><span className="field-label">Mínimo €</span>
+                    <input type="number" inputMode="decimal" min="0" placeholder="0" value={c.minimo || ""}
+                      onChange={(e) => updateCard(c.id, "minimo", Number(e.target.value) || 0)} /></div>
+                </div>
+                {uso !== null && (
+                  <>
+                    <div className="util-bar-track"><div className={`util-bar-fill ${usoNivel}`} style={{ width: `${uso}%` }} /></div>
+                    <div className="util-label">Uso del límite: {Math.round(uso)}%</div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+          {cards.length === 0 && <div className="empty-state">Aún no has añadido tarjetas.</div>}
+          <button className="add-btn" onClick={addCard}>+ Añadir tarjeta</button>
+          <div className="mini-total"><span>Suma de pagos mínimos</span><b>€{fmt0(totalMinimos)}</b></div>
+        </div>
+
+        <div className="panel">
+          <h2>¿Qué % de lo que sobre quieres ahorrar?</h2>
+          <p className="hint">Se aplica sobre lo que queda tras pagos fijos y mínimos de tarjeta.</p>
+          <div className="slider-row">
+            <input type="range" min="0" max="100" value={savingsRate}
+              onChange={(e) => setSavingsRate(Number(e.target.value))} />
+            <div className="slider-val">{savingsRate}%</div>
+          </div>
+        </div>
+
+        <div className="panel">
+          <h2>Tu ahorro</h2>
+          <p className="hint">Cuánto tienes guardado y cuánto quieres llegar a tener.</p>
+          <div className="goal-grid">
+            <div className="goal-field">
+              <label>Ahorro actual €</label>
+              <input type="number" inputMode="decimal" min="0" placeholder="0" value={ahorroActual || ""}
+                onChange={(e) => setAhorroActual(Number(e.target.value) || 0)} />
+            </div>
+            <div className="goal-field">
+              <label>Meta de ahorro €</label>
+              <input type="number" inputMode="decimal" min="0" placeholder="0" value={metaAhorro || ""}
+                onChange={(e) => setMetaAhorro(Number(e.target.value) || 0)} />
+            </div>
+          </div>
+          {metaAhorro > 0 && (
+            <>
+              <div className="progress-track"><div className="progress-fill" style={{ width: `${metaProgreso}%` }} /></div>
+              <div className="goal-caption">
+                <span>€{fmt0(ahorroActual)} de €{fmt0(metaAhorro)}</span>
+                <span>{Math.round(metaProgreso)}%</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        <button className="calc-btn" onClick={calcular}>Calcular mi mes</button>
+
+        {resultado && resultado.insuficiente && (
+          <div className="warn-box">
+            <b>No te alcanza este mes.</b><br />
+            Con tus pagos fijos y los mínimos de tarjeta te faltan <b>€{fmt0(resultado.faltante)}</b>.
+          </div>
+        )}
+
+        {resultado && !resultado.insuficiente && (
+          <div className="result-card">
+            <div className="result-line"><span>Ingreso</span><span>€{fmt0(Number(ingreso) || 0)}</span></div>
+            <div className="result-line"><span>Pagos fijos</span><span>−€{fmt0(totalSubs)}</span></div>
+            {resultado.asignaciones.map((c) => (
+              <div className="result-line" key={c.id}>
+                <span className="name">{c.nombre || "Tarjeta"}{c.pagoExtra > 0 && <span className="badge">extra</span>}</span>
+                <span>−€{fmt0(c.pagoTotal)}</span>
+              </div>
+            ))}
+            {cards.length === 0 && <div className="result-line"><span>Sin tarjetas</span><span>—</span></div>}
+            <div className="result-line"><span>Ahorro sugerido</span><span>€{fmt10(resultado.ahorro)}</span></div>
+            <div className="result-total"><span>Total ingreso repartido</span><span>€{fmt0(Number(ingreso) || 0)}</span></div>
+          </div>
+        )}
+
+        {sugerencias.length > 0 && (
+          <div className="sugerencias">
+            <h2>Sugerencias para este mes</h2>
+            <ul>{sugerencias.map((s, i) => <li key={i}>{s}</li>)}</ul>
+          </div>
+        )}
+
+        {resultado && <button className="save-month-btn" onClick={guardarMes}>Guardar este mes en el historial</button>}
+        {savedFlash && <div className="flash">Mes guardado ✓</div>}
+
+        <div className="panel">
+          <h2>Historial mensual</h2>
+          <p className="hint">Cuánto de tu ingreso estuvo comprometido cada mes.</p>
+          {history.length === 0 && <div className="empty-state">Todavía no hay meses guardados.</div>}
+          {history.map((h) => (
+            <div className="history-row" key={h.month}>
+              <div className="history-top">
+                <span className="history-month">{monthLabel(h.month)}</span>
+                <span className={`status-pill ${h.status}`}>{h.status === "verde" ? "Correcto" : h.status === "amarillo" ? "Apretado" : "Peligroso"}</span>
+              </div>
+              <div className="hbar-track">
+                <div className={`hbar-fill util-bar-fill ${h.status}`} style={{ width: `${Math.min(h.ratio * 100, 100)}%` }} />
+              </div>
+              <div className="history-meta">
+                <span>Comprometido €{fmt0(h.comprometido)} de €{fmt0(h.ingreso)} · Ahorro €{fmt0(h.ahorro)}</span>
+                <button className="history-del" onClick={() => removeHistory(h.month)}>Eliminar</button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="save-note">
+          {storageError ? "No se pudo guardar en este dispositivo." : "Tus datos se guardan automáticamente en este dispositivo."}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<CuentasClaras />);
+</script>
+
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  min-height: 100vh;
+  background: #F2F2F7;
+  color: #1C1C1E;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.page { padding: 20px 14px 70px; padding-top: max(20px, env(safe-area-inset-top)); }
+.wrap { max-width: 760px; margin: 0 auto; }
+
+h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 2px; }
+.subtitle { color: #8E8E93; font-size: 13.5px; margin: 0 0 18px; }
+
+.top-actions { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 10px; flex-wrap: wrap; }
+.pill-btn { background: #E9E9EB; color: #1C1C1E; border: none; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.pill-btn:disabled { opacity: 0.4; cursor: default; }
+.pill-btn.danger { color: #FF3B30; }
+.pill-btn.confirm { background: #FF3B30; color: #fff; }
+
+.summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+@media (max-width: 600px) { .summary { grid-template-columns: 1fr 1fr; } }
+.sum-card { background: #fff; border-radius: 16px; padding: 14px 14px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.sum-label { font-size: 11.5px; color: #8E8E93; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 4px; }
+.sum-val { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
+.sum-val.red { color: #FF3B30; }
+.sum-val.green { color: #34C759; }
+.sum-val.blue { color: #007AFF; }
+.status-pill { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 10px; }
+.status-pill.verde { background: #E3F8E9; color: #248A3D; }
+.status-pill.amarillo { background: #FFF3DE; color: #B25E00; }
+.status-pill.rojo { background: #FFE5E3; color: #D70015; }
+
+.panel { background: #fff; border-radius: 16px; padding: 16px 16px 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.panel h2 { font-size: 16.5px; font-weight: 700; margin: 0 0 2px; }
+.panel .hint { color: #8E8E93; font-size: 12.5px; margin: 0 0 12px; }
+
+.sub-row { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #F0F0F2; flex-wrap: wrap; }
+.sub-row:last-of-type { border-bottom: none; }
+.sub-row input[type=text] { flex: 1 1 140px; min-width: 0; }
+.sub-row input[type=number] { width: 92px; }
+
+input[type=text], input[type=number] { background: #F7F7F9; border: 1px solid #E5E5EA; border-radius: 10px; color: #1C1C1E; font-size: 14px; padding: 9px 10px; font-family: inherit; }
+input[type=text]:focus, input[type=number]:focus { outline: none; border-color: #007AFF; background: #fff; }
+input::placeholder { color: #B8B8BD; }
+
+.icon-del { background: #F7F7F9; border: none; color: #8E8E93; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0; }
+.icon-del:hover { background: #FFE5E3; color: #FF3B30; }
+
+.add-btn { margin-top: 10px; width: 100%; background: #EAF3FF; color: #007AFF; border: none; border-radius: 10px; padding: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.add-btn:hover { background: #DCEBFF; }
+
+.mini-total { display: flex; justify-content: space-between; font-size: 13px; color: #8E8E93; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F0F0F2; }
+.mini-total b { color: #1C1C1E; font-weight: 700; }
+
+.card-entry { background: #FAFAFB; border: 1px solid #EFEFF1; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+.card-entry-top { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.card-entry-top input[type=text] { flex: 1; font-weight: 600; }
+.card-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 8px; }
+.field-label { font-size: 10.5px; color: #8E8E93; font-weight: 600; margin-bottom: 3px; display: block; }
+.card-fields input { width: 100%; }
+
+.util-bar-track { height: 6px; background: #EFEFF1; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+.util-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+.util-bar-fill.verde { background: #34C759; }
+.util-bar-fill.amarillo { background: #FF9500; }
+.util-bar-fill.rojo { background: #FF3B30; }
+.util-label { font-size: 11px; color: #8E8E93; margin-top: 4px; }
+
+.slider-row { display: flex; align-items: center; gap: 12px; }
+.slider-row input[type=range] { flex: 1; accent-color: #007AFF; }
+.slider-val { font-size: 17px; font-weight: 800; color: #007AFF; width: 46px; text-align: right; }
+
+.goal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+@media (max-width: 500px) { .goal-grid { grid-template-columns: 1fr; } }
+.goal-field label { font-size: 12px; color: #8E8E93; font-weight: 600; display: block; margin-bottom: 4px; }
+.goal-field input { width: 100%; }
+.progress-track { height: 10px; background: #EFEFF1; border-radius: 6px; overflow: hidden; margin-top: 4px; }
+.progress-fill { height: 100%; background: linear-gradient(90deg,#5AC8FA,#007AFF); border-radius: 6px; transition: width 0.4s; }
+.goal-caption { display: flex; justify-content: space-between; font-size: 12px; color: #8E8E93; margin-top: 6px; }
+
+.calc-btn { width: 100%; background: #007AFF; color: #fff; border: none; border-radius: 12px; padding: 14px; font-weight: 700; font-size: 15px; cursor: pointer; margin: 4px 0 12px; }
+.calc-btn:hover { background: #0066D6; }
+.save-month-btn { width: 100%; background: #1C1C1E; color: #fff; border: none; border-radius: 12px; padding: 12px; font-weight: 700; font-size: 14px; cursor: pointer; margin-bottom: 16px; }
+.flash { text-align: center; color: #34C759; font-size: 13px; font-weight: 600; margin: -8px 0 14px; }
+
+.sugerencias { background: #EAF3FF; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
+.sugerencias h2 { font-size: 14.5px; color: #007AFF; margin: 0 0 8px; }
+.sugerencias ul { margin: 0; padding-left: 18px; }
+.sugerencias li { font-size: 13.5px; line-height: 1.5; margin-bottom: 6px; }
+
+.result-card { background: #fff; border-radius: 16px; padding: 4px 16px 12px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.result-line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F0F0F2; font-size: 14px; }
+.result-line:last-child { border-bottom: none; }
+.result-line .name { font-weight: 600; }
+.result-line .badge { font-size: 10px; background: #FFF3DE; color: #B25E00; padding: 1px 7px; border-radius: 8px; margin-left: 6px; font-weight: 700; }
+.result-total { display: flex; justify-content: space-between; padding: 12px 0 4px; font-weight: 800; font-size: 15px; }
+
+.warn-box { background: #FFE5E3; border-radius: 14px; padding: 16px; font-size: 14px; line-height: 1.55; color: #C4241A; margin-bottom: 14px; }
+.warn-box b { color: #D70015; }
+
+.history-row { padding: 10px 0; border-bottom: 1px solid #F0F0F2; }
+.history-row:last-child { border-bottom: none; }
+.history-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.history-month { font-weight: 700; font-size: 13.5px; text-transform: capitalize; }
+.history-del { background: none; border: none; color: #C7C7CC; cursor: pointer; font-size: 14px; }
+.history-del:hover { color: #FF3B30; }
+.hbar-track { height: 10px; background: #EFEFF1; border-radius: 6px; overflow: hidden; }
+.hbar-fill { height: 100%; border-radius: 6px; }
+.history-meta { display: flex; justify-content: space-between; font-size: 11.5px; color: #8E8E93; margin-top: 4px; }
+
+.empty-state { text-align: center; color: #B8B8BD; font-size: 12.5px; padding: 10px 0; }
+.save-note { text-align: center; font-size: 11px; color: #B8B8BD; margin-top: 24px; }
+</style>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
