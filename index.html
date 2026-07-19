@@ -100,6 +100,16 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 
 .icon-del { background: var(--input-bg); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 .icon-del:hover { background: #FFE5E3; color: #FF3B30; }
+.icon-pencil { background: var(--input-bg); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 14px; line-height: 1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+.icon-pencil:hover { background: #EAF3FF; color: #007AFF; }
+.icon-pencil.done { background: #E3F8E9; color: #248A3D; font-size: 16px; font-weight: 800; }
+.confirm-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; flex-wrap: wrap; }
+.confirm-row span { font-size: 13px; color: var(--text-muted); flex: 1 1 140px; }
+.confirm-row-btns { display: flex; gap: 8px; flex-shrink: 0; }
+.card-collapsed-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.card-collapsed-name { font-weight: 700; font-size: 14.5px; }
+.card-collapsed-balance input { width: 100%; }
+.delete-link { background: none; border: none; color: #FF3B30; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 10px 0 0; font-family: inherit; }
 
 .add-btn { margin-top: 10px; width: 100%; background: #EAF3FF; color: #007AFF; border: none; border-radius: 10px; padding: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
 [data-theme="dark"] .add-btn { background: #0A2A4A; }
@@ -213,6 +223,11 @@ const I18N = {
     cardNombrePh: "Nombre (ej. Visa)", cardsEmpty: "Aún no has añadido tarjetas.",
     addCard: "+ Añadir tarjeta", totalMinimos: "Suma de pagos mínimos",
     saldoLbl: "Saldo", limiteLbl: "Límite", taeLbl: "TAE %", minimoLbl: "Mínimo",
+    debesAhoraLbl: "Debes ahora",
+    confirmDeleteSubMsg: (n) => '¿Eliminar "' + n + '"?',
+    confirmDeleteCardMsg: (n) => '¿Eliminar la tarjeta "' + n + '"?',
+    confirmDeleteHistoryMsg: (m) => "¿Eliminar " + m + "?",
+    deleteCardLink: "Eliminar tarjeta",
     limiteOpcionalPh: "opcional", usoLimite: "Uso del límite: ",
     ahorroPctTitle: "% de lo que sobre quieres ahorrar",
     tuAhorroTitle: "Tu ahorro", tuAhorroHint: "Cuánto tienes guardado y cuánto quieres llegar a tener.",
@@ -276,6 +291,11 @@ const I18N = {
     cardNombrePh: "Name (e.g. Visa)", cardsEmpty: "You haven't added any cards yet.",
     addCard: "+ Add card", totalMinimos: "Sum of minimum payments",
     saldoLbl: "Balance", limiteLbl: "Limit", taeLbl: "APR %", minimoLbl: "Minimum",
+    debesAhoraLbl: "You currently owe",
+    confirmDeleteSubMsg: (n) => 'Delete "' + n + '"?',
+    confirmDeleteCardMsg: (n) => 'Delete card "' + n + '"?',
+    confirmDeleteHistoryMsg: (m) => "Delete " + m + "?",
+    deleteCardLink: "Delete card",
     limiteOpcionalPh: "optional", usoLimite: "Limit usage: ",
     ahorroPctTitle: "% of what's left to save",
     tuAhorroTitle: "Your savings", tuAhorroHint: "How much you have saved and how much you want to reach.",
@@ -384,6 +404,8 @@ const state = {
   currency: settingsInit.currency || "usd",
   newProfileName: "",
   showOptions: false,
+  confirmDeleteSubId: null, confirmDeleteCardId: null, confirmDeleteHistoryKey: null,
+  expandedCardIds: {},
 
   ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", history: [],
   payFrequency: "mensual", ultimoPago: "", proximoPagoAjuste: "", quincena1Monto: "", quincena2Monto: "", semanaMonto: "",
@@ -429,6 +451,7 @@ function enterProfile(id) {
   state.quincena2Monto = d.quincena2Monto != null ? d.quincena2Monto : "";
   state.semanaMonto = d.semanaMonto != null ? d.semanaMonto : "";
   state.resultado = null; state.confirmReset = false; state.showOptions = false;
+  state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null;
   undoStack.length = 0;
   state.screen = "app";
   render();
@@ -467,18 +490,32 @@ function toggleOptions() { state.showOptions = !state.showOptions; render(); }
 
 /* ---------- acciones de datos ---------- */
 function addSub() { state.subs.push({ id: uid(), nombre: "", monto: "" }); scheduleSave(); rerenderPreservingFocus(); }
-function removeSub(id) { pushUndo(); state.subs = state.subs.filter((x) => x.id !== id); scheduleSave(); rerenderPreservingFocus(); }
-function addCard() { state.cards.push({ id: uid(), nombre: "", saldo: "", limite: "", apr: "", minimo: "" }); scheduleSave(); rerenderPreservingFocus(); }
-function removeCard(id) { pushUndo(); state.cards = state.cards.filter((x) => x.id !== id); scheduleSave(); rerenderPreservingFocus(); }
+function askDeleteSub(id) { state.confirmDeleteSubId = id; render(); }
+function cancelDeleteSub() { state.confirmDeleteSubId = null; render(); }
+function removeSub(id) { pushUndo(); state.subs = state.subs.filter((x) => x.id !== id); state.confirmDeleteSubId = null; scheduleSave(); rerenderPreservingFocus(); }
+
+function addCard() {
+  const c = { id: uid(), nombre: "", saldo: "", limite: "", apr: "", minimo: "" };
+  state.cards.push(c);
+  state.expandedCardIds[c.id] = true;
+  scheduleSave(); rerenderPreservingFocus();
+}
+function toggleCardExpand(id) { state.expandedCardIds[id] = !state.expandedCardIds[id]; render(); }
+function askDeleteCard(id) { state.confirmDeleteCardId = id; render(); }
+function cancelDeleteCard() { state.confirmDeleteCardId = null; render(); }
+function removeCard(id) { pushUndo(); state.cards = state.cards.filter((x) => x.id !== id); delete state.expandedCardIds[id]; state.confirmDeleteCardId = null; scheduleSave(); rerenderPreservingFocus(); }
 
 function resetAll() {
   pushUndo();
   state.ingreso = ""; state.subs = []; state.cards = []; state.savingsRate = 20;
   state.ahorroActual = ""; state.metaAhorro = ""; state.resultado = null; state.confirmReset = false;
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.quincena1Monto = ""; state.quincena2Monto = ""; state.semanaMonto = "";
+  state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null;
   scheduleSave(); rerenderPreservingFocus();
 }
-function removeHistory(key) { pushUndo(); state.history = state.history.filter((x) => x.month !== key); scheduleSave(); rerenderPreservingFocus(); }
+function askDeleteHistory(key) { state.confirmDeleteHistoryKey = key; render(); }
+function cancelDeleteHistory() { state.confirmDeleteHistoryKey = null; render(); }
+function removeHistory(key) { pushUndo(); state.history = state.history.filter((x) => x.month !== key); state.confirmDeleteHistoryKey = null; scheduleSave(); rerenderPreservingFocus(); }
 
 /* ---------- ingreso según frecuencia de pago ---------- */
 function parseISODate(s) { if (!s) return null; const d = new Date(s + "T00:00:00"); return isNaN(d) ? null : d; }
@@ -733,10 +770,14 @@ function renderApp() {
 
   html += '<div class="panel"><h2>' + t("subsTitle") + '</h2><p class="hint">' + t("subsHint") + '</p>';
   state.subs.forEach((s) => {
-    html += '<div class="sub-row">';
-    html += '<input type="text" placeholder="' + t("subNombrePh") + '" id="sub-nombre-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="nombre" value="' + esc(s.nombre) + '">';
-    html += '<input type="text" inputmode="decimal" placeholder="' + sym() + '" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '">';
-    html += '<button class="icon-del" data-action="removeSub" data-id="' + s.id + '">×</button></div>';
+    if (state.confirmDeleteSubId === s.id) {
+      html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteSubMsg")(s.nombre || t("subNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeSub" data-id="' + s.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteSub">' + t("cancel") + '</button></div></div>';
+    } else {
+      html += '<div class="sub-row">';
+      html += '<input type="text" placeholder="' + t("subNombrePh") + '" id="sub-nombre-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="nombre" value="' + esc(s.nombre) + '">';
+      html += '<input type="text" inputmode="decimal" placeholder="' + sym() + '" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '">';
+      html += '<button class="icon-pencil" data-action="askDeleteSub" data-id="' + s.id + '">✎</button></div>';
+    }
   });
   if (state.subs.length === 0) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
   html += '<button class="add-btn" data-action="addSub">' + t("addSub") + '</button>';
@@ -748,20 +789,38 @@ function renderApp() {
     const saldo = toNum(c.saldo);
     const uso = lim > 0 ? Math.min((saldo / lim) * 100, 100) : null;
     const usoNivel = uso === null ? "" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
-    html += '<div class="card-entry">';
-    html += '<div class="card-entry-top"><input type="text" placeholder="' + t("cardNombrePh") + '" id="card-nombre-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="nombre" value="' + esc(c.nombre) + '">';
-    html += '<button class="icon-del" data-action="removeCard" data-id="' + c.id + '">×</button></div>';
-    html += '<div class="card-fields">';
-    html += '<div><span class="field-label">' + t("saldoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + esc(c.saldo) + '"></div>';
-    html += '<div><span class="field-label">' + t("limiteLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="card-limite-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="limite" value="' + esc(c.limite) + '"></div>';
-    html += '<div><span class="field-label">' + t("taeLbl") + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-apr-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="apr" value="' + esc(c.apr) + '"></div>';
-    html += '<div><span class="field-label">' + t("minimoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-minimo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="minimo" value="' + esc(c.minimo) + '"></div>';
-    html += '</div>';
-    if (uso !== null) {
-      html += '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div></div>';
-      html += '<div class="util-label">' + t("usoLimite") + Math.round(uso) + '%</div>';
+
+    if (state.confirmDeleteCardId === c.id) {
+      html += '<div class="card-entry"><div class="confirm-row"><span>' + esc(t("confirmDeleteCardMsg")(c.nombre || t("cardNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeCard" data-id="' + c.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteCard">' + t("cancel") + '</button></div></div></div>';
+      return;
     }
-    html += '</div>';
+
+    if (state.expandedCardIds[c.id]) {
+      html += '<div class="card-entry">';
+      html += '<div class="card-entry-top"><input type="text" placeholder="' + t("cardNombrePh") + '" id="card-nombre-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="nombre" value="' + esc(c.nombre) + '">';
+      html += '<button class="icon-pencil done" data-action="toggleCardExpand" data-id="' + c.id + '">✓</button></div>';
+      html += '<div class="card-fields">';
+      html += '<div><span class="field-label">' + t("saldoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + esc(c.saldo) + '"></div>';
+      html += '<div><span class="field-label">' + t("limiteLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="card-limite-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="limite" value="' + esc(c.limite) + '"></div>';
+      html += '<div><span class="field-label">' + t("taeLbl") + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-apr-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="apr" value="' + esc(c.apr) + '"></div>';
+      html += '<div><span class="field-label">' + t("minimoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-minimo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="minimo" value="' + esc(c.minimo) + '"></div>';
+      html += '</div>';
+      if (uso !== null) {
+        html += '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div></div>';
+        html += '<div class="util-label">' + t("usoLimite") + Math.round(uso) + '%</div>';
+      }
+      html += '<button class="delete-link" data-action="askDeleteCard" data-id="' + c.id + '">' + t("deleteCardLink") + '</button>';
+      html += '</div>';
+    } else {
+      html += '<div class="card-entry">';
+      html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(c.nombre || t("cardNombrePh")) + '</span><button class="icon-pencil" data-action="toggleCardExpand" data-id="' + c.id + '">✎</button></div>';
+      html += '<div class="card-collapsed-balance"><span class="field-label">' + t("debesAhoraLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + esc(c.saldo) + '" style="font-size:19px;font-weight:800;"></div>';
+      if (uso !== null) {
+        html += '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div></div>';
+        html += '<div class="util-label">' + t("usoLimite") + Math.round(uso) + '%</div>';
+      }
+      html += '</div>';
+    }
   });
   if (state.cards.length === 0) html += '<div class="empty-state">' + t("cardsEmpty") + '</div>';
   html += '<button class="add-btn" data-action="addCard">' + t("addCard") + '</button>';
@@ -813,7 +872,11 @@ function renderApp() {
     const metaLine = t("comprometidoDe").split("{s}").join(sym()).split("{a}").join(fmt0(h.comprometido)).split("{b}").join(fmt0(h.ingreso)).split("{c}").join(fmt0(h.ahorro));
     html += '<div class="history-row"><div class="history-top"><span class="history-month">' + esc(monthLabel(h.month)) + '</span><span class="status-pill ' + h.status + '">' + label + '</span></div>';
     html += '<div class="hbar-track"><div class="hbar-fill util-bar-fill ' + h.status + '" style="width:' + Math.min(h.ratio * 100, 100) + '%"></div></div>';
-    html += '<div class="history-meta"><span>' + esc(metaLine) + '</span><button class="history-del" data-action="removeHistory" data-id="' + h.month + '">' + t("eliminar") + '</button></div></div>';
+    if (state.confirmDeleteHistoryKey === h.month) {
+      html += '<div class="history-meta"><span>' + esc(t("confirmDeleteHistoryMsg")(monthLabel(h.month))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeHistory" data-id="' + h.month + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteHistory">' + t("cancel") + '</button></div></div></div>';
+    } else {
+      html += '<div class="history-meta"><span>' + esc(metaLine) + '</span><button class="history-del" data-action="askDeleteHistory" data-id="' + h.month + '">' + t("eliminar") + '</button></div></div>';
+    }
   });
   html += '</div>';
 
@@ -896,9 +959,10 @@ root.addEventListener("click", (e) => {
     confirmReset: () => { state.confirmReset = true; render(); },
     cancelReset: () => { state.confirmReset = false; render(); },
     resetAll: resetAll,
-    addSub: addSub, removeSub: () => removeSub(id),
-    addCard: addCard, removeCard: () => removeCard(id),
-    calcular: calcular, guardarMes: guardarMes, removeHistory: () => removeHistory(id),
+    addSub: addSub, removeSub: () => removeSub(id), askDeleteSub: () => askDeleteSub(id), cancelDeleteSub: cancelDeleteSub,
+    addCard: addCard, removeCard: () => removeCard(id), askDeleteCard: () => askDeleteCard(id), cancelDeleteCard: cancelDeleteCard,
+    toggleCardExpand: () => toggleCardExpand(id),
+    calcular: calcular, guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
     switchUser: switchUser,
     toggleTheme: toggleTheme, toggleLang: toggleLang, toggleCurrency: toggleCurrency,
     setLangEs: () => { if (state.lang !== "es") toggleLang(); },
