@@ -194,6 +194,8 @@ const I18N = {
     switchUser: "Cambiar de usuario",
     payMensual: "Mensual", payQuincenal: "Quincenal", paySemanal: "Semanal",
     ultimoPagoLbl: "Fecha de tu último pago",
+    ajustePagoLbl: "¿Este pago cae distinto por feriado? Ajusta la fecha (opcional)",
+    ajustePagoHint: "Ej. si normalmente cobras viernes pero este ciclo es jueves por feriado.",
     update: "Actualizar app", undo: "Deshacer", resetAll: "Restablecer todo",
     confirmResetMsg: "¿Borrar todos los datos de este usuario?", yesDelete: "Sí, borrar", cancel: "Cancelar",
     debesTotal: "Debes en total", disponibleMes: "Disponible este mes", ahorradoActual: "Ahorrado actual",
@@ -255,6 +257,8 @@ const I18N = {
     switchUser: "Switch user",
     payMensual: "Monthly", payQuincenal: "Biweekly", paySemanal: "Weekly",
     ultimoPagoLbl: "Date of your last payday",
+    ajustePagoLbl: "Is this pay date shifting due to a holiday? Adjust it (optional)",
+    ajustePagoHint: "E.g. you usually get paid Friday but this cycle it's Thursday due to a holiday.",
     update: "Update app", undo: "Undo", resetAll: "Reset everything",
     confirmResetMsg: "Delete all data for this user?", yesDelete: "Yes, delete", cancel: "Cancel",
     debesTotal: "Total debt", disponibleMes: "Available this month", ahorradoActual: "Current savings",
@@ -361,7 +365,7 @@ function saveUserDataNow() {
     localStorage.setItem(dataKeyV3(state.activeProfileId), JSON.stringify({
       ingreso: state.ingreso, subs: state.subs, cards: state.cards,
       savingsRate: state.savingsRate, ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, history: state.history,
-      payFrequency: state.payFrequency, ultimoPago: state.ultimoPago,
+      payFrequency: state.payFrequency, ultimoPago: state.ultimoPago, proximoPagoAjuste: state.proximoPagoAjuste,
       quincena1Monto: state.quincena1Monto, quincena2Monto: state.quincena2Monto, semanaMonto: state.semanaMonto,
     }));
     state.storageError = false;
@@ -382,7 +386,7 @@ const state = {
   showOptions: false,
 
   ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", history: [],
-  payFrequency: "mensual", ultimoPago: "", quincena1Monto: "", quincena2Monto: "", semanaMonto: "",
+  payFrequency: "mensual", ultimoPago: "", proximoPagoAjuste: "", quincena1Monto: "", quincena2Monto: "", semanaMonto: "",
   resultado: null, confirmReset: false, savedFlash: false, storageError: false,
 };
 LANG = state.lang;
@@ -396,7 +400,7 @@ function pushUndo() {
   undoStack.push(JSON.parse(JSON.stringify({
     subs: state.subs, cards: state.cards, ingreso: state.ingreso, savingsRate: state.savingsRate,
     ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, history: state.history,
-    payFrequency: state.payFrequency, ultimoPago: state.ultimoPago,
+    payFrequency: state.payFrequency, ultimoPago: state.ultimoPago, proximoPagoAjuste: state.proximoPagoAjuste,
     quincena1Monto: state.quincena1Monto, quincena2Monto: state.quincena2Monto, semanaMonto: state.semanaMonto,
   })));
   if (undoStack.length > 15) undoStack.shift();
@@ -420,6 +424,7 @@ function enterProfile(id) {
   state.history = d.history || [];
   state.payFrequency = d.payFrequency || "mensual";
   state.ultimoPago = d.ultimoPago || "";
+  state.proximoPagoAjuste = d.proximoPagoAjuste || "";
   state.quincena1Monto = d.quincena1Monto != null ? d.quincena1Monto : "";
   state.quincena2Monto = d.quincena2Monto != null ? d.quincena2Monto : "";
   state.semanaMonto = d.semanaMonto != null ? d.semanaMonto : "";
@@ -470,7 +475,7 @@ function resetAll() {
   pushUndo();
   state.ingreso = ""; state.subs = []; state.cards = []; state.savingsRate = 20;
   state.ahorroActual = ""; state.metaAhorro = ""; state.resultado = null; state.confirmReset = false;
-  state.payFrequency = "mensual"; state.ultimoPago = ""; state.quincena1Monto = ""; state.quincena2Monto = ""; state.semanaMonto = "";
+  state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.quincena1Monto = ""; state.quincena2Monto = ""; state.semanaMonto = "";
   scheduleSave(); rerenderPreservingFocus();
 }
 function removeHistory(key) { pushUndo(); state.history = state.history.filter((x) => x.month !== key); scheduleSave(); rerenderPreservingFocus(); }
@@ -496,9 +501,13 @@ function ingresoActivo() {
   return toNum(state.ingreso);
 }
 function nextPayInfo() {
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const ajuste = parseISODate(state.proximoPagoAjuste);
+  if (ajuste && ajuste >= now) {
+    return { date: ajuste, diffDays: Math.round((ajuste - now) / 86400000), ajustado: true };
+  }
   const last = parseISODate(state.ultimoPago);
   if (!last) return null;
-  const now = new Date(); now.setHours(0, 0, 0, 0);
   let next = new Date(last);
   if (state.payFrequency === "mensual") {
     while (next < now) next.setMonth(next.getMonth() + 1);
@@ -666,6 +675,7 @@ function renderOptionsSheet() {
   h += '<button style="flex:1;" class="' + (state.payFrequency === "semanal" ? "active" : "") + '" data-action="setPaySemanal">' + t("paySemanal") + '</button>';
   h += '</div>';
   h += '<div class="pay-config"><label>' + t("ultimoPagoLbl") + '</label><input type="date" id="ultimo-pago" data-scope="ultimoPago" value="' + esc(state.ultimoPago) + '"></div>';
+  h += '<div class="pay-config"><label>' + t("ajustePagoLbl") + '</label><input type="date" id="ajuste-pago" data-scope="proximoPagoAjuste" value="' + esc(state.proximoPagoAjuste) + '"><p class="opt-row-sub" style="margin-top:4px;">' + t("ajustePagoHint") + '</p></div>';
   h += '</div>';
 
   h += '<div class="opt-section"><p class="opt-section-title">' + t("secAhorroPct") + '</p>';
@@ -702,7 +712,7 @@ function renderApp() {
   html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
   html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
   html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></div>';
-  if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + '</div></div>';
+  if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + (np.ajustado ? " ✎" : "") + '</div></div>';
   html += '</div>';
 
   html += '<div class="panel"><h2>' + t("ingresoTitle") + '</h2><p class="hint">' + (state.payFrequency === "mensual" ? t("ingresoMensualHint") : t("ingresoHint")) + '</p>';
@@ -856,6 +866,7 @@ root.addEventListener("input", (e) => {
   if (scope === "quincena2Monto") { state.quincena2Monto = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "semanaMonto") { state.semanaMonto = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "ultimoPago") { state.ultimoPago = el.value; scheduleSave(); render(); return; }
+  if (scope === "proximoPagoAjuste") { state.proximoPagoAjuste = el.value; scheduleSave(); render(); return; }
   if (scope === "sub") {
     const item = state.subs.find((x) => x.id === el.dataset.id);
     if (!item) return;
