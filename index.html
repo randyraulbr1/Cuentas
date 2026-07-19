@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Cuentas Claras</title>
-<meta name="description" content="Controla tu ingreso mensual, pagos fijos, tarjetas y ahorro." />
+<meta name="description" content="Controla tu ingreso, pagos fijos, tarjetas y ahorro." />
 <meta name="theme-color" content="#007AFF" />
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -17,61 +17,60 @@
 html, body { margin:0; padding:0; }
 
 :root {
-  --bg: #F2F2F7;
-  --card-bg: #FFFFFF;
-  --card-bg-2: #FAFAFB;
-  --text: #1C1C1E;
-  --text-muted: #8E8E93;
-  --border: #F0F0F2;
-  --input-bg: #F7F7F9;
-  --input-border: #E5E5EA;
-  --shadow: 0 1px 3px rgba(0,0,0,0.06);
-  --pill-bg: #E9E9EB;
+  --bg: #F2F2F7; --card-bg: #FFFFFF; --card-bg-2: #FAFAFB; --text: #1C1C1E; --text-muted: #8E8E93;
+  --border: #F0F0F2; --input-bg: #F7F7F9; --input-border: #E5E5EA; --shadow: 0 1px 3px rgba(0,0,0,0.06); --pill-bg: #E9E9EB;
 }
 [data-theme="dark"] {
-  --bg: #000000;
-  --card-bg: #1C1C1E;
-  --card-bg-2: #232326;
-  --text: #F2F2F7;
-  --text-muted: #98989D;
-  --border: #2C2C2E;
-  --input-bg: #2C2C2E;
-  --input-border: #3A3A3C;
-  --shadow: 0 1px 3px rgba(0,0,0,0.5);
-  --pill-bg: #2C2C2E;
+  --bg: #000000; --card-bg: #1C1C1E; --card-bg-2: #232326; --text: #F2F2F7; --text-muted: #98989D;
+  --border: #2C2C2E; --input-bg: #2C2C2E; --input-border: #3A3A3C; --shadow: 0 1px 3px rgba(0,0,0,0.5); --pill-bg: #2C2C2E;
 }
 
-body {
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  transition: background 0.2s, color 0.2s;
-}
+body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; transition: background 0.2s, color 0.2s; }
 .page { padding: 20px 14px 70px; padding-top: max(20px, env(safe-area-inset-top)); }
-.wrap { max-width: 760px; margin: 0 auto; }
+.wrap { max-width: 760px; margin: 0 auto; position: relative; }
 
-h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 2px; }
-.subtitle { color: var(--text-muted); font-size: 13.5px; margin: 0 0 18px; }
+h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 2px; padding-right: 50px; }
+.subtitle { color: var(--text-muted); font-size: 13.5px; margin: 0 0 4px; }
+.profile-line { color: var(--text-muted); font-size: 12.5px; margin: 0 0 18px; font-weight: 600; }
+
+/* --- boton flotante de opciones --- */
+.options-fab { position: fixed; top: max(18px, env(safe-area-inset-top)); right: 16px; width: 42px; height: 42px; border-radius: 50%; background: var(--card-bg); box-shadow: var(--shadow); border: none; font-size: 19px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 40; }
+.options-fab .dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; border-radius: 50%; background: #FF3B30; border: 2px solid var(--card-bg); }
+
+.options-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
+.options-sheet { background: var(--card-bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 18px 18px calc(24px + env(safe-area-inset-bottom)); max-height: 88vh; overflow-y: auto; }
+.options-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.options-head h2 { font-size: 19px; font-weight: 800; margin: 0; }
+.options-close { background: var(--pill-bg); border: none; color: var(--text); width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; }
+.opt-section { margin-bottom: 18px; }
+.opt-section-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 0 0 8px; }
+.opt-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+.opt-row:last-child { border-bottom: none; }
+.opt-row-label { font-size: 14px; font-weight: 600; }
+.opt-row-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+.seg { display: flex; background: var(--input-bg); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { border: none; background: transparent; color: var(--text-muted); font-size: 12.5px; font-weight: 600; padding: 7px 10px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+.seg button.active { background: #007AFF; color: #fff; }
+select { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 13.5px; padding: 8px 10px; font-family: inherit; }
+.pay-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.pay-config-grid label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
+.pay-config-grid input, .pay-config-grid select { width: 100%; }
 
 .top-actions { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 10px; flex-wrap: wrap; }
 .pill-btn { background: var(--pill-bg); color: var(--text); border: none; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .pill-btn:disabled { opacity: 0.4; cursor: default; }
 .pill-btn.danger { color: #FF3B30; }
 .pill-btn.confirm { background: #FF3B30; color: #fff; }
-.pill-btn.update { background: #EAF3FF; color: #007AFF; }
+.pill-btn.update { background: #EAF3FF; color: #007AFF; position: relative; }
 [data-theme="dark"] .pill-btn.update { background: #0A2A4A; }
-.pill-btn.user { background: #EAF3FF; color: #007AFF; font-weight: 700; }
-[data-theme="dark"] .pill-btn.user { background: #0A2A4A; }
+.pill-btn.update .dot { position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: #FF3B30; border: 2px solid var(--card-bg); }
+.pill-btn.wide { width: 100%; justify-content: center; display: flex; }
 
-.summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
-@media (max-width: 600px) { .summary { grid-template-columns: 1fr 1fr; } }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 10px; margin-bottom: 14px; }
 .sum-card { background: var(--card-bg); border-radius: 16px; padding: 14px 14px 12px; box-shadow: var(--shadow); }
 .sum-label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 4px; }
 .sum-val { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
-.sum-val.red { color: #FF3B30; }
-.sum-val.green { color: #34C759; }
-.sum-val.blue { color: #007AFF; }
+.sum-val.red { color: #FF3B30; } .sum-val.green { color: #34C759; } .sum-val.blue { color: #007AFF; }
 .status-pill { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 10px; }
 .status-pill.verde { background: #E3F8E9; color: #248A3D; }
 .status-pill.amarillo { background: #FFF3DE; color: #B25E00; }
@@ -87,10 +86,10 @@ h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 2
 .sub-row { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .sub-row:last-of-type { border-bottom: none; }
 .sub-row input[type=text] { flex: 1 1 140px; min-width: 0; }
-.sub-row input[type=number] { width: 92px; }
+.sub-row input.money { width: 92px; }
 
-input[type=text], input[type=number] { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 14px; padding: 9px 10px; font-family: inherit; }
-input[type=text]:focus, input[type=number]:focus { outline: none; border-color: #007AFF; }
+input[type=text] { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 14px; padding: 9px 10px; font-family: inherit; }
+input[type=text]:focus { outline: none; border-color: #007AFF; }
 input::placeholder { color: var(--text-muted); opacity: 0.7; }
 
 .icon-del { background: var(--input-bg); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0; }
@@ -111,9 +110,7 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 
 .util-bar-track { height: 6px; background: var(--border); border-radius: 4px; margin-top: 10px; overflow: hidden; }
 .util-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
-.util-bar-fill.verde { background: #34C759; }
-.util-bar-fill.amarillo { background: #FF9500; }
-.util-bar-fill.rojo { background: #FF3B30; }
+.util-bar-fill.verde { background: #34C759; } .util-bar-fill.amarillo { background: #FF9500; } .util-bar-fill.rojo { background: #FF3B30; }
 .util-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
 .slider-row { display: flex; align-items: center; gap: 12px; }
@@ -164,7 +161,6 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .empty-state { text-align: center; color: var(--text-muted); font-size: 12.5px; padding: 10px 0; }
 .save-note { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 24px; }
 
-/* --- selector de perfiles --- */
 .selector-wrap { max-width: 420px; margin: 0 auto; padding-top: 12vh; }
 .selector-logo { width: 56px; height: 56px; border-radius: 16px; background: #007AFF; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800; margin: 0 auto 14px; }
 .selector-title { text-align: center; font-size: 22px; font-weight: 800; margin: 0 0 4px; }
@@ -186,61 +182,53 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 "use strict";
 
 /* ---------- traducciones ---------- */
+const WEEKDAYS = {
+  es: ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"],
+  en: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+};
+
 const I18N = {
   es: {
     brand: "Cuentas Claras",
     subtitle: "Ingreso, pagos fijos, tarjetas y ahorro — todo en un solo lugar.",
-    update: "⟳ Actualizar app",
-    undo: "↶ Deshacer",
-    resetAll: "Restablecer todo",
-    confirmResetMsg: "¿Borrar todos los datos de este usuario?",
-    yesDelete: "Sí, borrar",
-    cancel: "Cancelar",
-    switchUser: "👤 Cambiar usuario",
-    debesTotal: "Debes en total",
-    disponibleMes: "Disponible este mes",
-    ahorradoActual: "Ahorrado actual",
-    statusVerde: "Correcto",
-    statusAmarillo: "Apretado",
-    statusRojo: "Peligroso",
-    ingresoTitle: "Ingreso de este mes",
-    ingresoHint: "Lo que ganas en total este mes.",
-    subsTitle: "Suscripciones y pagos fijos",
-    subsHint: "Renta, luz, streaming, cuotas…",
-    subNombrePh: "Nombre (ej. Alquiler)",
-    subsEmpty: "Aún no has añadido pagos fijos.",
-    addSub: "+ Añadir pago",
-    totalPagosFijos: "Total pagos fijos",
-    cardsTitle: "Tarjetas de crédito",
-    cardsHint: "Saldo, límite (opcional), interés anual y pago mínimo.",
-    cardNombrePh: "Nombre (ej. Visa)",
-    cardsEmpty: "Aún no has añadido tarjetas.",
-    addCard: "+ Añadir tarjeta",
-    totalMinimos: "Suma de pagos mínimos",
+    helloProfile: (n) => "Hola, " + n,
+    optionsTitle: "Opciones", close: "Cerrar",
+    secPerfil: "Perfil", secIdioma: "Idioma", secMoneda: "Moneda", secTema: "Tema", secPago: "Frecuencia de pago", secDatos: "Datos",
+    switchUser: "Cambiar de usuario",
+    payMensual: "Mensual", payQuincenal: "Quincenal", paySemanal: "Semanal",
+    payDayMonthlyLbl: "Día de pago (1-31)",
+    quincena1DiaLbl: "Día quincena 1", quincena2DiaLbl: "Día quincena 2",
+    semanaDiaLbl: "Día de la semana",
+    update: "Actualizar app", undo: "Deshacer", resetAll: "Restablecer todo",
+    confirmResetMsg: "¿Borrar todos los datos de este usuario?", yesDelete: "Sí, borrar", cancel: "Cancelar",
+    debesTotal: "Debes en total", disponibleMes: "Disponible este mes", ahorradoActual: "Ahorrado actual",
+    proximoPago: "Próximo pago",
+    statusVerde: "Correcto", statusAmarillo: "Apretado", statusRojo: "Peligroso",
+    ingresoTitle: "Ingreso", ingresoHint: "Lo que ganas, según cómo te pagan.",
+    ingresoMensualHint: "Lo que ganas en total este mes.",
+    ingresoSemanalLbl: "Monto por semana", ingresoQuincena1Lbl: "Quincena 1", ingresoQuincena2Lbl: "Quincena 2",
+    totalCalculado: "Total del mes (calculado)",
+    vecesEsteMes: (n) => n + (n === 1 ? " pago este mes" : " pagos este mes"),
+    subsTitle: "Suscripciones y pagos fijos", subsHint: "Renta, luz, streaming, cuotas…",
+    subNombrePh: "Nombre (ej. Alquiler)", subsEmpty: "Aún no has añadido pagos fijos.",
+    addSub: "+ Añadir pago", totalPagosFijos: "Total pagos fijos",
+    cardsTitle: "Tarjetas de crédito", cardsHint: "Saldo, límite (opcional), interés anual y pago mínimo.",
+    cardNombrePh: "Nombre (ej. Visa)", cardsEmpty: "Aún no has añadido tarjetas.",
+    addCard: "+ Añadir tarjeta", totalMinimos: "Suma de pagos mínimos",
     saldoLbl: "Saldo", limiteLbl: "Límite", taeLbl: "TAE %", minimoLbl: "Mínimo",
-    limiteOpcionalPh: "opcional",
-    usoLimite: "Uso del límite: ",
+    limiteOpcionalPh: "opcional", usoLimite: "Uso del límite: ",
     ahorroPctTitle: "¿Qué % de lo que sobre quieres ahorrar?",
     ahorroPctHint: "Se aplica sobre lo que queda tras pagos fijos y mínimos de tarjeta.",
-    tuAhorroTitle: "Tu ahorro",
-    tuAhorroHint: "Cuánto tienes guardado y cuánto quieres llegar a tener.",
-    ahorroActualLbl: "Ahorro actual",
-    metaAhorroLbl: "Meta de ahorro",
+    tuAhorroTitle: "Tu ahorro", tuAhorroHint: "Cuánto tienes guardado y cuánto quieres llegar a tener.",
+    ahorroActualLbl: "Ahorro actual", metaAhorroLbl: "Meta de ahorro",
     calcBtn: "Calcular mi mes",
-    noAlcanza: "No te alcanza este mes.",
-    faltan: "Con tus pagos fijos y los mínimos de tarjeta te faltan",
-    ingresoLbl: "Ingreso",
-    pagosFijosLbl: "Pagos fijos",
-    sinTarjetas: "Sin tarjetas",
-    ahorroSugerido: "Ahorro sugerido",
-    totalRepartido: "Total ingreso repartido",
-    extraBadge: "extra",
-    tarjetaFallback: "Tarjeta",
+    noAlcanza: "No te alcanza este mes.", faltan: "Con tus pagos fijos y los mínimos de tarjeta te faltan",
+    ingresoLbl: "Ingreso", pagosFijosLbl: "Pagos fijos", sinTarjetas: "Sin tarjetas",
+    ahorroSugerido: "Ahorro sugerido", totalRepartido: "Total ingreso repartido",
+    extraBadge: "extra", tarjetaFallback: "tu tarjeta",
     sugerenciasTitle: "Sugerencias para este mes",
-    guardarMes: "Guardar este mes en el historial",
-    mesGuardado: "Mes guardado ✓",
-    historialTitle: "Historial mensual",
-    historialHint: "Cuánto de tu ingreso estuvo comprometido cada mes.",
+    guardarMes: "Guardar este mes en el historial", mesGuardado: "Mes guardado ✓",
+    historialTitle: "Historial mensual", historialHint: "Cuánto de tu ingreso estuvo comprometido cada mes.",
     historialEmpty: "Todavía no hay meses guardados.",
     comprometidoDe: "Comprometido {s}{a} de {s}{b} · Ahorro {s}{c}",
     eliminar: "Eliminar",
@@ -248,74 +236,63 @@ const I18N = {
     saveNoteErr: "No se pudo guardar en este dispositivo.",
     selectorTitle: "Cuentas Claras",
     selectorHint: "Elige tu perfil o crea uno nuevo. Cada usuario guarda sus datos por separado en este dispositivo.",
-    newProfilePh: "Nombre del nuevo usuario",
-    enter: "Entrar",
-    noProfiles: "Aún no hay usuarios en este dispositivo.",
+    newProfilePh: "Nombre del nuevo usuario", enter: "Entrar", noProfiles: "Aún no hay usuarios en este dispositivo.",
+    hoy: "Hoy", manana: "Mañana",
+    enDias: (n) => "En " + n + " días",
     faltanTuFalta: (n) => "Te faltan " + sym() + n + ".",
     usaAhorro: (n) => "Es un momento razonable para usar parte de tu ahorro (tienes " + sym() + n + ") y cubrir el faltante sin dejar de pagar tus tarjetas.",
     sinAhorroRecorta: "Antes de que la deuda crezca, revisa si puedes recortar algún pago fijo este mes.",
-    pagaPrimero: (n, apr, pago) => 'Paga primero "' + n + '": tiene la tasa más alta (' + apr + '%). Destínale ' + sym() + pago + " este mes.",
+    pagaPrimeroExtra: (n, apr, pago) => 'Destina ' + sym() + pago + ' a "' + n + '" (tasa más alta, ' + apr + '%). Es para mantener el equilibrio: no hace falta pagarla completa, solo lo necesario para seguir un buen ritmo.',
+    pagaPrimeroSinExtra: (n, apr) => 'Mantén al día el mínimo de "' + n + '" (tasa más alta, ' + apr + '%). Este mes no te sobra para adelantar más, y no pasa nada.',
     vaBien: "Este mes va bien. No necesitas tocar tu ahorro; es buen momento para seguir sumando a él.",
     vasAjustado: "Vas ajustado este mes. Evita retirar ahorro salvo necesidad real; mantén los mínimos al día.",
     mesApretado: "Mes apretado: casi todo tu ingreso está comprometido. No es momento de gastos extra ni de nuevas deudas.",
     metaCumplida: (n) => "Ya cumpliste tu meta de ahorro de " + sym() + n + ".",
     ritmoMeta: (ahorro, meta, meses) => "A " + sym() + ahorro + " por mes, llegas a tu meta de " + sym() + meta + " en " + meses + (meses === 1 ? " mes." : " meses."),
     sinAhorroMeta: "No estás generando ahorro hacia tu meta este mes; revisa tus pagos fijos o mínimos de tarjeta.",
+    proximoPagoSug: (n) => "Te faltan " + n + " días para tu próximo pago. Reparte tus pagos con calma, no hace falta adelantar todo hoy.",
   },
   en: {
     brand: "Cuentas Claras",
     subtitle: "Income, fixed bills, cards and savings — all in one place.",
-    update: "⟳ Update app",
-    undo: "↶ Undo",
-    resetAll: "Reset everything",
-    confirmResetMsg: "Delete all data for this user?",
-    yesDelete: "Yes, delete",
-    cancel: "Cancel",
-    switchUser: "👤 Switch user",
-    debesTotal: "Total debt",
-    disponibleMes: "Available this month",
-    ahorradoActual: "Current savings",
-    statusVerde: "On track",
-    statusAmarillo: "Tight",
-    statusRojo: "Risky",
-    ingresoTitle: "This month's income",
-    ingresoHint: "What you earn in total this month.",
-    subsTitle: "Subscriptions & fixed bills",
-    subsHint: "Rent, utilities, streaming, installments…",
-    subNombrePh: "Name (e.g. Rent)",
-    subsEmpty: "You haven't added any fixed bills yet.",
-    addSub: "+ Add bill",
-    totalPagosFijos: "Total fixed bills",
-    cardsTitle: "Credit cards",
-    cardsHint: "Balance, limit (optional), annual rate and minimum payment.",
-    cardNombrePh: "Name (e.g. Visa)",
-    cardsEmpty: "You haven't added any cards yet.",
-    addCard: "+ Add card",
-    totalMinimos: "Sum of minimum payments",
+    helloProfile: (n) => "Hi, " + n,
+    optionsTitle: "Options", close: "Close",
+    secPerfil: "Profile", secIdioma: "Language", secMoneda: "Currency", secTema: "Theme", secPago: "Pay frequency", secDatos: "Data",
+    switchUser: "Switch user",
+    payMensual: "Monthly", payQuincenal: "Biweekly", paySemanal: "Weekly",
+    payDayMonthlyLbl: "Pay day (1-31)",
+    quincena1DiaLbl: "Day of 1st pay", quincena2DiaLbl: "Day of 2nd pay",
+    semanaDiaLbl: "Day of week",
+    update: "Update app", undo: "Undo", resetAll: "Reset everything",
+    confirmResetMsg: "Delete all data for this user?", yesDelete: "Yes, delete", cancel: "Cancel",
+    debesTotal: "Total debt", disponibleMes: "Available this month", ahorradoActual: "Current savings",
+    proximoPago: "Next payday",
+    statusVerde: "On track", statusAmarillo: "Tight", statusRojo: "Risky",
+    ingresoTitle: "Income", ingresoHint: "What you earn, based on how you're paid.",
+    ingresoMensualHint: "What you earn in total this month.",
+    ingresoSemanalLbl: "Amount per week", ingresoQuincena1Lbl: "1st pay", ingresoQuincena2Lbl: "2nd pay",
+    totalCalculado: "Month total (calculated)",
+    vecesEsteMes: (n) => n + (n === 1 ? " payday this month" : " paydays this month"),
+    subsTitle: "Subscriptions & fixed bills", subsHint: "Rent, utilities, streaming, installments…",
+    subNombrePh: "Name (e.g. Rent)", subsEmpty: "You haven't added any fixed bills yet.",
+    addSub: "+ Add bill", totalPagosFijos: "Total fixed bills",
+    cardsTitle: "Credit cards", cardsHint: "Balance, limit (optional), annual rate and minimum payment.",
+    cardNombrePh: "Name (e.g. Visa)", cardsEmpty: "You haven't added any cards yet.",
+    addCard: "+ Add card", totalMinimos: "Sum of minimum payments",
     saldoLbl: "Balance", limiteLbl: "Limit", taeLbl: "APR %", minimoLbl: "Minimum",
-    limiteOpcionalPh: "optional",
-    usoLimite: "Limit usage: ",
+    limiteOpcionalPh: "optional", usoLimite: "Limit usage: ",
     ahorroPctTitle: "What % of what's left do you want to save?",
     ahorroPctHint: "Applied to what's left after fixed bills and card minimums.",
-    tuAhorroTitle: "Your savings",
-    tuAhorroHint: "How much you have saved and how much you want to reach.",
-    ahorroActualLbl: "Current savings",
-    metaAhorroLbl: "Savings goal",
+    tuAhorroTitle: "Your savings", tuAhorroHint: "How much you have saved and how much you want to reach.",
+    ahorroActualLbl: "Current savings", metaAhorroLbl: "Savings goal",
     calcBtn: "Calculate my month",
-    noAlcanza: "You're short this month.",
-    faltan: "After fixed bills and card minimums you're short",
-    ingresoLbl: "Income",
-    pagosFijosLbl: "Fixed bills",
-    sinTarjetas: "No cards",
-    ahorroSugerido: "Suggested savings",
-    totalRepartido: "Total income allocated",
-    extraBadge: "extra",
-    tarjetaFallback: "Card",
+    noAlcanza: "You're short this month.", faltan: "After fixed bills and card minimums you're short",
+    ingresoLbl: "Income", pagosFijosLbl: "Fixed bills", sinTarjetas: "No cards",
+    ahorroSugerido: "Suggested savings", totalRepartido: "Total income allocated",
+    extraBadge: "extra", tarjetaFallback: "your card",
     sugerenciasTitle: "Suggestions for this month",
-    guardarMes: "Save this month to history",
-    mesGuardado: "Month saved ✓",
-    historialTitle: "Monthly history",
-    historialHint: "How much of your income was committed each month.",
+    guardarMes: "Save this month to history", mesGuardado: "Month saved ✓",
+    historialTitle: "Monthly history", historialHint: "How much of your income was committed each month.",
     historialEmpty: "No months saved yet.",
     comprometidoDe: "Committed {s}{a} of {s}{b} · Savings {s}{c}",
     eliminar: "Delete",
@@ -323,25 +300,28 @@ const I18N = {
     saveNoteErr: "Could not save on this device.",
     selectorTitle: "Cuentas Claras",
     selectorHint: "Choose your profile or create a new one. Each user's data is stored separately on this device.",
-    newProfilePh: "New user's name",
-    enter: "Enter",
-    noProfiles: "No users on this device yet.",
+    newProfilePh: "New user's name", enter: "Enter", noProfiles: "No users on this device yet.",
+    hoy: "Today", manana: "Tomorrow",
+    enDias: (n) => "In " + n + " days",
     faltanTuFalta: (n) => "You're short " + sym() + n + ".",
     usaAhorro: (n) => "It's a reasonable time to use part of your savings (you have " + sym() + n + ") to cover the gap without missing card payments.",
     sinAhorroRecorta: "Before debt grows, check if you can cut a fixed bill this month.",
-    pagaPrimero: (n, apr, pago) => 'Pay "' + n + '" first: it has the highest rate (' + apr + '%). Put ' + sym() + pago + " toward it this month.",
+    pagaPrimeroExtra: (n, apr, pago) => "Put " + sym() + pago + ' toward "' + n + '" (highest rate, ' + apr + "%). This is to keep things balanced: you don't need to pay it off in full, just enough to stay on a good pace.",
+    pagaPrimeroSinExtra: (n, apr) => 'Keep the minimum on "' + n + '" (highest rate, ' + apr + "%) current. There's no extra to put toward it this month, and that's fine.",
     vaBien: "This month looks good. You don't need to touch your savings; it's a good time to keep adding to it.",
     vasAjustado: "You're tight this month. Avoid withdrawing savings unless truly necessary; keep minimums current.",
     mesApretado: "Tight month: almost all your income is committed. Not the time for extra spending or new debt.",
     metaCumplida: (n) => "You've already hit your savings goal of " + sym() + n + ".",
     ritmoMeta: (ahorro, meta, meses) => "At " + sym() + ahorro + "/month, you'll reach your " + sym() + meta + " goal in " + meses + (meses === 1 ? " month." : " months."),
     sinAhorroMeta: "You're not generating savings toward your goal this month; review your fixed bills or card minimums.",
+    proximoPagoSug: (n) => "You have " + n + " days until your next payday. Pace your payments, no need to rush everything today.",
   },
 };
 let LANG = "es";
 const t = (k) => (I18N[LANG][k] !== undefined ? I18N[LANG][k] : k);
 
 /* ---------- utilidades ---------- */
+const toNum = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
@@ -351,9 +331,10 @@ const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
 const PROFILES_KEY = "cuentas-claras:perfiles";
 const CURRENCY = { usd: "$", eur: "€" };
 function sym() { return CURRENCY[state.currency] || "$"; }
+
 const ACTIVE_KEY = "cuentas-claras:perfil-activo";
 const SETTINGS_KEY = "cuentas-claras:ajustes";
-const dataKey = (id) => "cuentas-claras:datos-v2:" + id;
+const dataKey = (id) => "cuentas-claras:datos-v3:" + id;
 
 const MESES_ES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 const MESES_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -365,10 +346,7 @@ function statusFromRatio(ratio, insuficiente) {
   if (ratio > 0.6) return { key: "amarillo", label: t("statusAmarillo") };
   return { key: "verde", label: t("statusVerde") };
 }
-
-function esc(v) {
-  return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
+function esc(v) { return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
 /* ---------- perfiles y ajustes ---------- */
 function loadProfiles() { try { return JSON.parse(localStorage.getItem(PROFILES_KEY)) || []; } catch (e) { return []; } }
@@ -381,8 +359,11 @@ function saveUserDataNow() {
   try {
     localStorage.setItem(dataKey(state.activeProfileId), JSON.stringify({
       ingreso: state.ingreso, subs: state.subs, cards: state.cards,
-      savingsRate: state.savingsRate, ahorroActual: state.ahorroActual,
-      metaAhorro: state.metaAhorro, history: state.history,
+      savingsRate: state.savingsRate, ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, history: state.history,
+      payFrequency: state.payFrequency, payDayMonthly: state.payDayMonthly,
+      quincena1Dia: state.quincena1Dia, quincena1Monto: state.quincena1Monto,
+      quincena2Dia: state.quincena2Dia, quincena2Monto: state.quincena2Monto,
+      semanaDia: state.semanaDia, semanaMonto: state.semanaMonto,
     }));
     state.storageError = false;
   } catch (e) { state.storageError = true; }
@@ -399,36 +380,34 @@ const state = {
   lang: settingsInit.lang || "es",
   currency: settingsInit.currency || "usd",
   newProfileName: "",
+  showOptions: false,
 
-  ingreso: 0, subs: [], cards: [], savingsRate: 20, ahorroActual: 0, metaAhorro: 0, history: [],
+  ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", history: [],
+  payFrequency: "mensual", payDayMonthly: "", quincena1Dia: "1", quincena1Monto: "", quincena2Dia: "16", quincena2Monto: "",
+  semanaDia: "5", semanaMonto: "",
   resultado: null, confirmReset: false, savedFlash: false, storageError: false,
 };
 LANG = state.lang;
+let UPDATE_AVAILABLE = false;
 
 const undoStack = [];
 let saveTimeout = null;
-function scheduleSave() {
-  if (saveTimeout) clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(saveUserDataNow, 300);
-}
+function scheduleSave() { if (saveTimeout) clearTimeout(saveTimeout); saveTimeout = setTimeout(saveUserDataNow, 300); }
 
 function pushUndo() {
   undoStack.push(JSON.parse(JSON.stringify({
-    subs: state.subs, cards: state.cards, ingreso: state.ingreso,
-    savingsRate: state.savingsRate, ahorroActual: state.ahorroActual,
-    metaAhorro: state.metaAhorro, history: state.history,
+    subs: state.subs, cards: state.cards, ingreso: state.ingreso, savingsRate: state.savingsRate,
+    ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, history: state.history,
+    payFrequency: state.payFrequency, payDayMonthly: state.payDayMonthly,
+    quincena1Dia: state.quincena1Dia, quincena1Monto: state.quincena1Monto,
+    quincena2Dia: state.quincena2Dia, quincena2Monto: state.quincena2Monto,
+    semanaDia: state.semanaDia, semanaMonto: state.semanaMonto,
   })));
   if (undoStack.length > 15) undoStack.shift();
 }
-function undo() {
-  const prev = undoStack.pop();
-  if (!prev) return;
-  Object.assign(state, prev);
-  scheduleSave();
-  rerenderPreservingFocus();
-}
+function undo() { const prev = undoStack.pop(); if (!prev) return; Object.assign(state, prev); scheduleSave(); rerenderPreservingFocus(); }
 
-/* ---------- acciones de perfil ---------- */
+/* ---------- perfil ---------- */
 function applyTheme() { document.documentElement.setAttribute("data-theme", state.theme); }
 
 function enterProfile(id) {
@@ -436,38 +415,40 @@ function enterProfile(id) {
   state.activeProfileId = id;
   try { localStorage.setItem(ACTIVE_KEY, id); } catch (e) {}
   const d = loadUserData(id);
-  state.ingreso = d.ingreso || 0;
+  state.ingreso = d.ingreso != null ? d.ingreso : "";
   state.subs = d.subs || [];
   state.cards = d.cards || [];
   state.savingsRate = d.savingsRate != null ? d.savingsRate : 20;
-  state.ahorroActual = d.ahorroActual || 0;
-  state.metaAhorro = d.metaAhorro || 0;
+  state.ahorroActual = d.ahorroActual != null ? d.ahorroActual : "";
+  state.metaAhorro = d.metaAhorro != null ? d.metaAhorro : "";
   state.history = d.history || [];
-  state.resultado = null;
-  state.confirmReset = false;
+  state.payFrequency = d.payFrequency || "mensual";
+  state.payDayMonthly = d.payDayMonthly != null ? d.payDayMonthly : "";
+  state.quincena1Dia = d.quincena1Dia != null ? d.quincena1Dia : "1";
+  state.quincena1Monto = d.quincena1Monto != null ? d.quincena1Monto : "";
+  state.quincena2Dia = d.quincena2Dia != null ? d.quincena2Dia : "16";
+  state.quincena2Monto = d.quincena2Monto != null ? d.quincena2Monto : "";
+  state.semanaDia = d.semanaDia != null ? d.semanaDia : "5";
+  state.semanaMonto = d.semanaMonto != null ? d.semanaMonto : "";
+  state.resultado = null; state.confirmReset = false; state.showOptions = false;
   undoStack.length = 0;
   state.screen = "app";
   render();
 }
-
 function createProfile() {
   const name = (state.newProfileName || "").trim();
   if (!name) return;
   const p = { id: uid(), nombre: name };
-  state.profiles.push(p);
-  saveProfiles(state.profiles);
-  state.newProfileName = "";
+  state.profiles.push(p); saveProfiles(state.profiles); state.newProfileName = "";
   enterProfile(p.id);
 }
-
 function switchUser() {
   if (saveTimeout) { clearTimeout(saveTimeout); saveUserDataNow(); }
   state.activeProfileId = null;
   try { localStorage.removeItem(ACTIVE_KEY); } catch (e) {}
-  state.screen = "selector";
+  state.screen = "selector"; state.showOptions = false;
   render();
 }
-
 function askDeleteProfile(id) { state.confirmDeleteProfileId = id; render(); }
 function cancelDeleteProfile() { state.confirmDeleteProfileId = null; render(); }
 function deleteProfile(id) {
@@ -482,49 +463,95 @@ function deleteProfile(id) {
 function toggleTheme() { state.theme = state.theme === "dark" ? "light" : "dark"; saveSettings(); applyTheme(); render(); }
 function toggleLang() { state.lang = state.lang === "es" ? "en" : "es"; LANG = state.lang; saveSettings(); render(); }
 function toggleCurrency() { state.currency = state.currency === "usd" ? "eur" : "usd"; saveSettings(); render(); }
+function setPayFrequency(f) { state.payFrequency = f; scheduleSave(); render(); }
+function toggleOptions() { state.showOptions = !state.showOptions; render(); }
 
 /* ---------- acciones de datos ---------- */
-function addSub() { state.subs.push({ id: uid(), nombre: "", monto: 0 }); scheduleSave(); rerenderPreservingFocus(); }
+function addSub() { state.subs.push({ id: uid(), nombre: "", monto: "" }); scheduleSave(); rerenderPreservingFocus(); }
 function removeSub(id) { pushUndo(); state.subs = state.subs.filter((x) => x.id !== id); scheduleSave(); rerenderPreservingFocus(); }
-function addCard() { state.cards.push({ id: uid(), nombre: "", saldo: 0, limite: 0, apr: 0, minimo: 0 }); scheduleSave(); rerenderPreservingFocus(); }
+function addCard() { state.cards.push({ id: uid(), nombre: "", saldo: "", limite: "", apr: "", minimo: "" }); scheduleSave(); rerenderPreservingFocus(); }
 function removeCard(id) { pushUndo(); state.cards = state.cards.filter((x) => x.id !== id); scheduleSave(); rerenderPreservingFocus(); }
 
 function resetAll() {
   pushUndo();
-  state.ingreso = 0; state.subs = []; state.cards = []; state.savingsRate = 20;
-  state.ahorroActual = 0; state.metaAhorro = 0; state.resultado = null; state.confirmReset = false;
+  state.ingreso = ""; state.subs = []; state.cards = []; state.savingsRate = 20;
+  state.ahorroActual = ""; state.metaAhorro = ""; state.resultado = null; state.confirmReset = false;
+  state.payFrequency = "mensual"; state.payDayMonthly = ""; state.quincena1Monto = ""; state.quincena2Monto = ""; state.semanaMonto = "";
   scheduleSave(); rerenderPreservingFocus();
 }
 function removeHistory(key) { pushUndo(); state.history = state.history.filter((x) => x.month !== key); scheduleSave(); rerenderPreservingFocus(); }
 
+/* ---------- ingreso según frecuencia de pago ---------- */
+function occurrenciasSemana(dia) {
+  if (dia === "" || dia == null) return 0;
+  dia = Number(dia);
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  let count = 0;
+  for (let d = 1; d <= daysInMonth; d++) { if (new Date(year, month, d).getDay() === dia) count++; }
+  return count;
+}
+function ingresoActivo() {
+  if (state.payFrequency === "quincenal") return toNum(state.quincena1Monto) + toNum(state.quincena2Monto);
+  if (state.payFrequency === "semanal") return toNum(state.semanaMonto) * occurrenciasSemana(state.semanaDia);
+  return toNum(state.ingreso);
+}
+function nextPayInfo() {
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  let candidates = [];
+  function addMonthlyDay(day) {
+    if (!(day >= 1 && day <= 31)) return;
+    candidates.push(new Date(now.getFullYear(), now.getMonth(), day));
+    candidates.push(new Date(now.getFullYear(), now.getMonth() + 1, day));
+  }
+  if (state.payFrequency === "mensual") {
+    addMonthlyDay(Number(state.payDayMonthly) || 0);
+  } else if (state.payFrequency === "quincenal") {
+    addMonthlyDay(Number(state.quincena1Dia) || 0);
+    addMonthlyDay(Number(state.quincena2Dia) || 0);
+  } else if (state.payFrequency === "semanal") {
+    if (state.semanaDia !== "" && state.semanaDia != null) {
+      const dia = Number(state.semanaDia);
+      for (let i = 0; i < 14; i++) {
+        const d = new Date(now); d.setDate(now.getDate() + i);
+        if (d.getDay() === dia) { candidates.push(d); break; }
+      }
+    }
+  }
+  candidates = candidates.filter((d) => d instanceof Date && !isNaN(d) && d >= now);
+  candidates.sort((a, b) => a - b);
+  if (candidates.length === 0) return null;
+  const next = candidates[0];
+  const diffDays = Math.round((next - now) / 86400000);
+  return { date: next, diffDays };
+}
+function formatDate(d) { return d.toLocaleDateString(LANG === "es" ? "es-ES" : "en-US", { day: "numeric", month: "short" }); }
+function diasLabel(n) { if (n === 0) return t("hoy"); if (n === 1) return t("manana"); return t("enDias")(n); }
+
 function computeTotals() {
-  const totalSubs = state.subs.reduce((a, s) => a + (Number(s.monto) || 0), 0);
-  const totalMinimos = state.cards.reduce((a, c) => a + (Number(c.minimo) || 0), 0);
-  const totalDeuda = state.cards.reduce((a, c) => a + (Number(c.saldo) || 0), 0);
-  const disponibleBruto = (Number(state.ingreso) || 0) - totalSubs;
-  const ratioComprometido = (Number(state.ingreso) || 0) > 0
-    ? (totalSubs + totalMinimos) / Number(state.ingreso)
-    : (totalSubs + totalMinimos > 0 ? 1.5 : 0);
+  const ingresoEfectivo = ingresoActivo();
+  const totalSubs = state.subs.reduce((a, s) => a + toNum(s.monto), 0);
+  const totalMinimos = state.cards.reduce((a, c) => a + toNum(c.minimo), 0);
+  const totalDeuda = state.cards.reduce((a, c) => a + toNum(c.saldo), 0);
+  const disponibleBruto = ingresoEfectivo - totalSubs;
+  const ratioComprometido = ingresoEfectivo > 0 ? (totalSubs + totalMinimos) / ingresoEfectivo : (totalSubs + totalMinimos > 0 ? 1.5 : 0);
   const insuficienteLive = disponibleBruto - totalMinimos < 0;
   const liveStatus = statusFromRatio(ratioComprometido, insuficienteLive);
-  return { totalSubs, totalMinimos, totalDeuda, disponibleBruto, ratioComprometido, liveStatus };
+  return { ingresoEfectivo, totalSubs, totalMinimos, totalDeuda, disponibleBruto, ratioComprometido, liveStatus };
 }
 
 function calcular() {
   const t2 = computeTotals();
   const restoTrasMinimos = t2.disponibleBruto - t2.totalMinimos;
-  if (restoTrasMinimos < 0) {
-    state.resultado = { insuficiente: true, faltante: Math.abs(restoTrasMinimos) };
-    rerenderPreservingFocus();
-    return;
-  }
+  if (restoTrasMinimos < 0) { state.resultado = { insuficiente: true, faltante: Math.abs(restoTrasMinimos) }; rerenderPreservingFocus(); return; }
   const ahorroCrudo = restoTrasMinimos * (state.savingsRate / 100);
   const ahorro = Math.round(ahorroCrudo / 10) * 10;
   let extraParaTarjetas = Math.round((restoTrasMinimos - ahorro) * 100) / 100;
   if (extraParaTarjetas < 0) extraParaTarjetas = 0;
 
   const ordenAvalancha = state.cards
-    .map((c) => ({ ...c, saldo: Number(c.saldo) || 0, apr: Number(c.apr) || 0, minimo: Number(c.minimo) || 0 }))
+    .map((c) => ({ ...c, saldo: toNum(c.saldo), apr: toNum(c.apr), minimo: toNum(c.minimo) }))
     .filter((c) => c.saldo > 0 || c.minimo > 0 || c.nombre)
     .sort((a, b) => b.apr - a.apr);
 
@@ -535,7 +562,6 @@ function calcular() {
     restante = Math.round((restante - pagoExtra) * 100) / 100;
     return Object.assign({}, c, { pagoExtra, pagoTotal: Math.round((c.minimo + pagoExtra) * 100) / 100 });
   });
-
   const ahorroFinal = Math.round((ahorro + restante) / 10) * 10;
   state.resultado = { insuficiente: false, ahorro: ahorroFinal, asignaciones };
   rerenderPreservingFocus();
@@ -547,13 +573,8 @@ function guardarMes() {
   const t2 = computeTotals();
   const key = monthKey();
   const entry = {
-    month: key,
-    ingreso: Number(state.ingreso) || 0,
-    comprometido: t2.totalSubs + t2.totalMinimos,
-    ratio: t2.ratioComprometido,
-    ahorro: state.resultado.insuficiente ? 0 : state.resultado.ahorro,
-    insuficiente: !!state.resultado.insuficiente,
-    status: t2.liveStatus.key,
+    month: key, ingreso: t2.ingresoEfectivo, comprometido: t2.totalSubs + t2.totalMinimos, ratio: t2.ratioComprometido,
+    ahorro: state.resultado.insuficiente ? 0 : state.resultado.ahorro, insuficiente: !!state.resultado.insuficiente, status: t2.liveStatus.key,
   };
   state.history = state.history.filter((x) => x.month !== key);
   state.history.push(entry);
@@ -566,8 +587,16 @@ function guardarMes() {
 
 async function actualizarApp() {
   try {
+    if ("serviceWorker" in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg && reg.waiting) {
+        reg.waiting.postMessage("SKIP_WAITING");
+        navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
+        return;
+      }
+      if (reg) { try { await reg.update(); } catch (e) {} }
+    }
     if ("caches" in window) { const keys = await caches.keys(); await Promise.all(keys.map((k) => caches.delete(k))); }
-    if ("serviceWorker" in navigator) { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map((r) => r.unregister())); }
   } catch (e) {}
   location.reload();
 }
@@ -579,22 +608,27 @@ function buildSugerencias(t2) {
   if (!r) return s;
   if (r.insuficiente) {
     s.push(t("faltan") + " " + sym() + fmt0(r.faltante) + ".");
-    if (state.ahorroActual > 0) s.push(t("usaAhorro")(fmt0(state.ahorroActual)));
+    if (toNum(state.ahorroActual) > 0) s.push(t("usaAhorro")(fmt0(toNum(state.ahorroActual))));
     else s.push(t("sinAhorroRecorta"));
   } else {
     const conExtra = r.asignaciones.filter((c) => c.pagoExtra > 0);
     const prioridad = conExtra[0] || r.asignaciones[0];
-    if (prioridad) s.push(t("pagaPrimero")(prioridad.nombre || t("tarjetaFallback"), fmt0(prioridad.apr), fmt0(prioridad.pagoTotal)));
+    if (prioridad) {
+      if (prioridad.pagoExtra > 0) s.push(t("pagaPrimeroExtra")(prioridad.nombre || t("tarjetaFallback"), fmt0(prioridad.apr), fmt0(prioridad.pagoTotal)));
+      else s.push(t("pagaPrimeroSinExtra")(prioridad.nombre || t("tarjetaFallback"), fmt0(prioridad.apr)));
+    }
     if (t2.liveStatus.key === "verde") s.push(t("vaBien"));
     else if (t2.liveStatus.key === "amarillo") s.push(t("vasAjustado"));
     else s.push(t("mesApretado"));
-    if (state.metaAhorro > 0) {
-      const falta = state.metaAhorro - state.ahorroActual;
-      if (falta <= 0) s.push(t("metaCumplida")(fmt0(state.metaAhorro)));
-      else if (r.ahorro > 0) s.push(t("ritmoMeta")(fmt0(r.ahorro), fmt0(state.metaAhorro), Math.ceil(falta / r.ahorro)));
+    if (toNum(state.metaAhorro) > 0) {
+      const falta = toNum(state.metaAhorro) - toNum(state.ahorroActual);
+      if (falta <= 0) s.push(t("metaCumplida")(fmt0(toNum(state.metaAhorro))));
+      else if (r.ahorro > 0) s.push(t("ritmoMeta")(fmt0(r.ahorro), fmt0(toNum(state.metaAhorro)), Math.ceil(falta / r.ahorro)));
       else s.push(t("sinAhorroMeta"));
     }
   }
+  const np = nextPayInfo();
+  if (np && np.diffDays > 0 && np.diffDays <= 14) s.push(t("proximoPagoSug")(np.diffDays));
   return s;
 }
 
@@ -606,7 +640,6 @@ function renderSelector() {
   html += '<div class="selector-logo">' + sym() + '</div>';
   html += '<h1 class="selector-title">' + t("selectorTitle") + '</h1>';
   html += '<p class="selector-hint">' + t("selectorHint") + '</p>';
-
   state.profiles.forEach((p) => {
     const initial = (p.nombre || "?").trim().charAt(0).toUpperCase();
     if (state.confirmDeleteProfileId === p.id) {
@@ -616,62 +649,115 @@ function renderSelector() {
     } else {
       html += '<div class="profile-row" data-action="enterProfile" data-id="' + p.id + '"><div class="profile-avatar">' + esc(initial) + '</div><div class="profile-name">' + esc(p.nombre) + '</div>';
       html += '<button class="pill-btn">' + t("enter") + '</button>';
-      html += '<button class="icon-del" data-action="askDeleteProfile" data-id="' + p.id + '" data-stop="1">×</button></div>';
+      html += '<button class="icon-del" data-action="askDeleteProfile" data-id="' + p.id + '">×</button></div>';
     }
   });
   if (state.profiles.length === 0) html += '<div class="empty-state">' + t("noProfiles") + '</div>';
-
   html += '<div class="new-profile-row"><input type="text" id="new-profile-input" placeholder="' + t("newProfilePh") + '" value="' + esc(state.newProfileName) + '">';
   html += '<button data-action="createProfile">+</button></div>';
-
   html += '<div class="lang-theme-row">';
   html += '<button class="pill-btn" data-action="toggleLang">' + (state.lang === "es" ? "EN" : "ES") + '</button>';
+  html += '<button class="pill-btn" data-action="toggleCurrency">' + (state.currency === "usd" ? "€" : "$") + '</button>';
   html += '<button class="pill-btn" data-action="toggleTheme">' + (state.theme === "dark" ? "☀️" : "🌙") + '</button>';
-  html += '</div>';
-
-  html += '</div></div>';
+  html += '</div></div></div>';
   root.innerHTML = html;
+}
+
+function renderOptionsSheet() {
+  const weekdays = WEEKDAYS[LANG];
+  let h = '<div class="options-overlay" data-action="closeOptionsBackdrop">';
+  h += '<div class="options-sheet">';
+  h += '<div class="options-head"><h2>' + t("optionsTitle") + '</h2><button class="options-close" data-action="toggleOptions">×</button></div>';
+
+  const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
+  h += '<div class="opt-section"><p class="opt-section-title">' + t("secPerfil") + '</p>';
+  h += '<div class="opt-row"><span class="opt-row-label">' + esc(activeProfile ? activeProfile.nombre : "") + '</span><button class="pill-btn" data-action="switchUser">' + t("switchUser") + '</button></div></div>';
+
+  h += '<div class="opt-section"><p class="opt-section-title">' + t("secIdioma") + '</p>';
+  h += '<div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div></div>';
+
+  h += '<div class="opt-section"><p class="opt-section-title">' + t("secMoneda") + '</p>';
+  h += '<div class="opt-row"><span class="opt-row-label">' + t("secMoneda") + '</span><div class="seg"><button class="' + (state.currency === "usd" ? "active" : "") + '" data-action="setCurUsd">$ USD</button><button class="' + (state.currency === "eur" ? "active" : "") + '" data-action="setCurEur">€ EUR</button></div></div></div>';
+
+  h += '<div class="opt-section"><p class="opt-section-title">' + t("secTema") + '</p>';
+  h += '<div class="opt-row"><span class="opt-row-label">' + t("secTema") + '</span><div class="seg"><button class="' + (state.theme === "light" ? "active" : "") + '" data-action="setThemeLight">☀️</button><button class="' + (state.theme === "dark" ? "active" : "") + '" data-action="setThemeDark">🌙</button></div></div></div>';
+
+  h += '<div class="opt-section"><p class="opt-section-title">' + t("secPago") + '</p>';
+  h += '<div class="seg" style="width:100%;">';
+  h += '<button style="flex:1;" class="' + (state.payFrequency === "mensual" ? "active" : "") + '" data-action="setPayMensual">' + t("payMensual") + '</button>';
+  h += '<button style="flex:1;" class="' + (state.payFrequency === "quincenal" ? "active" : "") + '" data-action="setPayQuincenal">' + t("payQuincenal") + '</button>';
+  h += '<button style="flex:1;" class="' + (state.payFrequency === "semanal" ? "active" : "") + '" data-action="setPaySemanal">' + t("paySemanal") + '</button>';
+  h += '</div>';
+
+  if (state.payFrequency === "mensual") {
+    h += '<div class="pay-config-grid"><div><label>' + t("payDayMonthlyLbl") + '</label><input type="text" inputmode="numeric" id="pay-day-monthly" data-scope="payDayMonthly" value="' + esc(state.payDayMonthly) + '"></div></div>';
+  } else if (state.payFrequency === "quincenal") {
+    h += '<div class="pay-config-grid">';
+    h += '<div><label>' + t("quincena1DiaLbl") + '</label><input type="text" inputmode="numeric" id="q1-dia" data-scope="quincena1Dia" value="' + esc(state.quincena1Dia) + '"></div>';
+    h += '<div><label>' + t("quincena2DiaLbl") + '</label><input type="text" inputmode="numeric" id="q2-dia" data-scope="quincena2Dia" value="' + esc(state.quincena2Dia) + '"></div>';
+    h += '</div>';
+  } else if (state.payFrequency === "semanal") {
+    h += '<div class="pay-config-grid"><div style="grid-column:1/-1;"><label>' + t("semanaDiaLbl") + '</label><select id="semana-dia" data-scope="semanaDia">';
+    weekdays.forEach((w, i) => { h += '<option value="' + i + '"' + (Number(state.semanaDia) === i ? " selected" : "") + '>' + esc(w) + '</option>'; });
+    h += '</select></div></div>';
+  }
+  h += '</div>';
+
+  h += '<div class="opt-section"><p class="opt-section-title">' + t("secDatos") + '</p>';
+  h += '<button class="pill-btn wide update" data-action="actualizar" style="margin-bottom:8px;">' + t("update") + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button>';
+  h += '<button class="pill-btn wide" data-action="undo"' + (undoStack.length === 0 ? " disabled" : "") + ' style="margin-bottom:8px;">' + t("undo") + '</button>';
+  if (!state.confirmReset) {
+    h += '<button class="pill-btn wide danger" data-action="confirmReset">' + t("resetAll") + '</button>';
+  } else {
+    h += '<p style="font-size:12.5px;color:var(--text-muted);text-align:center;margin:6px 0;">' + t("confirmResetMsg") + '</p>';
+    h += '<div style="display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="resetAll">' + t("yesDelete") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelReset">' + t("cancel") + '</button></div>';
+  }
+  h += '</div>';
+
+  h += '</div></div>';
+  return h;
 }
 
 function renderApp() {
   const t2 = computeTotals();
-  const metaProgreso = state.metaAhorro > 0 ? Math.min((state.ahorroActual / state.metaAhorro) * 100, 100) : 0;
+  const metaProgreso = toNum(state.metaAhorro) > 0 ? Math.min((toNum(state.ahorroActual) / toNum(state.metaAhorro)) * 100, 100) : 0;
   const sugerencias = buildSugerencias(t2);
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
+  const np = nextPayInfo();
 
   let html = '<div class="page"><div class="wrap">';
+  html += '<button class="options-fab" data-action="toggleOptions">⚙️' + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button>';
   html += '<h1>' + t("brand") + '</h1><p class="subtitle">' + t("subtitle") + '</p>';
-
-  html += '<div class="top-actions">';
-  html += '<button class="pill-btn user" data-action="switchUser">' + t("switchUser") + (activeProfile ? " · " + esc(activeProfile.nombre) : "") + '</button>';
-  html += '<button class="pill-btn" data-action="toggleLang">' + (state.lang === "es" ? "EN" : "ES") + '</button>';
-  html += '<button class="pill-btn" data-action="toggleCurrency">' + (state.currency === "usd" ? "€" : "$") + '</button>';
-  html += '<button class="pill-btn" data-action="toggleTheme">' + (state.theme === "dark" ? "☀️" : "🌙") + '</button>';
-  html += '<button class="pill-btn update" data-action="actualizar">' + t("update") + '</button>';
-  html += '<button class="pill-btn" data-action="undo"' + (undoStack.length === 0 ? " disabled" : "") + '>' + t("undo") + '</button>';
-  if (!state.confirmReset) {
-    html += '<button class="pill-btn danger" data-action="confirmReset">' + t("resetAll") + '</button>';
-  } else {
-    html += '<span style="font-size:12.5px;color:var(--text-muted);align-self:center;">' + t("confirmResetMsg") + '</span>';
-    html += '<button class="pill-btn confirm" data-action="resetAll">' + t("yesDelete") + '</button>';
-    html += '<button class="pill-btn" data-action="cancelReset">' + t("cancel") + '</button>';
-  }
-  html += '</div>';
+  if (activeProfile) html += '<p class="profile-line">' + esc(t("helloProfile")(activeProfile.nombre)) + '</p>';
 
   html += '<div class="summary">';
   html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
   html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
-  html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val blue">' + sym() + fmt0(state.ahorroActual) + '</div></div>';
+  html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></div>';
+  if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + '</div></div>';
   html += '</div>';
 
-  html += '<div class="panel"><h2>' + t("ingresoTitle") + '</h2><p class="hint">' + t("ingresoHint") + '</p>';
-  html += '<input type="text" inputmode="decimal" placeholder="0" id="ingreso-input" data-scope="ingreso" value="' + (state.ingreso || "") + '" style="width:100%;font-size:20px;font-weight:700;"></div>';
+  html += '<div class="panel"><h2>' + t("ingresoTitle") + '</h2><p class="hint">' + (state.payFrequency === "mensual" ? t("ingresoMensualHint") : t("ingresoHint")) + '</p>';
+  if (state.payFrequency === "mensual") {
+    html += '<input type="text" inputmode="decimal" placeholder="0" id="ingreso-input" data-scope="ingreso" value="' + esc(state.ingreso) + '" style="width:100%;font-size:20px;font-weight:700;">';
+  } else if (state.payFrequency === "quincenal") {
+    html += '<div class="goal-grid">';
+    html += '<div class="goal-field"><label>' + t("ingresoQuincena1Lbl") + (state.quincena1Dia ? " (" + esc(state.quincena1Dia) + ")" : "") + '</label><input type="text" inputmode="decimal" placeholder="0" id="q1-monto" data-scope="quincena1Monto" value="' + esc(state.quincena1Monto) + '"></div>';
+    html += '<div class="goal-field"><label>' + t("ingresoQuincena2Lbl") + (state.quincena2Dia ? " (" + esc(state.quincena2Dia) + ")" : "") + '</label><input type="text" inputmode="decimal" placeholder="0" id="q2-monto" data-scope="quincena2Monto" value="' + esc(state.quincena2Monto) + '"></div>';
+    html += '</div>';
+    html += '<div class="mini-total"><span>' + t("totalCalculado") + '</span><b>' + sym() + fmt0(t2.ingresoEfectivo) + '</b></div>';
+  } else if (state.payFrequency === "semanal") {
+    html += '<input type="text" inputmode="decimal" placeholder="0" id="semana-monto" data-scope="semanaMonto" value="' + esc(state.semanaMonto) + '" style="width:100%;font-size:20px;font-weight:700;">';
+    const veces = occurrenciasSemana(state.semanaDia);
+    html += '<div class="mini-total"><span>' + t("vecesEsteMes")(veces) + '</span><b>' + sym() + fmt0(t2.ingresoEfectivo) + '</b></div>';
+  }
+  html += '</div>';
 
   html += '<div class="panel"><h2>' + t("subsTitle") + '</h2><p class="hint">' + t("subsHint") + '</p>';
   state.subs.forEach((s) => {
     html += '<div class="sub-row">';
     html += '<input type="text" placeholder="' + t("subNombrePh") + '" id="sub-nombre-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="nombre" value="' + esc(s.nombre) + '">';
-    html += '<input type="text" inputmode="decimal" placeholder="" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + (s.monto || "") + '">';
+    html += '<input class="money" type="text" inputmode="decimal" placeholder="' + sym() + '" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '">';
     html += '<button class="icon-del" data-action="removeSub" data-id="' + s.id + '">×</button></div>';
   });
   if (state.subs.length === 0) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
@@ -680,18 +766,18 @@ function renderApp() {
 
   html += '<div class="panel"><h2>' + t("cardsTitle") + '</h2><p class="hint">' + t("cardsHint") + '</p>';
   state.cards.forEach((c) => {
-    const lim = Number(c.limite) || 0;
-    const saldo = Number(c.saldo) || 0;
+    const lim = toNum(c.limite);
+    const saldo = toNum(c.saldo);
     const uso = lim > 0 ? Math.min((saldo / lim) * 100, 100) : null;
     const usoNivel = uso === null ? "" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
     html += '<div class="card-entry">';
     html += '<div class="card-entry-top"><input type="text" placeholder="' + t("cardNombrePh") + '" id="card-nombre-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="nombre" value="' + esc(c.nombre) + '">';
     html += '<button class="icon-del" data-action="removeCard" data-id="' + c.id + '">×</button></div>';
     html += '<div class="card-fields">';
-    html += '<div><span class="field-label">' + t("saldoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + (c.saldo || "") + '"></div>';
-    html += '<div><span class="field-label">' + t("limiteLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="card-limite-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="limite" value="' + (c.limite || "") + '"></div>';
-    html += '<div><span class="field-label">' + t("taeLbl") + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-apr-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="apr" value="' + (c.apr || "") + '"></div>';
-    html += '<div><span class="field-label">' + t("minimoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-minimo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="minimo" value="' + (c.minimo || "") + '"></div>';
+    html += '<div><span class="field-label">' + t("saldoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + esc(c.saldo) + '"></div>';
+    html += '<div><span class="field-label">' + t("limiteLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="card-limite-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="limite" value="' + esc(c.limite) + '"></div>';
+    html += '<div><span class="field-label">' + t("taeLbl") + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-apr-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="apr" value="' + esc(c.apr) + '"></div>';
+    html += '<div><span class="field-label">' + t("minimoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-minimo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="minimo" value="' + esc(c.minimo) + '"></div>';
     html += '</div>';
     if (uso !== null) {
       html += '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div></div>';
@@ -708,12 +794,12 @@ function renderApp() {
 
   html += '<div class="panel"><h2>' + t("tuAhorroTitle") + '</h2><p class="hint">' + t("tuAhorroHint") + '</p>';
   html += '<div class="goal-grid">';
-  html += '<div class="goal-field"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + (state.ahorroActual || "") + '"></div>';
-  html += '<div class="goal-field"><label>' + t("metaAhorroLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="meta-ahorro-input" data-scope="metaAhorro" value="' + (state.metaAhorro || "") + '"></div>';
+  html += '<div class="goal-field"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '"></div>';
+  html += '<div class="goal-field"><label>' + t("metaAhorroLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="meta-ahorro-input" data-scope="metaAhorro" value="' + esc(state.metaAhorro) + '"></div>';
   html += '</div>';
-  if (state.metaAhorro > 0) {
+  if (toNum(state.metaAhorro) > 0) {
     html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
-    html += '<div class="goal-caption"><span>' + sym() + fmt0(state.ahorroActual) + ' / ' + sym() + fmt0(state.metaAhorro) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
+    html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
   }
   html += '</div>';
 
@@ -722,17 +808,16 @@ function renderApp() {
   if (state.resultado && state.resultado.insuficiente) {
     html += '<div class="warn-box"><b>' + t("noAlcanza") + '</b><br>' + t("faltan") + ' <b>' + sym() + fmt0(state.resultado.faltante) + '</b>.</div>';
   }
-
   if (state.resultado && !state.resultado.insuficiente) {
     html += '<div class="result-card">';
-    html += '<div class="result-line"><span>' + t("ingresoLbl") + '</span><span>' + sym() + fmt0(Number(state.ingreso) || 0) + '</span></div>';
+    html += '<div class="result-line"><span>' + t("ingresoLbl") + '</span><span>' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
     html += '<div class="result-line"><span>' + t("pagosFijosLbl") + '</span><span>−' + sym() + fmt0(t2.totalSubs) + '</span></div>';
     state.resultado.asignaciones.forEach((c) => {
       html += '<div class="result-line"><span class="name">' + esc(c.nombre || t("tarjetaFallback")) + (c.pagoExtra > 0 ? '<span class="badge">' + t("extraBadge") + '</span>' : '') + '</span><span>−' + sym() + fmt0(c.pagoTotal) + '</span></div>';
     });
     if (state.cards.length === 0) html += '<div class="result-line"><span>' + t("sinTarjetas") + '</span><span>—</span></div>';
     html += '<div class="result-line"><span>' + t("ahorroSugerido") + '</span><span>' + sym() + fmt10(state.resultado.ahorro) + '</span></div>';
-    html += '<div class="result-total"><span>' + t("totalRepartido") + '</span><span>' + sym() + fmt0(Number(state.ingreso) || 0) + '</span></div>';
+    html += '<div class="result-total"><span>' + t("totalRepartido") + '</span><span>' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
     html += '</div>';
   }
 
@@ -749,7 +834,7 @@ function renderApp() {
   if (state.history.length === 0) html += '<div class="empty-state">' + t("historialEmpty") + '</div>';
   state.history.forEach((h) => {
     const label = h.status === "verde" ? t("statusVerde") : h.status === "amarillo" ? t("statusAmarillo") : t("statusRojo");
-    const metaLine = t("comprometidoDe").replace("{a}", fmt0(h.comprometido)).replace("{b}", fmt0(h.ingreso)).replace("{c}", fmt0(h.ahorro));
+    const metaLine = t("comprometidoDe").split("{s}").join(sym()).split("{a}").join(fmt0(h.comprometido)).split("{b}").join(fmt0(h.ingreso)).split("{c}").join(fmt0(h.ahorro));
     html += '<div class="history-row"><div class="history-top"><span class="history-month">' + esc(monthLabel(h.month)) + '</span><span class="status-pill ' + h.status + '">' + label + '</span></div>';
     html += '<div class="hbar-track"><div class="hbar-fill util-bar-fill ' + h.status + '" style="width:' + Math.min(h.ratio * 100, 100) + '%"></div></div>';
     html += '<div class="history-meta"><span>' + esc(metaLine) + '</span><button class="history-del" data-action="removeHistory" data-id="' + h.month + '">' + t("eliminar") + '</button></div></div>';
@@ -757,7 +842,9 @@ function renderApp() {
   html += '</div>';
 
   html += '<p class="save-note">' + (state.storageError ? t("saveNoteErr") : t("saveNoteOk")) + '</p>';
-  html += '</div></div>';
+  html += '</div>';
+  if (state.showOptions) html += renderOptionsSheet();
+  html += '</div>';
 
   root.innerHTML = html;
 }
@@ -765,8 +852,7 @@ function renderApp() {
 function render() {
   applyTheme();
   document.documentElement.lang = state.lang;
-  if (state.screen === "selector") renderSelector();
-  else renderApp();
+  if (state.screen === "selector") renderSelector(); else renderApp();
 }
 
 function rerenderPreservingFocus() {
@@ -790,6 +876,7 @@ function sanitizeNum(str) {
   if (parts.length > 2) str = parts[0] + "." + parts.slice(1).join("");
   return str;
 }
+function sanitizeInt(str) { return String(str).replace(/[^0-9]/g, "").slice(0, 2); }
 
 root.addEventListener("input", (e) => {
   const el = e.target;
@@ -800,6 +887,13 @@ root.addEventListener("input", (e) => {
   if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "metaAhorro") { state.metaAhorro = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "savingsRate") { state.savingsRate = Number(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "quincena1Monto") { state.quincena1Monto = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "quincena2Monto") { state.quincena2Monto = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "semanaMonto") { state.semanaMonto = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "payDayMonthly") { state.payDayMonthly = sanitizeInt(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "quincena1Dia") { state.quincena1Dia = sanitizeInt(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "quincena2Dia") { state.quincena2Dia = sanitizeInt(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "semanaDia") { state.semanaDia = el.value; scheduleSave(); render(); return; }
   if (scope === "sub") {
     const item = state.subs.find((x) => x.id === el.dataset.id);
     if (!item) return;
@@ -814,34 +908,34 @@ root.addEventListener("input", (e) => {
   }
 });
 
-root.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && e.target && e.target.id === "new-profile-input") { createProfile(); }
-});
+root.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target && e.target.id === "new-profile-input") createProfile(); });
 
 root.addEventListener("click", (e) => {
-  const stopEl = e.target.closest('[data-stop="1"]');
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
-  if (stopEl) e.stopPropagation();
   const action = btn.dataset.action;
   const id = btn.dataset.id;
   const map = {
-    actualizar: actualizarApp,
-    undo: undo,
+    actualizar: actualizarApp, undo: undo,
     confirmReset: () => { state.confirmReset = true; render(); },
     cancelReset: () => { state.confirmReset = false; render(); },
     resetAll: resetAll,
-    addSub: addSub,
-    removeSub: () => removeSub(id),
-    addCard: addCard,
-    removeCard: () => removeCard(id),
-    calcular: calcular,
-    guardarMes: guardarMes,
-    removeHistory: () => removeHistory(id),
+    addSub: addSub, removeSub: () => removeSub(id),
+    addCard: addCard, removeCard: () => removeCard(id),
+    calcular: calcular, guardarMes: guardarMes, removeHistory: () => removeHistory(id),
     switchUser: switchUser,
-    toggleTheme: toggleTheme,
-    toggleLang: toggleLang,
-    toggleCurrency: toggleCurrency,
+    toggleTheme: toggleTheme, toggleLang: toggleLang, toggleCurrency: toggleCurrency,
+    setLangEs: () => { if (state.lang !== "es") toggleLang(); },
+    setLangEn: () => { if (state.lang !== "en") toggleLang(); },
+    setCurUsd: () => { if (state.currency !== "usd") toggleCurrency(); },
+    setCurEur: () => { if (state.currency !== "eur") toggleCurrency(); },
+    setThemeLight: () => { if (state.theme !== "light") toggleTheme(); },
+    setThemeDark: () => { if (state.theme !== "dark") toggleTheme(); },
+    setPayMensual: () => setPayFrequency("mensual"),
+    setPayQuincenal: () => setPayFrequency("quincenal"),
+    setPaySemanal: () => setPayFrequency("semanal"),
+    toggleOptions: toggleOptions,
+    closeOptionsBackdrop: () => { state.showOptions = false; render(); },
     enterProfile: () => enterProfile(id),
     askDeleteProfile: () => askDeleteProfile(id),
     cancelDeleteProfile: cancelDeleteProfile,
@@ -855,15 +949,23 @@ root.addEventListener("click", (e) => {
 (function boot() {
   applyTheme();
   const activeId = (function () { try { return localStorage.getItem(ACTIVE_KEY); } catch (e) { return null; } })();
-  if (activeId && state.profiles.some((p) => p.id === activeId)) {
-    enterProfile(activeId);
-  } else {
-    render();
-  }
+  if (activeId && state.profiles.some((p) => p.id === activeId)) enterProfile(activeId);
+  else render();
 })();
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").then((reg) => {
+      if (reg.waiting) { UPDATE_AVAILABLE = true; render(); }
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) { UPDATE_AVAILABLE = true; render(); }
+        });
+      });
+    }).catch(() => {});
+  });
 }
 </script>
 </body>
