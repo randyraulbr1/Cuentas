@@ -26,38 +26,44 @@ html, body { margin:0; padding:0; }
 }
 
 body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; transition: background 0.2s, color 0.2s; }
-.page { padding: 20px 14px 70px; padding-top: max(20px, env(safe-area-inset-top)); }
-.wrap { max-width: 760px; margin: 0 auto; position: relative; }
+.page { padding: 18px 14px 60px; padding-top: max(18px, env(safe-area-inset-top)); }
+.wrap { max-width: 760px; margin: 0 auto; }
 
-h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin: 4px 0 2px; padding-right: 50px; }
-.subtitle { color: var(--text-muted); font-size: 13.5px; margin: 0 0 4px; }
-.profile-line { color: var(--text-muted); font-size: 12.5px; margin: 0 0 18px; font-weight: 600; }
+.app-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.app-header-text { min-width: 0; }
+h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin: 2px 0 2px; }
+.subtitle { color: var(--text-muted); font-size: 13px; margin: 0 0 3px; }
+.profile-line { color: var(--text-muted); font-size: 12px; margin: 0; font-weight: 600; }
 
-/* --- boton flotante de opciones --- */
-.options-fab { position: fixed; top: max(18px, env(safe-area-inset-top)); right: 16px; width: 42px; height: 42px; border-radius: 50%; background: var(--card-bg); box-shadow: var(--shadow); border: none; font-size: 19px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 40; }
-.options-fab .dot { position: absolute; top: 4px; right: 4px; width: 10px; height: 10px; border-radius: 50%; background: #FF3B30; border: 2px solid var(--card-bg); }
+.options-btn { position: relative; flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--card-bg); box-shadow: var(--shadow); border: none; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.options-btn .dot { position: absolute; top: 2px; right: 2px; width: 9px; height: 9px; border-radius: 50%; background: #FF3B30; border: 2px solid var(--card-bg); }
 
 .options-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
-.options-sheet { background: var(--card-bg); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 18px 18px calc(24px + env(safe-area-inset-bottom)); max-height: 88vh; overflow-y: auto; }
-.options-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-.options-head h2 { font-size: 19px; font-weight: 800; margin: 0; }
-.options-close { background: var(--pill-bg); border: none; color: var(--text); width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; }
-.opt-section { margin-bottom: 18px; }
-.opt-section-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 0 0 8px; }
-.opt-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 10px; }
-.opt-row:last-child { border-bottom: none; }
-.opt-row-label { font-size: 14px; font-weight: 600; }
-.opt-row-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
-.seg { display: flex; background: var(--input-bg); border-radius: 10px; padding: 3px; gap: 3px; }
-.seg button { border: none; background: transparent; color: var(--text-muted); font-size: 12.5px; font-weight: 600; padding: 7px 10px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+.options-sheet { background: var(--card-bg); width: 100%; max-width: 480px; border-radius: 18px 18px 0 0; padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); max-height: 88vh; overflow-y: auto; }
+.options-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.options-head h2 { font-size: 17px; font-weight: 800; margin: 0; }
+.options-close { background: var(--pill-bg); border: none; color: var(--text); width: 28px; height: 28px; border-radius: 50%; font-size: 15px; cursor: pointer; }
+.opt-section { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.opt-section:last-child { border-bottom: none; }
+.opt-section-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 0 0 6px; }
+.opt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.opt-row + .opt-row { margin-top: 8px; }
+.opt-row-label { font-size: 13.5px; font-weight: 600; }
+.opt-row-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.seg { display: flex; background: var(--input-bg); border-radius: 9px; padding: 2px; gap: 2px; }
+.seg button { border: none; background: transparent; color: var(--text-muted); font-size: 12px; font-weight: 600; padding: 6px 9px; border-radius: 7px; cursor: pointer; font-family: inherit; }
 .seg button.active { background: #007AFF; color: #fff; }
-select { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 13.5px; padding: 8px 10px; font-family: inherit; }
-.pay-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-.pay-config-grid label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
-.pay-config-grid input, .pay-config-grid select { width: 100%; }
+select { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 9px; color: var(--text); font-size: 13px; padding: 7px 9px; font-family: inherit; }
+.pay-config { margin-top: 8px; }
+.pay-config label { font-size: 11px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
+.pay-config input { width: 100%; }
+.opt-slider-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.opt-slider-row input[type=range] { flex: 1; accent-color: #007AFF; }
+.opt-slider-val { font-size: 15px; font-weight: 800; color: #007AFF; width: 42px; text-align: right; }
+.opt-btn-stack button { margin-bottom: 7px; }
+.opt-btn-stack button:last-child { margin-bottom: 0; }
 
-.top-actions { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 10px; flex-wrap: wrap; }
-.pill-btn { background: var(--pill-bg); color: var(--text); border: none; border-radius: 20px; padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.pill-btn { background: var(--pill-bg); color: var(--text); border: none; border-radius: 18px; padding: 8px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .pill-btn:disabled { opacity: 0.4; cursor: default; }
 .pill-btn.danger { color: #FF3B30; }
 .pill-btn.confirm { background: #FF3B30; color: #fff; }
@@ -83,16 +89,16 @@ select { background: var(--input-bg); border: 1px solid var(--input-border); bor
 .panel h2 { font-size: 16.5px; font-weight: 700; margin: 0 0 2px; }
 .panel .hint { color: var(--text-muted); font-size: 12.5px; margin: 0 0 12px; }
 
-.sub-row { display: flex; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.sub-row { display: grid; grid-template-columns: 1fr 84px 30px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .sub-row:last-of-type { border-bottom: none; }
-.sub-row input[type=text] { flex: 1 1 140px; min-width: 0; }
-.sub-row input.money { width: 92px; }
+.sub-row input { min-width: 0; width: 100%; }
 
 input[type=text] { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 14px; padding: 9px 10px; font-family: inherit; }
-input[type=text]:focus { outline: none; border-color: #007AFF; }
+input[type=date] { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 13.5px; padding: 8px 9px; font-family: inherit; }
+input[type=text]:focus, input[type=date]:focus { outline: none; border-color: #007AFF; }
 input::placeholder { color: var(--text-muted); opacity: 0.7; }
 
-.icon-del { background: var(--input-bg); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0; }
+.icon-del { background: var(--input-bg); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 .icon-del:hover { background: #FFE5E3; color: #FF3B30; }
 
 .add-btn { margin-top: 10px; width: 100%; background: #EAF3FF; color: #007AFF; border: none; border-radius: 10px; padding: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
@@ -102,8 +108,8 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .mini-total b { color: var(--text); font-weight: 700; }
 
 .card-entry { background: var(--card-bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
-.card-entry-top { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
-.card-entry-top input[type=text] { flex: 1; font-weight: 600; }
+.card-entry-top { display: grid; grid-template-columns: 1fr 30px; gap: 8px; align-items: center; margin-bottom: 8px; }
+.card-entry-top input { min-width: 0; width: 100%; font-weight: 600; }
 .card-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)); gap: 8px; }
 .field-label { font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-bottom: 3px; display: block; }
 .card-fields input { width: 100%; }
@@ -113,12 +119,8 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .util-bar-fill.verde { background: #34C759; } .util-bar-fill.amarillo { background: #FF9500; } .util-bar-fill.rojo { background: #FF3B30; }
 .util-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
-.slider-row { display: flex; align-items: center; gap: 12px; }
-.slider-row input[type=range] { flex: 1; accent-color: #007AFF; }
-.slider-val { font-size: 17px; font-weight: 800; color: #007AFF; width: 46px; text-align: right; }
-
 .goal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-@media (max-width: 500px) { .goal-grid { grid-template-columns: 1fr; } }
+@media (max-width: 460px) { .goal-grid { grid-template-columns: 1fr; } }
 .goal-field label { font-size: 12px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
 .goal-field input { width: 100%; }
 .progress-track { height: 10px; background: var(--border); border-radius: 6px; overflow: hidden; margin-top: 4px; }
@@ -182,23 +184,16 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 "use strict";
 
 /* ---------- traducciones ---------- */
-const WEEKDAYS = {
-  es: ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"],
-  en: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
-};
-
 const I18N = {
   es: {
     brand: "Cuentas Claras",
-    subtitle: "Ingreso, pagos fijos, tarjetas y ahorro — todo en un solo lugar.",
+    subtitle: "Ingreso, pagos fijos, tarjetas y ahorro.",
     helloProfile: (n) => "Hola, " + n,
     optionsTitle: "Opciones", close: "Cerrar",
-    secPerfil: "Perfil", secIdioma: "Idioma", secMoneda: "Moneda", secTema: "Tema", secPago: "Frecuencia de pago", secDatos: "Datos",
+    secPerfil: "Perfil", secIdioma: "Idioma", secMoneda: "Moneda", secTema: "Tema", secPago: "Frecuencia de pago", secAhorroPct: "% a ahorrar", secDatos: "Datos",
     switchUser: "Cambiar de usuario",
     payMensual: "Mensual", payQuincenal: "Quincenal", paySemanal: "Semanal",
-    payDayMonthlyLbl: "Día de pago (1-31)",
-    quincena1DiaLbl: "Día quincena 1", quincena2DiaLbl: "Día quincena 2",
-    semanaDiaLbl: "Día de la semana",
+    ultimoPagoLbl: "Fecha de tu último pago",
     update: "Actualizar app", undo: "Deshacer", resetAll: "Restablecer todo",
     confirmResetMsg: "¿Borrar todos los datos de este usuario?", yesDelete: "Sí, borrar", cancel: "Cancelar",
     debesTotal: "Debes en total", disponibleMes: "Disponible este mes", ahorradoActual: "Ahorrado actual",
@@ -217,8 +212,7 @@ const I18N = {
     addCard: "+ Añadir tarjeta", totalMinimos: "Suma de pagos mínimos",
     saldoLbl: "Saldo", limiteLbl: "Límite", taeLbl: "TAE %", minimoLbl: "Mínimo",
     limiteOpcionalPh: "opcional", usoLimite: "Uso del límite: ",
-    ahorroPctTitle: "¿Qué % de lo que sobre quieres ahorrar?",
-    ahorroPctHint: "Se aplica sobre lo que queda tras pagos fijos y mínimos de tarjeta.",
+    ahorroPctTitle: "% de lo que sobre quieres ahorrar",
     tuAhorroTitle: "Tu ahorro", tuAhorroHint: "Cuánto tienes guardado y cuánto quieres llegar a tener.",
     ahorroActualLbl: "Ahorro actual", metaAhorroLbl: "Meta de ahorro",
     calcBtn: "Calcular mi mes",
@@ -254,15 +248,13 @@ const I18N = {
   },
   en: {
     brand: "Cuentas Claras",
-    subtitle: "Income, fixed bills, cards and savings — all in one place.",
+    subtitle: "Income, fixed bills, cards and savings.",
     helloProfile: (n) => "Hi, " + n,
     optionsTitle: "Options", close: "Close",
-    secPerfil: "Profile", secIdioma: "Language", secMoneda: "Currency", secTema: "Theme", secPago: "Pay frequency", secDatos: "Data",
+    secPerfil: "Profile", secIdioma: "Language", secMoneda: "Currency", secTema: "Theme", secPago: "Pay frequency", secAhorroPct: "% to save", secDatos: "Data",
     switchUser: "Switch user",
     payMensual: "Monthly", payQuincenal: "Biweekly", paySemanal: "Weekly",
-    payDayMonthlyLbl: "Pay day (1-31)",
-    quincena1DiaLbl: "Day of 1st pay", quincena2DiaLbl: "Day of 2nd pay",
-    semanaDiaLbl: "Day of week",
+    ultimoPagoLbl: "Date of your last payday",
     update: "Update app", undo: "Undo", resetAll: "Reset everything",
     confirmResetMsg: "Delete all data for this user?", yesDelete: "Yes, delete", cancel: "Cancel",
     debesTotal: "Total debt", disponibleMes: "Available this month", ahorradoActual: "Current savings",
@@ -281,8 +273,7 @@ const I18N = {
     addCard: "+ Add card", totalMinimos: "Sum of minimum payments",
     saldoLbl: "Balance", limiteLbl: "Limit", taeLbl: "APR %", minimoLbl: "Minimum",
     limiteOpcionalPh: "optional", usoLimite: "Limit usage: ",
-    ahorroPctTitle: "What % of what's left do you want to save?",
-    ahorroPctHint: "Applied to what's left after fixed bills and card minimums.",
+    ahorroPctTitle: "% of what's left to save",
     tuAhorroTitle: "Your savings", tuAhorroHint: "How much you have saved and how much you want to reach.",
     ahorroActualLbl: "Current savings", metaAhorroLbl: "Savings goal",
     calcBtn: "Calculate my month",
@@ -334,7 +325,8 @@ function sym() { return CURRENCY[state.currency] || "$"; }
 
 const ACTIVE_KEY = "cuentas-claras:perfil-activo";
 const SETTINGS_KEY = "cuentas-claras:ajustes";
-const dataKey = (id) => "cuentas-claras:datos-v3:" + id;
+const dataKeyV3 = (id) => "cuentas-claras:datos-v3:" + id;
+const dataKeyV2 = (id) => "cuentas-claras:datos-v2:" + id;
 
 const MESES_ES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 const MESES_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -353,17 +345,24 @@ function loadProfiles() { try { return JSON.parse(localStorage.getItem(PROFILES_
 function saveProfiles(list) { try { localStorage.setItem(PROFILES_KEY, JSON.stringify(list)); } catch (e) {} }
 function loadSettings() { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch (e) { return {}; } }
 function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme: state.theme, lang: state.lang, currency: state.currency })); } catch (e) {} }
-function loadUserData(id) { try { return JSON.parse(localStorage.getItem(dataKey(id))) || {}; } catch (e) { return {}; } }
+
+/* Carga con migración: intenta la llave actual (v3); si no hay nada, recupera datos guardados
+   antes bajo la llave anterior (v2) para que una actualización de la app nunca borre lo ya puesto. */
+function loadUserData(id) {
+  try {
+    let raw = localStorage.getItem(dataKeyV3(id));
+    if (!raw) raw = localStorage.getItem(dataKeyV2(id));
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
 function saveUserDataNow() {
   if (!state.activeProfileId) return;
   try {
-    localStorage.setItem(dataKey(state.activeProfileId), JSON.stringify({
+    localStorage.setItem(dataKeyV3(state.activeProfileId), JSON.stringify({
       ingreso: state.ingreso, subs: state.subs, cards: state.cards,
       savingsRate: state.savingsRate, ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, history: state.history,
-      payFrequency: state.payFrequency, payDayMonthly: state.payDayMonthly,
-      quincena1Dia: state.quincena1Dia, quincena1Monto: state.quincena1Monto,
-      quincena2Dia: state.quincena2Dia, quincena2Monto: state.quincena2Monto,
-      semanaDia: state.semanaDia, semanaMonto: state.semanaMonto,
+      payFrequency: state.payFrequency, ultimoPago: state.ultimoPago,
+      quincena1Monto: state.quincena1Monto, quincena2Monto: state.quincena2Monto, semanaMonto: state.semanaMonto,
     }));
     state.storageError = false;
   } catch (e) { state.storageError = true; }
@@ -383,8 +382,7 @@ const state = {
   showOptions: false,
 
   ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", history: [],
-  payFrequency: "mensual", payDayMonthly: "", quincena1Dia: "1", quincena1Monto: "", quincena2Dia: "16", quincena2Monto: "",
-  semanaDia: "5", semanaMonto: "",
+  payFrequency: "mensual", ultimoPago: "", quincena1Monto: "", quincena2Monto: "", semanaMonto: "",
   resultado: null, confirmReset: false, savedFlash: false, storageError: false,
 };
 LANG = state.lang;
@@ -398,10 +396,8 @@ function pushUndo() {
   undoStack.push(JSON.parse(JSON.stringify({
     subs: state.subs, cards: state.cards, ingreso: state.ingreso, savingsRate: state.savingsRate,
     ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, history: state.history,
-    payFrequency: state.payFrequency, payDayMonthly: state.payDayMonthly,
-    quincena1Dia: state.quincena1Dia, quincena1Monto: state.quincena1Monto,
-    quincena2Dia: state.quincena2Dia, quincena2Monto: state.quincena2Monto,
-    semanaDia: state.semanaDia, semanaMonto: state.semanaMonto,
+    payFrequency: state.payFrequency, ultimoPago: state.ultimoPago,
+    quincena1Monto: state.quincena1Monto, quincena2Monto: state.quincena2Monto, semanaMonto: state.semanaMonto,
   })));
   if (undoStack.length > 15) undoStack.shift();
 }
@@ -423,17 +419,15 @@ function enterProfile(id) {
   state.metaAhorro = d.metaAhorro != null ? d.metaAhorro : "";
   state.history = d.history || [];
   state.payFrequency = d.payFrequency || "mensual";
-  state.payDayMonthly = d.payDayMonthly != null ? d.payDayMonthly : "";
-  state.quincena1Dia = d.quincena1Dia != null ? d.quincena1Dia : "1";
+  state.ultimoPago = d.ultimoPago || "";
   state.quincena1Monto = d.quincena1Monto != null ? d.quincena1Monto : "";
-  state.quincena2Dia = d.quincena2Dia != null ? d.quincena2Dia : "16";
   state.quincena2Monto = d.quincena2Monto != null ? d.quincena2Monto : "";
-  state.semanaDia = d.semanaDia != null ? d.semanaDia : "5";
   state.semanaMonto = d.semanaMonto != null ? d.semanaMonto : "";
   state.resultado = null; state.confirmReset = false; state.showOptions = false;
   undoStack.length = 0;
   state.screen = "app";
   render();
+  saveUserDataNow();
 }
 function createProfile() {
   const name = (state.newProfileName || "").trim();
@@ -454,7 +448,7 @@ function cancelDeleteProfile() { state.confirmDeleteProfileId = null; render(); 
 function deleteProfile(id) {
   state.profiles = state.profiles.filter((p) => p.id !== id);
   saveProfiles(state.profiles);
-  try { localStorage.removeItem(dataKey(id)); } catch (e) {}
+  try { localStorage.removeItem(dataKeyV3(id)); localStorage.removeItem(dataKeyV2(id)); } catch (e) {}
   state.confirmDeleteProfileId = null;
   if (state.activeProfileId === id) { state.activeProfileId = null; state.screen = "selector"; }
   render();
@@ -476,15 +470,14 @@ function resetAll() {
   pushUndo();
   state.ingreso = ""; state.subs = []; state.cards = []; state.savingsRate = 20;
   state.ahorroActual = ""; state.metaAhorro = ""; state.resultado = null; state.confirmReset = false;
-  state.payFrequency = "mensual"; state.payDayMonthly = ""; state.quincena1Monto = ""; state.quincena2Monto = ""; state.semanaMonto = "";
+  state.payFrequency = "mensual"; state.ultimoPago = ""; state.quincena1Monto = ""; state.quincena2Monto = ""; state.semanaMonto = "";
   scheduleSave(); rerenderPreservingFocus();
 }
 function removeHistory(key) { pushUndo(); state.history = state.history.filter((x) => x.month !== key); scheduleSave(); rerenderPreservingFocus(); }
 
 /* ---------- ingreso según frecuencia de pago ---------- */
+function parseISODate(s) { if (!s) return null; const d = new Date(s + "T00:00:00"); return isNaN(d) ? null : d; }
 function occurrenciasSemana(dia) {
-  if (dia === "" || dia == null) return 0;
-  dia = Number(dia);
   const now = new Date();
   const year = now.getFullYear(), month = now.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -492,37 +485,27 @@ function occurrenciasSemana(dia) {
   for (let d = 1; d <= daysInMonth; d++) { if (new Date(year, month, d).getDay() === dia) count++; }
   return count;
 }
+function semanaOcurrenciasEsteMes() {
+  const last = parseISODate(state.ultimoPago);
+  if (!last) return 0;
+  return occurrenciasSemana(last.getDay());
+}
 function ingresoActivo() {
   if (state.payFrequency === "quincenal") return toNum(state.quincena1Monto) + toNum(state.quincena2Monto);
-  if (state.payFrequency === "semanal") return toNum(state.semanaMonto) * occurrenciasSemana(state.semanaDia);
+  if (state.payFrequency === "semanal") return toNum(state.semanaMonto) * semanaOcurrenciasEsteMes();
   return toNum(state.ingreso);
 }
 function nextPayInfo() {
+  const last = parseISODate(state.ultimoPago);
+  if (!last) return null;
   const now = new Date(); now.setHours(0, 0, 0, 0);
-  let candidates = [];
-  function addMonthlyDay(day) {
-    if (!(day >= 1 && day <= 31)) return;
-    candidates.push(new Date(now.getFullYear(), now.getMonth(), day));
-    candidates.push(new Date(now.getFullYear(), now.getMonth() + 1, day));
-  }
+  let next = new Date(last);
   if (state.payFrequency === "mensual") {
-    addMonthlyDay(Number(state.payDayMonthly) || 0);
-  } else if (state.payFrequency === "quincenal") {
-    addMonthlyDay(Number(state.quincena1Dia) || 0);
-    addMonthlyDay(Number(state.quincena2Dia) || 0);
-  } else if (state.payFrequency === "semanal") {
-    if (state.semanaDia !== "" && state.semanaDia != null) {
-      const dia = Number(state.semanaDia);
-      for (let i = 0; i < 14; i++) {
-        const d = new Date(now); d.setDate(now.getDate() + i);
-        if (d.getDay() === dia) { candidates.push(d); break; }
-      }
-    }
+    while (next < now) next.setMonth(next.getMonth() + 1);
+  } else {
+    const interval = state.payFrequency === "semanal" ? 7 : 15;
+    while (next < now) next.setDate(next.getDate() + interval);
   }
-  candidates = candidates.filter((d) => d instanceof Date && !isNaN(d) && d >= now);
-  candidates.sort((a, b) => a - b);
-  if (candidates.length === 0) return null;
-  const next = candidates[0];
   const diffDays = Math.round((next - now) / 86400000);
   return { date: next, diffDays };
 }
@@ -664,8 +647,7 @@ function renderSelector() {
 }
 
 function renderOptionsSheet() {
-  const weekdays = WEEKDAYS[LANG];
-  let h = '<div class="options-overlay" data-action="closeOptionsBackdrop">';
+  let h = '<div class="options-overlay">';
   h += '<div class="options-sheet">';
   h += '<div class="options-head"><h2>' + t("optionsTitle") + '</h2><button class="options-close" data-action="toggleOptions">×</button></div>';
 
@@ -673,13 +655,8 @@ function renderOptionsSheet() {
   h += '<div class="opt-section"><p class="opt-section-title">' + t("secPerfil") + '</p>';
   h += '<div class="opt-row"><span class="opt-row-label">' + esc(activeProfile ? activeProfile.nombre : "") + '</span><button class="pill-btn" data-action="switchUser">' + t("switchUser") + '</button></div></div>';
 
-  h += '<div class="opt-section"><p class="opt-section-title">' + t("secIdioma") + '</p>';
-  h += '<div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div></div>';
-
-  h += '<div class="opt-section"><p class="opt-section-title">' + t("secMoneda") + '</p>';
-  h += '<div class="opt-row"><span class="opt-row-label">' + t("secMoneda") + '</span><div class="seg"><button class="' + (state.currency === "usd" ? "active" : "") + '" data-action="setCurUsd">$ USD</button><button class="' + (state.currency === "eur" ? "active" : "") + '" data-action="setCurEur">€ EUR</button></div></div></div>';
-
-  h += '<div class="opt-section"><p class="opt-section-title">' + t("secTema") + '</p>';
+  h += '<div class="opt-section"><div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div>';
+  h += '<div class="opt-row"><span class="opt-row-label">' + t("secMoneda") + '</span><div class="seg"><button class="' + (state.currency === "usd" ? "active" : "") + '" data-action="setCurUsd">$</button><button class="' + (state.currency === "eur" ? "active" : "") + '" data-action="setCurEur">€</button></div></div>';
   h += '<div class="opt-row"><span class="opt-row-label">' + t("secTema") + '</span><div class="seg"><button class="' + (state.theme === "light" ? "active" : "") + '" data-action="setThemeLight">☀️</button><button class="' + (state.theme === "dark" ? "active" : "") + '" data-action="setThemeDark">🌙</button></div></div></div>';
 
   h += '<div class="opt-section"><p class="opt-section-title">' + t("secPago") + '</p>';
@@ -688,31 +665,22 @@ function renderOptionsSheet() {
   h += '<button style="flex:1;" class="' + (state.payFrequency === "quincenal" ? "active" : "") + '" data-action="setPayQuincenal">' + t("payQuincenal") + '</button>';
   h += '<button style="flex:1;" class="' + (state.payFrequency === "semanal" ? "active" : "") + '" data-action="setPaySemanal">' + t("paySemanal") + '</button>';
   h += '</div>';
-
-  if (state.payFrequency === "mensual") {
-    h += '<div class="pay-config-grid"><div><label>' + t("payDayMonthlyLbl") + '</label><input type="text" inputmode="numeric" id="pay-day-monthly" data-scope="payDayMonthly" value="' + esc(state.payDayMonthly) + '"></div></div>';
-  } else if (state.payFrequency === "quincenal") {
-    h += '<div class="pay-config-grid">';
-    h += '<div><label>' + t("quincena1DiaLbl") + '</label><input type="text" inputmode="numeric" id="q1-dia" data-scope="quincena1Dia" value="' + esc(state.quincena1Dia) + '"></div>';
-    h += '<div><label>' + t("quincena2DiaLbl") + '</label><input type="text" inputmode="numeric" id="q2-dia" data-scope="quincena2Dia" value="' + esc(state.quincena2Dia) + '"></div>';
-    h += '</div>';
-  } else if (state.payFrequency === "semanal") {
-    h += '<div class="pay-config-grid"><div style="grid-column:1/-1;"><label>' + t("semanaDiaLbl") + '</label><select id="semana-dia" data-scope="semanaDia">';
-    weekdays.forEach((w, i) => { h += '<option value="' + i + '"' + (Number(state.semanaDia) === i ? " selected" : "") + '>' + esc(w) + '</option>'; });
-    h += '</select></div></div>';
-  }
+  h += '<div class="pay-config"><label>' + t("ultimoPagoLbl") + '</label><input type="date" id="ultimo-pago" data-scope="ultimoPago" value="' + esc(state.ultimoPago) + '"></div>';
   h += '</div>';
 
-  h += '<div class="opt-section"><p class="opt-section-title">' + t("secDatos") + '</p>';
-  h += '<button class="pill-btn wide update" data-action="actualizar" style="margin-bottom:8px;">' + t("update") + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button>';
-  h += '<button class="pill-btn wide" data-action="undo"' + (undoStack.length === 0 ? " disabled" : "") + ' style="margin-bottom:8px;">' + t("undo") + '</button>';
+  h += '<div class="opt-section"><p class="opt-section-title">' + t("secAhorroPct") + '</p>';
+  h += '<div class="opt-slider-row"><input type="range" min="0" max="100" id="savings-rate-input" data-scope="savingsRate" value="' + state.savingsRate + '"><div class="opt-slider-val">' + state.savingsRate + '%</div></div></div>';
+
+  h += '<div class="opt-section"><p class="opt-section-title">' + t("secDatos") + '</p><div class="opt-btn-stack">';
+  h += '<button class="pill-btn wide update" data-action="actualizar">' + t("update") + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button>';
+  h += '<button class="pill-btn wide" data-action="undo"' + (undoStack.length === 0 ? " disabled" : "") + '>' + t("undo") + '</button>';
   if (!state.confirmReset) {
     h += '<button class="pill-btn wide danger" data-action="confirmReset">' + t("resetAll") + '</button>';
   } else {
-    h += '<p style="font-size:12.5px;color:var(--text-muted);text-align:center;margin:6px 0;">' + t("confirmResetMsg") + '</p>';
+    h += '<p style="font-size:12px;color:var(--text-muted);text-align:center;margin:4px 0;">' + t("confirmResetMsg") + '</p>';
     h += '<div style="display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="resetAll">' + t("yesDelete") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelReset">' + t("cancel") + '</button></div>';
   }
-  h += '</div>';
+  h += '</div></div>';
 
   h += '</div></div>';
   return h;
@@ -726,9 +694,9 @@ function renderApp() {
   const np = nextPayInfo();
 
   let html = '<div class="page"><div class="wrap">';
-  html += '<button class="options-fab" data-action="toggleOptions">⚙️' + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button>';
-  html += '<h1>' + t("brand") + '</h1><p class="subtitle">' + t("subtitle") + '</p>';
+  html += '<div class="app-header"><div class="app-header-text"><h1>' + t("brand") + '</h1><p class="subtitle">' + t("subtitle") + '</p>';
   if (activeProfile) html += '<p class="profile-line">' + esc(t("helloProfile")(activeProfile.nombre)) + '</p>';
+  html += '</div><button class="options-btn" data-action="toggleOptions">⚙️' + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button></div>';
 
   html += '<div class="summary">';
   html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
@@ -742,13 +710,13 @@ function renderApp() {
     html += '<input type="text" inputmode="decimal" placeholder="0" id="ingreso-input" data-scope="ingreso" value="' + esc(state.ingreso) + '" style="width:100%;font-size:20px;font-weight:700;">';
   } else if (state.payFrequency === "quincenal") {
     html += '<div class="goal-grid">';
-    html += '<div class="goal-field"><label>' + t("ingresoQuincena1Lbl") + (state.quincena1Dia ? " (" + esc(state.quincena1Dia) + ")" : "") + '</label><input type="text" inputmode="decimal" placeholder="0" id="q1-monto" data-scope="quincena1Monto" value="' + esc(state.quincena1Monto) + '"></div>';
-    html += '<div class="goal-field"><label>' + t("ingresoQuincena2Lbl") + (state.quincena2Dia ? " (" + esc(state.quincena2Dia) + ")" : "") + '</label><input type="text" inputmode="decimal" placeholder="0" id="q2-monto" data-scope="quincena2Monto" value="' + esc(state.quincena2Monto) + '"></div>';
+    html += '<div class="goal-field"><label>' + t("ingresoQuincena1Lbl") + '</label><input type="text" inputmode="decimal" placeholder="0" id="q1-monto" data-scope="quincena1Monto" value="' + esc(state.quincena1Monto) + '"></div>';
+    html += '<div class="goal-field"><label>' + t("ingresoQuincena2Lbl") + '</label><input type="text" inputmode="decimal" placeholder="0" id="q2-monto" data-scope="quincena2Monto" value="' + esc(state.quincena2Monto) + '"></div>';
     html += '</div>';
     html += '<div class="mini-total"><span>' + t("totalCalculado") + '</span><b>' + sym() + fmt0(t2.ingresoEfectivo) + '</b></div>';
   } else if (state.payFrequency === "semanal") {
     html += '<input type="text" inputmode="decimal" placeholder="0" id="semana-monto" data-scope="semanaMonto" value="' + esc(state.semanaMonto) + '" style="width:100%;font-size:20px;font-weight:700;">';
-    const veces = occurrenciasSemana(state.semanaDia);
+    const veces = semanaOcurrenciasEsteMes();
     html += '<div class="mini-total"><span>' + t("vecesEsteMes")(veces) + '</span><b>' + sym() + fmt0(t2.ingresoEfectivo) + '</b></div>';
   }
   html += '</div>';
@@ -757,7 +725,7 @@ function renderApp() {
   state.subs.forEach((s) => {
     html += '<div class="sub-row">';
     html += '<input type="text" placeholder="' + t("subNombrePh") + '" id="sub-nombre-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="nombre" value="' + esc(s.nombre) + '">';
-    html += '<input class="money" type="text" inputmode="decimal" placeholder="' + sym() + '" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '">';
+    html += '<input type="text" inputmode="decimal" placeholder="' + sym() + '" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '">';
     html += '<button class="icon-del" data-action="removeSub" data-id="' + s.id + '">×</button></div>';
   });
   if (state.subs.length === 0) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
@@ -789,9 +757,6 @@ function renderApp() {
   html += '<button class="add-btn" data-action="addCard">' + t("addCard") + '</button>';
   html += '<div class="mini-total"><span>' + t("totalMinimos") + '</span><b>' + sym() + fmt0(t2.totalMinimos) + '</b></div></div>';
 
-  html += '<div class="panel"><h2>' + t("ahorroPctTitle") + '</h2><p class="hint">' + t("ahorroPctHint") + '</p>';
-  html += '<div class="slider-row"><input type="range" min="0" max="100" id="savings-rate-input" data-scope="savingsRate" value="' + state.savingsRate + '"><div class="slider-val">' + state.savingsRate + '%</div></div></div>';
-
   html += '<div class="panel"><h2>' + t("tuAhorroTitle") + '</h2><p class="hint">' + t("tuAhorroHint") + '</p>';
   html += '<div class="goal-grid">';
   html += '<div class="goal-field"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '"></div>';
@@ -801,6 +766,7 @@ function renderApp() {
     html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
     html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
   }
+  html += '<p class="hint" style="margin-top:10px;">' + t("ahorroPctTitle") + ': <b>' + state.savingsRate + '%</b> — <span style="color:#007AFF;cursor:pointer;font-weight:600;" data-action="toggleOptions">⚙️ ' + t("optionsTitle") + '</span></p>';
   html += '</div>';
 
   html += '<button class="calc-btn" data-action="calcular">' + t("calcBtn") + '</button>';
@@ -876,7 +842,6 @@ function sanitizeNum(str) {
   if (parts.length > 2) str = parts[0] + "." + parts.slice(1).join("");
   return str;
 }
-function sanitizeInt(str) { return String(str).replace(/[^0-9]/g, "").slice(0, 2); }
 
 root.addEventListener("input", (e) => {
   const el = e.target;
@@ -890,10 +855,7 @@ root.addEventListener("input", (e) => {
   if (scope === "quincena1Monto") { state.quincena1Monto = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "quincena2Monto") { state.quincena2Monto = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "semanaMonto") { state.semanaMonto = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
-  if (scope === "payDayMonthly") { state.payDayMonthly = sanitizeInt(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
-  if (scope === "quincena1Dia") { state.quincena1Dia = sanitizeInt(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
-  if (scope === "quincena2Dia") { state.quincena2Dia = sanitizeInt(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
-  if (scope === "semanaDia") { state.semanaDia = el.value; scheduleSave(); render(); return; }
+  if (scope === "ultimoPago") { state.ultimoPago = el.value; scheduleSave(); render(); return; }
   if (scope === "sub") {
     const item = state.subs.find((x) => x.id === el.dataset.id);
     if (!item) return;
@@ -911,6 +873,9 @@ root.addEventListener("input", (e) => {
 root.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target && e.target.id === "new-profile-input") createProfile(); });
 
 root.addEventListener("click", (e) => {
+  if (e.target.classList && e.target.classList.contains("options-overlay")) {
+    state.showOptions = false; render(); return;
+  }
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
   const action = btn.dataset.action;
@@ -935,7 +900,6 @@ root.addEventListener("click", (e) => {
     setPayQuincenal: () => setPayFrequency("quincenal"),
     setPaySemanal: () => setPayFrequency("semanal"),
     toggleOptions: toggleOptions,
-    closeOptionsBackdrop: () => { state.showOptions = false; render(); },
     enterProfile: () => enterProfile(id),
     askDeleteProfile: () => askDeleteProfile(id),
     cancelDeleteProfile: cancelDeleteProfile,
