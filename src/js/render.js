@@ -12,8 +12,10 @@ function renderSelector() {
   html += '<h2 style="margin-bottom:2px;">' + t("bancoNubeTitle") + '</h2><p class="hint" style="margin-bottom:10px;">' + t("bancoNubeHint") + '</p>';
   if (state.cloudErrorMsg) html += '<p class="opt-row-sub" style="color:#FF3B30;margin-bottom:8px;">' + esc(state.cloudErrorMsg) + '</p>';
   if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
-  html += '<button class="pay-trigger" style="background:#3D5AFE;margin-top:0;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + t("conectarBancoPlaidBtn") + '</button>';
+  if (state.cloudBusy) html += '<p class="opt-row-sub" style="margin-bottom:8px;">' + t("esperaServidorMsg") + '</p>';
+  html += '<button class="pay-trigger" style="background:#3D5AFE;margin-top:0;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
   html += '</div>';
+  html += '<p class="opt-row-sub" style="text-align:center;margin:6px 0 -4px;">v' + APP_VERSION.replace("v", "") + ' \u00b7 <button data-action="actualizar" style="background:none;border:none;color:#3D5AFE;font:inherit;padding:0;cursor:pointer;">' + t("update") + '</button></p>';
   state.profiles.forEach((p) => {
     const initial = (p.nombre || "?").trim().charAt(0).toUpperCase();
     if (state.confirmDeleteProfileId === p.id) {
@@ -286,7 +288,7 @@ function renderApp() {
       if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
 
       if (!state.authUser) {
-        html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + t("conectarBancoPlaidBtn") + '</button>';
+        html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
         html += '<button class="delete-link" style="display:block;margin:8px auto 0;" data-action="resetConexionNube">' + t("restablecerConexionBtn") + '</button>';
       } else {
 
@@ -301,7 +303,7 @@ function renderApp() {
         }
       });
 
-      html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + t("conectarBancoPlaidBtn") + '</button>';
+      html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
       if (state.cloudInstitutions.length > 0) html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="actualizarDatosNube"' + (state.cloudBusy ? " disabled" : "") + '>' + t("actualizarNubeBtn") + '</button>';
       if (state.cloudLastSync) html += '<p class="opt-row-sub" style="text-align:center;margin-top:8px;">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(state.cloudLastSync).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
 
