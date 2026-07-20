@@ -391,6 +391,7 @@ const toNum = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
+const APP_VERSION = "v13";
 let uidCounter = 1;
 const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
 
@@ -772,14 +773,16 @@ function renderSelector() {
   html += '<button class="pill-btn" data-action="toggleLang">' + (state.lang === "es" ? "EN" : "ES") + '</button>';
   html += '<button class="pill-btn" data-action="toggleCurrency">' + (state.currency === "usd" ? "€" : "$") + '</button>';
   html += '<button class="pill-btn" data-action="toggleTheme">' + (state.theme === "dark" ? "☀️" : "🌙") + '</button>';
-  html += '</div></div></div>';
+  html += '</div>';
+  html += '<p class="save-note">' + APP_VERSION + '</p>';
+  html += '</div></div>';
   root.innerHTML = html;
 }
 
 function renderOptionsSheet() {
   let h = '<div class="options-overlay">';
   h += '<div class="options-sheet">';
-  h += '<div class="options-head"><h2>' + t("optionsTitle") + '</h2><button class="options-close" data-action="toggleOptions">×</button></div>';
+  h += '<div class="options-head"><h2>' + t("optionsTitle") + ' <span style="font-size:11px;color:var(--text-muted);font-weight:600;">' + APP_VERSION + '</span></h2><button class="options-close" data-action="toggleOptions">×</button></div>';
 
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
   h += '<div class="opt-section"><p class="opt-section-title">' + t("secPerfil") + '</p>';
@@ -936,7 +939,7 @@ function renderApp() {
 
     if (state.resultado) html += '<button class="save-month-btn" data-action="guardarMes">' + t("guardarMes") + '</button>';
     if (state.savedFlash) html += '<div class="flash">' + t("mesGuardado") + '</div>';
-    html += '<p class="save-note">' + (state.storageError ? t("saveNoteErr") : t("saveNoteOk")) + '</p>';
+    html += '<p class="save-note">' + (state.storageError ? t("saveNoteErr") : t("saveNoteOk")) + ' · ' + APP_VERSION + '</p>';
   }
 
   if (tab === "pagos") {
