@@ -450,7 +450,7 @@ const toNum = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v20";
+const APP_VERSION = "v21";
 let uidCounter = 1;
 const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
 
@@ -525,7 +525,7 @@ const state = {
   confirmDeleteSubId: null, confirmDeleteCardId: null, confirmDeleteHistoryKey: null, confirmDeleteLoanId: null,
   editingSubs: false,
   editingIngreso: false, editingAhorro: false, editingCards: false, editingLoans: false,
-  payingTarget: null, payFormSource: "ahorro", payFormMonto: "", payFlash: false, autoPagoNotif: null,
+  payingTarget: null, payingSubId: null, payFormSource: "ahorro", payFormMonto: "", payFlash: false, autoPagoNotif: null,
   expandedCardIds: {},
 
   ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", debito: "", history: [],
@@ -572,7 +572,7 @@ function enterProfile(id) {
   state.ingresosLog = d.ingresosLog || [];
   state.loans = d.loans || [];
   state.resultado = null; state.confirmReset = false; state.showOptions = false;
-  state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
+  state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payingSubId = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
   state.autoPagoNotif = null;
   processAutoPayments();
   undoStack.length = 0;
@@ -621,9 +621,38 @@ function toggleEditSubs() { state.editingSubs = !state.editingSubs; state.confir
 function toggleSubPagado(id) {
   const s = state.subs.find((x) => x.id === id);
   if (!s) return;
-  const mk = monthKey();
-  s.pagadoMes = s.pagadoMes === mk ? null : mk;
-  scheduleSave(); render();
+  if (s.pagadoMes === monthKey()) {
+    pushUndo();
+    const monto = toNum(s.pagadoMonto);
+    if (monto > 0) {
+      if (s.pagadoFuente === "debito") state.debito = String(toNum(state.debito) + monto);
+      else state.ahorroActual = String(toNum(state.ahorroActual) + monto);
+    }
+    s.pagadoMes = null; s.pagadoFuente = null; s.pagadoMonto = null;
+    scheduleSave(); rerenderPreservingFocus();
+  } else {
+    state.payingSubId = id;
+    state.payFormSource = toNum(state.debito) >= toNum(state.ahorroActual) ? "debito" : "ahorro";
+    state.payFormMonto = String(toNum(s.monto));
+    render();
+  }
+}
+function cancelPagoSub() { state.payingSubId = null; state.payFormMonto = ""; render(); }
+function confirmPagoSub() {
+  const s = state.subs.find((x) => x.id === state.payingSubId);
+  if (!s) return;
+  const monto = toNum(state.payFormMonto);
+  if (monto <= 0) return;
+  pushUndo();
+  if (state.payFormSource === "debito") state.debito = String(Math.max(toNum(state.debito) - monto, 0));
+  else state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
+  s.pagadoMes = monthKey();
+  s.pagadoFuente = state.payFormSource;
+  s.pagadoMonto = String(monto);
+  state.payingSubId = null;
+  state.payFormMonto = "";
+  scheduleSave();
+  rerenderPreservingFocus();
 }
 function toggleEditIngreso() { state.editingIngreso = !state.editingIngreso; render(); }
 function addIngresoEntry() { state.ingresosLog.push({ id: uid(), monto: "", month: monthKey() }); scheduleSave(); rerenderPreservingFocus(); }
@@ -756,7 +785,7 @@ function resetAll() {
   state.ingreso = ""; state.subs = []; state.cards = []; state.savingsRate = 20;
   state.ahorroActual = ""; state.metaAhorro = ""; state.debito = ""; state.resultado = null; state.confirmReset = false;
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.ingresosLog = []; state.loans = [];
-  state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
+  state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payingSubId = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
   scheduleSave(); rerenderPreservingFocus();
 }
 function askDeleteHistory(key) { state.confirmDeleteHistoryKey = key; render(); }
@@ -1238,7 +1267,21 @@ function renderApp() {
         html += '</div>';
       } else {
         const pagado = s.pagadoMes === monthKey();
-        html += '<div class="sub-row-locked"><span class="locked-name" style="display:flex;align-items:center;gap:8px;"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + s.id + '">' + (pagado ? "\\u2713" : "") + '</button>' + (CATEGORY_ICON[s.categoria] || CATEGORY_ICON.otro) + ' ' + esc(s.nombre || t("subNombrePh")) + '</span><span class="locked-amount"' + (pagado ? ' style="text-decoration:line-through;opacity:0.5;"' : '') + '>' + sym() + fmt0(toNum(s.monto)) + '</span></div>';
+        if (state.payingSubId === s.id) {
+          html += '<div class="pay-form" style="margin:8px 0;">';
+          html += '<p class="opt-row-sub" style="margin-bottom:6px;">' + esc(s.nombre || t("subNombrePh")) + ' \u00b7 ' + t("pagarDesdeLbl") + '</p>';
+          html += '<div class="seg" style="width:100%;">';
+          html += '<button style="flex:1;" class="' + (state.payFormSource === "ahorro" ? "active" : "") + '" data-action="setPagoSourceAhorro">' + t("ahorroActualLbl") + ' ' + sym() + fmt0(toNum(state.ahorroActual)) + '</button>';
+          html += '<button style="flex:1;" class="' + (state.payFormSource === "debito" ? "active" : "") + '" data-action="setPagoSourceDebito">' + t("debitoLbl") + ' ' + sym() + fmt0(toNum(state.debito)) + '</button>';
+          html += '</div>';
+          html += '<input type="text" inputmode="decimal" placeholder="0" id="pago-sub-monto-' + s.id + '" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
+          html += '<div style="display:flex;gap:8px;margin-top:8px;">';
+          html += '<button class="pill-btn confirm" style="flex:1;" data-action="confirmPagoSub">' + t("confirmarPago") + '</button>';
+          html += '<button class="pill-btn" style="flex:1;" data-action="cancelPagoSub">' + t("cancel") + '</button>';
+          html += '</div></div>';
+        } else {
+          html += '<div class="sub-row-locked"><span class="locked-name" style="display:flex;align-items:center;gap:8px;"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + s.id + '">' + (pagado ? "\u2713" : "") + '</button>' + (CATEGORY_ICON[s.categoria] || CATEGORY_ICON.otro) + ' ' + esc(s.nombre || t("subNombrePh")) + '</span><span class="locked-amount"' + (pagado ? ' style="text-decoration:line-through;opacity:0.5;"' : '') + '>' + sym() + fmt0(toNum(s.monto)) + '</span></div>';
+        }
       }
     });
     if (state.subs.length === 0 && !state.editingSubs) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
@@ -1472,7 +1515,7 @@ root.addEventListener("click", (e) => {
     cancelReset: () => { state.confirmReset = false; render(); },
     resetAll: resetAll,
     addSub: addSub, removeSub: () => removeSub(id), askDeleteSub: () => askDeleteSub(id), cancelDeleteSub: cancelDeleteSub, toggleEditSubs: toggleEditSubs,
-    toggleSubPagado: () => toggleSubPagado(id),
+    toggleSubPagado: () => toggleSubPagado(id), confirmPagoSub: confirmPagoSub, cancelPagoSub: cancelPagoSub,
     addSubPreset: () => addSubPreset(id),
     toggleEditIngreso: toggleEditIngreso, toggleEditAhorro: toggleEditAhorro, toggleEditCards: toggleEditCards,
     addIngresoEntry: addIngresoEntry, removeIngresoEntry: () => removeIngresoEntry(id),
