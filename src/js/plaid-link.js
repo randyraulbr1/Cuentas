@@ -1,0 +1,86 @@
+"use strict";
+
+let plaidScriptPromise = null;
+function loadPlaidScript() {
+  if (window.Plaid) return Promise.resolve();
+  if (plaidScriptPromise) return plaidScriptPromise;
+  plaidScriptPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.plaid.com/link/v2/stable/link-initialize.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("no-plaid-script"));
+    document.head.appendChild(script);
+  });
+  return plaidScriptPromise;
+}
+
+async function iniciarConectarBanco() {
+  state.cloudErrorMsg = "";
+  state.cloudBusy = true;
+  render();
+
+  const linkRes = await apiCreateLinkToken();
+  if (!linkRes.ok) {
+    state.cloudBusy = false;
+    state.cloudErrorMsg = linkRes.error;
+    render();
+    return;
+  }
+
+  try {
+    await loadPlaidScript();
+  } catch (e) {
+    state.cloudBusy = false;
+    state.cloudErrorMsg = t("apiErrorPlaidScript");
+    render();
+    return;
+  }
+
+  state.cloudBusy = false;
+  render();
+
+  const handler = window.Plaid.create({
+    token: linkRes.data.link_token,
+    onSuccess: async (public_token) => {
+      state.cloudBusy = true; state.cloudErrorMsg = ""; render();
+      const exch = await apiExchangePublicToken(public_token);
+      if (!exch.ok) { state.cloudBusy = false; state.cloudErrorMsg = exch.error; render(); return; }
+      const sync = await apiSyncTransactions();
+      if (!sync.ok) { state.cloudBusy = false; state.cloudErrorMsg = sync.error; render(); return; }
+      await refrescarDatosNube();
+      state.cloudBusy = false;
+      state.cloudFlash = t("bancoConectadoMsg");
+      render();
+      setTimeout(() => { state.cloudFlash = ""; rerenderPreservingFocus(); }, 2200);
+    },
+    onExit: (err) => {
+      if (err) { state.cloudErrorMsg = t("apiErrorPlaidExit"); render(); }
+    },
+  });
+  handler.open();
+}
+
+async function actualizarDatosNube() {
+  state.cloudErrorMsg = "";
+  state.cloudBusy = true;
+  render();
+  const sync = await apiSyncTransactions();
+  if (!sync.ok) { state.cloudBusy = false; state.cloudErrorMsg = sync.error; render(); return; }
+  const r = await refrescarDatosNube();
+  state.cloudBusy = false;
+  if (!r.ok) state.cloudErrorMsg = r.error;
+  else { state.cloudFlash = t("datosActualizadosMsg"); setTimeout(() => { state.cloudFlash = ""; rerenderPreservingFocus(); }, 2200); }
+  render();
+}
+
+function askDisconnectBank(plaidItemId) { state.confirmDisconnectId = plaidItemId; render(); }
+function cancelDisconnectBank() { state.confirmDisconnectId = null; render(); }
+async function confirmDisconnectBank(plaidItemId) {
+  state.cloudBusy = true; render();
+  const r = await apiDisconnectBank(plaidItemId, false);
+  state.confirmDisconnectId = null;
+  if (!r.ok) { state.cloudBusy = false; state.cloudErrorMsg = r.error; render(); return; }
+  await refrescarDatosNube();
+  state.cloudBusy = false;
+  render();
+}

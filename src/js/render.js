@@ -48,6 +48,20 @@ function renderConsentimientoSheet() {
   return h;
 }
 
+function renderTxChip(categoria) {
+  const c = categoriaIconoColor(categoria);
+  return '<div class="tx-chip" style="background:' + c.color + ';">' + icon(c.icon) + '</div>';
+}
+function renderTxRow(descripcion, categoria, monto, fecha, rightExtraHtml) {
+  const positivo = toNum(monto) > 0;
+  let h = '<div class="history-row"><div class="tx-row">';
+  h += renderTxChip(categoria);
+  h += '<div class="tx-row-main"><div class="tx-row-top"><span class="tx-row-name">' + esc(descripcion) + '</span><span class="locked-amount" style="color:' + (positivo ? "#34C759" : "var(--text)") + ';white-space:nowrap;">' + (positivo ? "+" : "\u2212") + sym() + fmt0(Math.abs(toNum(monto))) + '</span></div>';
+  h += '<div class="tx-row-cat">' + esc(fecha || "") + (categoria ? " \u00b7 " + t("cat_" + categoria) : "") + '</div></div>';
+  h += '</div>' + (rightExtraHtml || "") + '</div>';
+  return h;
+}
+
 function renderExportSheet() {
   const json = JSON.stringify(buildExportData(), null, 2);
   let h = '<div class="options-overlay">';
@@ -117,6 +131,20 @@ function renderOptionsSheet() {
     h += '<div style="display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="resetAll">' + t("yesDelete") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelReset">' + t("cancel") + '</button></div>';
   }
   h += '</div></div>';
+
+  h += '<div class="opt-section"><p class="opt-section-title">' + t("secNube") + '</p>';
+  h += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("apiBaseUrlLbl") + '</label><input type="text" placeholder="https://tu-servidor.onrender.com" id="api-base-url" data-scope="apiBaseUrl" value="' + esc(state.apiBaseUrl) + '" style="width:100%;font-size:12.5px;"></div>';
+  if (state.authUser) {
+    h += '<div class="opt-row"><span class="opt-row-label">' + esc(state.authUser.email) + '</span><button class="pill-btn" data-action="apiLogout">' + t("cerrarSesion") + '</button></div>';
+    h += '<button class="pill-btn wide danger" style="margin-top:10px;" data-action="apiDeleteCloudAccount">' + t("eliminarCuentaNubeBtn") + '</button>';
+  } else {
+    h += '<div class="seg" style="width:100%;margin-bottom:8px;"><button style="flex:1;" class="' + (state.authMode === "login" ? "active" : "") + '" data-action="setAuthLogin">' + t("iniciarSesion") + '</button><button style="flex:1;" class="' + (state.authMode === "register" ? "active" : "") + '" data-action="setAuthRegister">' + t("crearCuenta") + '</button></div>';
+    h += '<input type="text" placeholder="' + t("correoPh") + '" id="auth-email" data-scope="authEmail" value="' + esc(state.authEmail) + '" style="width:100%;margin-bottom:8px;">';
+    h += '<input type="password" placeholder="' + t("contrasenaPh") + '" id="auth-password" data-scope="authPassword" value="' + esc(state.authPassword) + '" style="width:100%;margin-bottom:8px;">';
+    if (state.authFormError) h += '<p class="opt-row-sub" style="color:#FF3B30;margin-bottom:8px;">' + esc(state.authFormError) + '</p>';
+    h += '<button class="pill-btn wide confirm" data-action="submitAuthForm"' + (state.cloudBusy ? " disabled" : "") + '>' + (state.authMode === "login" ? t("iniciarSesion") : t("crearCuenta")) + '</button>';
+  }
+  h += '</div>';
 
   h += '<div class="opt-section"><p class="opt-section-title">' + t("secLegal") + '</p><div class="opt-btn-stack">';
   h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="privacy.html" target="_blank" rel="noopener">' + t("verPrivacidad") + '</a>';
@@ -236,14 +264,48 @@ function renderApp() {
         if (state.confirmDeleteBankTxId === tx.id) {
           html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteTxMsg")(tx.descripcion)) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeBankTx" data-id="' + tx.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteBankTx">' + t("cancel") + '</button></div></div>';
         } else {
-          html += '<div class="history-row"><div class="history-top"><span class="history-month" style="text-transform:none;">' + esc(tx.descripcion) + '</span><span class="' + (tx.monto > 0 ? "locked-amount" : "locked-amount") + '" style="color:' + (tx.monto > 0 ? "#34C759" : "var(--text)") + ';">' + (tx.monto > 0 ? "+" : "\u2212") + sym() + fmt0(Math.abs(tx.monto)) + '</span></div>';
-          html += '<div class="history-meta"><span>' + esc(tx.fecha) + (tx.categoria ? " \u00b7 " + t("cat_" + tx.categoria) : "") + '</span><button class="history-del" data-action="askDeleteBankTx" data-id="' + tx.id + '">' + t("eliminar") + '</button></div></div>';
+          html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, tx.fecha, '<button class="history-del" style="margin-left:6px;" data-action="askDeleteBankTx" data-id="' + tx.id + '">' + t("eliminar") + '</button>');
         }
       });
     } else if (!state.bankImportMsg) {
       html += '<div class="empty-state">' + t("bankEmpty") + '</div>';
     }
     html += '</div>';
+
+    if (state.authUser) {
+      html += '<div class="panel">';
+      html += '<div class="panel-head-row"><div><h2>' + t("bancoNubeTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("bancoNubeHint") + '</p></div></div>';
+      if (state.cloudErrorMsg) html += '<p class="opt-row-sub" style="color:#FF3B30;margin:8px 0;">' + esc(state.cloudErrorMsg) + '</p>';
+      if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
+
+      state.cloudInstitutions.forEach((inst) => {
+        if (state.confirmDisconnectId === inst.id) {
+          html += '<div class="confirm-row"><span>' + esc(t("confirmDesconectarMsg")(inst.institution_name || "")) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="confirmDisconnectBank" data-id="' + inst.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDisconnectBank">' + t("cancel") + '</button></div></div>';
+        } else {
+          html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(inst.institution_name || t("bancoDesconocido")) + '</span><span class="status-pill ' + (inst.status === "active" ? "verde" : "rojo") + '">' + (inst.status === "active" ? t("estadoActivo") : t("estadoDesconectado")) + '</span></div>';
+          if (inst.last_synced_at) html += '<p class="opt-row-sub">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(inst.last_synced_at).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
+          if (inst.status === "active") html += '<button class="delete-link" data-action="askDisconnectBank" data-id="' + inst.id + '">' + t("desconectarBancoBtn") + '</button>';
+          html += '</div>';
+        }
+      });
+
+      html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + t("conectarBancoPlaidBtn") + '</button>';
+      if (state.cloudInstitutions.length > 0) html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="actualizarDatosNube"' + (state.cloudBusy ? " disabled" : "") + '>' + t("actualizarNubeBtn") + '</button>';
+      if (state.cloudLastSync) html += '<p class="opt-row-sub" style="text-align:center;margin-top:8px;">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(state.cloudLastSync).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
+
+      if (state.cloudAccounts.length > 0) {
+        html += '<div class="mini-total" style="margin-top:10px;"><span>' + t("cuentasConectadasLbl") + '</span></div>';
+        state.cloudAccounts.forEach((acc) => {
+          html += '<div class="sub-row-locked"><span class="locked-name">' + esc(acc.name || "") + (acc.mask ? " ****" + esc(acc.mask) : "") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(acc.balance_current)) + '</span></div>';
+        });
+      }
+      if (state.cloudTransactions.length > 0) {
+        state.cloudTransactions.slice(0, 8).forEach((tx) => {
+          html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10));
+        });
+      }
+      html += '</div>';
+    }
 
     if (t2.cardsConLimite.length > 0) {
       html += '<div class="panel"><h2>' + t("saludCreditoTitle") + '</h2><p class="hint">' + t("saludCreditoHint") + '</p>';

@@ -164,6 +164,9 @@ root.addEventListener("input", (e) => {
   if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "debito") { state.debito = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "cash") { state.cash = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "apiBaseUrl") { state.apiBaseUrl = el.value.trim(); saveSettings(); rerenderPreservingFocus(); return; }
+  if (scope === "authEmail") { state.authEmail = el.value; rerenderPreservingFocus(); return; }
+  if (scope === "authPassword") { state.authPassword = el.value; rerenderPreservingFocus(); return; }
   if (scope === "payFormMonto") { state.payFormMonto = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "metaAhorro") { state.metaAhorro = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "savingsRate") { state.savingsRate = Number(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
@@ -244,6 +247,12 @@ root.addEventListener("click", (e) => {
     toggleEditLoans: toggleEditLoans, setLoanFrec: () => setLoanFrec(id, freq),
     loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
     startImportarBanco: startImportarBanco, confirmTxCategoria: () => confirmTxCategoria(id),
+    setAuthLogin: () => { state.authMode = "login"; state.authFormError = ""; render(); },
+    setAuthRegister: () => { state.authMode = "register"; state.authFormError = ""; render(); },
+    submitAuthForm: submitAuthForm, apiLogout: apiLogout, apiDeleteCloudAccount: apiDeleteCloudAccount,
+    iniciarConectarBanco: iniciarConectarBanco, actualizarDatosNube: actualizarDatosNube,
+    askDisconnectBank: () => askDisconnectBank(id), cancelDisconnectBank: cancelDisconnectBank,
+    confirmDisconnectBank: () => confirmDisconnectBank(id),
     aceptarConsentimiento: aceptarConsentimiento, cancelarConsentimiento: cancelarConsentimiento,
     askDeleteBankTx: () => askDeleteBankTx(id), cancelDeleteBankTx: cancelDeleteBankTx, removeBankTx: () => removeBankTx(id),
     toggleEditJob: toggleEditJob,
@@ -291,9 +300,17 @@ root.addEventListener("click", (e) => {
 (async function boot() {
   applyTheme();
   await ensureMigrated();
+  const session = await loadAuthSession();
+  if (session && session.token) {
+    state.authToken = session.token;
+    state.authUser = session.user;
+  }
   const activeId = (function () { try { return localStorage.getItem(ACTIVE_KEY); } catch (e) { return null; } })();
   if (activeId && state.profiles.some((p) => p.id === activeId)) await enterProfile(activeId);
   else render();
+  if (state.authToken && state.apiBaseUrl) {
+    refrescarDatosNube().then(() => render());
+  }
 })();
 
 if ("serviceWorker" in navigator) {

@@ -37,7 +37,7 @@ function idbSet(key, value) {
 function loadProfiles() { try { return JSON.parse(localStorage.getItem(PROFILES_KEY)) || []; } catch (e) { return []; } }
 function saveProfiles(list) { try { localStorage.setItem(PROFILES_KEY, JSON.stringify(list)); } catch (e) {} }
 function loadSettings() { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch (e) { return {}; } }
-function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme: state.theme, lang: state.lang, currency: state.currency, objetivo: state.objetivo })); } catch (e) {} }
+function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme: state.theme, lang: state.lang, currency: state.currency, objetivo: state.objetivo, apiBaseUrl: state.apiBaseUrl })); } catch (e) {} }
 
 /* ---------- datos financieros por perfil: IndexedDB, con localStorage como respaldo/migracion ---------- */
 
