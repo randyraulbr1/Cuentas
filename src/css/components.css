@@ -12,7 +12,7 @@ body { min-height: 100vh; background: var(--bg); color: var(--text); font-family
 h1 { font-size: 25px; font-weight: 800; letter-spacing: -0.025em; margin: 2px 0 3px; }
 .seg { display: flex; background: var(--input-bg); border-radius: 9px; padding: 2px; gap: 2px; }
 .seg button { border: none; background: transparent; color: var(--text-muted); font-size: 12px; font-weight: 600; padding: 6px 9px; border-radius: 7px; cursor: pointer; font-family: inherit; }
-.seg button.active { background: #007AFF; color: #fff; }
+.seg button.active { background: #3D5AFE; color: #fff; }
 select { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 9px; color: var(--text); font-size: 13px; padding: 7px 9px; font-family: inherit; }
 .pay-config { margin-top: 8px; }
 .pay-config label { font-size: 11px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
@@ -21,7 +21,7 @@ select { background: var(--input-bg); border: 1px solid var(--input-border); bor
 .pill-btn:disabled { opacity: 0.4; cursor: default; }
 .pill-btn.danger { color: #FF3B30; }
 .pill-btn.confirm { background: #FF3B30; color: #fff; }
-.pill-btn.update { background: #EAF3FF; color: #007AFF; position: relative; }
+.pill-btn.update { background: #EAF3FF; color: #3D5AFE; position: relative; }
 [data-theme="dark"] .pill-btn.update { background: #0A2A4A; }
 .pill-btn.update .dot { position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: #FF3B30; border: 2px solid var(--card-bg); }
 .pill-btn.wide { width: 100%; justify-content: center; display: flex; }
@@ -51,12 +51,12 @@ select { background: var(--input-bg); border: 1px solid var(--input-border); bor
 .sub-row input { min-width: 0; width: 100%; }
 input[type=text] { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 14px; padding: 9px 10px; font-family: inherit; }
 input[type=date] { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 13.5px; padding: 8px 9px; font-family: inherit; }
-input[type=text]:focus, input[type=date]:focus { outline: none; border-color: #007AFF; }
+input[type=text]:focus, input[type=date]:focus { outline: none; border-color: #3D5AFE; }
 input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .icon-del { background: var(--input-bg); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 .icon-del:hover { background: #FFE5E3; color: #FF3B30; }
 .icon-pencil { background: var(--input-bg); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 14px; line-height: 1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
-.icon-pencil:hover { background: #EAF3FF; color: #007AFF; }
+.icon-pencil:hover { background: #EAF3FF; color: #3D5AFE; }
 .icon-pencil.done { background: #E3F8E9; color: #248A3D; font-size: 16px; font-weight: 800; }
 .confirm-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; flex-wrap: wrap; }
 .confirm-row span { font-size: 13px; color: var(--text-muted); flex: 1 1 140px; }
@@ -65,9 +65,9 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .card-collapsed-name { font-weight: 700; font-size: 14.5px; }
 .card-collapsed-balance input { width: 100%; }
 .delete-link { background: none; border: none; color: #FF3B30; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 10px 0 0; font-family: inherit; }
-.pay-trigger { width: 100%; background: #34C759; color: #fff; border: none; border-radius: 10px; padding: 10px; font-weight: 700; font-size: 13.5px; cursor: pointer; margin-top: 10px; font-family: inherit; }
+.pay-trigger { width: 100%; background: #34C759; color: #fff; border: none; border-radius: 10px; padding: 10px; font-weight: 700; font-size: 13.5px; cursor: pointer; margin-top: 10px; font-family: inherit; display: flex; align-items: center; justify-content: center; }
 .pay-form { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 12px; padding: 12px; margin-top: 10px; }
-.add-btn { margin-top: 10px; width: 100%; background: #EAF3FF; color: #007AFF; border: none; border-radius: 10px; padding: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.add-btn { margin-top: 10px; width: 100%; background: #EAF3FF; color: #3D5AFE; border: none; border-radius: 10px; padding: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
 [data-theme="dark"] .add-btn { background: #0A2A4A; }
 .mini-total { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
 .mini-total b { color: var(--text); font-weight: 700; }
@@ -90,10 +90,10 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .goal-field label { font-size: 12px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
 .goal-field input { width: 100%; }
 .progress-track { height: 10px; background: var(--border); border-radius: 6px; overflow: hidden; margin-top: 4px; }
-.progress-fill { height: 100%; background: linear-gradient(90deg,#5AC8FA,#007AFF); border-radius: 6px; transition: width 0.4s; }
+.progress-fill { height: 100%; background: linear-gradient(90deg,#5AC8FA,#3D5AFE); border-radius: 6px; transition: width 0.4s; }
 .goal-caption { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: 6px; }
-.calc-btn { width: 100%; background: #007AFF; color: #fff; border: none; border-radius: 12px; padding: 14px; font-weight: 700; font-size: 15px; cursor: pointer; margin: 4px 0 12px; font-family: inherit; }
+.calc-btn { width: 100%; background: #3D5AFE; color: #fff; border: none; border-radius: 12px; padding: 14px; font-weight: 700; font-size: 15px; cursor: pointer; margin: 4px 0 12px; font-family: inherit; }
 .save-month-btn { width: 100%; background: var(--text); color: var(--bg); border: none; border-radius: 12px; padding: 12px; font-weight: 700; font-size: 14px; cursor: pointer; margin-bottom: 16px; font-family: inherit; }
-.flash { text-align: center; color: #34C759; font-size: 13px; font-weight: 600; margin: -8px 0 14px; }
+.flash { text-align: center; color: #34C759; font-size: 13px; font-weight: 600; margin: -8px 0 14px; display: flex; align-items: center; justify-content: center; }
 .empty-state { text-align: center; color: var(--text-muted); font-size: 12.5px; padding: 10px 0; }
 .save-note { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 24px; }

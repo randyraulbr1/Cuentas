@@ -5,5 +5,9 @@
   "scripts": {
     "dev": "echo 'No hay backend activo todavia. Fase 2 documentada en README.md y .env.example.' && exit 1",
     "start": "echo 'No hay backend activo todavia. Fase 2 documentada en README.md y .env.example.' && exit 1"
+  },
+  "dependencies": {
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^29.1.1"
   }
 }

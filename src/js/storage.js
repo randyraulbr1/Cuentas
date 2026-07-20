@@ -65,7 +65,7 @@ async function saveUserDataNow() {
   if (!state.activeProfileId) return;
   const payload = {
     ingreso: state.ingreso, subs: state.subs, cards: state.cards,
-    savingsRate: state.savingsRate, ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, debito: state.debito, history: state.history,
+    savingsRate: state.savingsRate, ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, debito: state.debito, cash: state.cash, history: state.history,
     payFrequency: state.payFrequency, ultimoPago: state.ultimoPago, proximoPagoAjuste: state.proximoPagoAjuste,
     ingresosLog: state.ingresosLog, loans: state.loans, job: state.job, turnos: state.turnos, turnoActivo: state.turnoActivo, pagosTrabajo: state.pagosTrabajo,
   };

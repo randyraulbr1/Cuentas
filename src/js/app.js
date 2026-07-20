@@ -13,6 +13,7 @@ async function enterProfile(id) {
   state.savingsRate = d.savingsRate != null ? d.savingsRate : 20;
   state.ahorroActual = d.ahorroActual != null ? d.ahorroActual : "";
   state.debito = d.debito != null ? d.debito : "";
+  state.cash = d.cash != null ? d.cash : "";
   state.metaAhorro = d.metaAhorro != null ? d.metaAhorro : "";
   state.history = d.history || [];
   state.payFrequency = d.payFrequency || "mensual";
@@ -154,6 +155,7 @@ root.addEventListener("input", (e) => {
   if (scope === "ingreso") { state.ingreso = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "debito") { state.debito = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "cash") { state.cash = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "payFormMonto") { state.payFormMonto = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "metaAhorro") { state.metaAhorro = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "savingsRate") { state.savingsRate = Number(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
@@ -245,7 +247,7 @@ root.addEventListener("click", (e) => {
     askDeletePagoTrabajo: () => askDeletePagoTrabajo(id), cancelDeletePagoTrabajo: cancelDeletePagoTrabajo, removePagoTrabajo: () => removePagoTrabajo(id),
     loanFuenteAhorro: () => setLoanFuente(id, "ahorro"), loanFuenteDebito: () => setLoanFuente(id, "debito"),
     startPago: () => startPago(payType, id), cancelPago: cancelPago, confirmPago: confirmPago,
-    setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito, setPagoSourceNinguno: setPagoSourceNinguno,
+    setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito, setPagoSourceCash: setPagoSourceCash, setPagoSourceNinguno: setPagoSourceNinguno,
     guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
     switchUser: switchUser,
     toggleTheme: toggleTheme, toggleLang: toggleLang, toggleCurrency: toggleCurrency,

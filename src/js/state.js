@@ -6,7 +6,7 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v25";
+const APP_VERSION = "v26";
 
 let uidCounter = 1;
 
@@ -70,7 +70,7 @@ const state = {
   payingTarget: null, payingSubId: null, payFormSource: "ahorro", payFormMonto: "", payFlash: false, autoPagoNotif: null,
   expandedCardIds: {},
 
-  ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", debito: "", history: [],
+  ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", debito: "", cash: "", history: [],
   payFrequency: "mensual", ultimoPago: "", proximoPagoAjuste: "", ingresosLog: [], loans: [],
   job: { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false },
   turnos: [], turnoActivo: null, pagosTrabajo: [],
@@ -92,7 +92,7 @@ function scheduleSave() { if (saveTimeout) clearTimeout(saveTimeout); saveTimeou
 function pushUndo() {
   undoStack.push(JSON.parse(JSON.stringify({
     subs: state.subs, cards: state.cards, ingreso: state.ingreso, savingsRate: state.savingsRate,
-    ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, debito: state.debito, history: state.history,
+    ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, debito: state.debito, cash: state.cash, history: state.history,
     payFrequency: state.payFrequency, ultimoPago: state.ultimoPago, proximoPagoAjuste: state.proximoPagoAjuste,
     ingresosLog: state.ingresosLog, loans: state.loans, job: state.job, turnos: state.turnos, turnoActivo: state.turnoActivo, pagosTrabajo: state.pagosTrabajo,
   })));

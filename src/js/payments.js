@@ -34,6 +34,7 @@ function confirmPagoSub() {
   pushUndo();
   if (state.payFormSource === "debito") state.debito = String(Math.max(toNum(state.debito) - monto, 0));
   else if (state.payFormSource === "ahorro") state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
+  else if (state.payFormSource === "cash") state.cash = String(Math.max(toNum(state.cash) - monto, 0));
   s.pagadoMes = monthKey();
   s.pagadoFuente = state.payFormSource;
   s.pagadoMonto = String(monto);
@@ -152,6 +153,8 @@ function setPagoSourceAhorro() { state.payFormSource = "ahorro"; render(); }
 
 function setPagoSourceDebito() { state.payFormSource = "debito"; render(); }
 
+function setPagoSourceCash() { state.payFormSource = "cash"; render(); }
+
 function setPagoSourceNinguno() { state.payFormSource = "ninguno"; render(); }
 
 function confirmPago() {
@@ -166,6 +169,7 @@ function confirmPago() {
   item[field] = String(Math.max(toNum(item[field]) - monto, 0));
   if (state.payFormSource === "debito") state.debito = String(Math.max(toNum(state.debito) - monto, 0));
   else if (state.payFormSource === "ahorro") state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
+  else if (state.payFormSource === "cash") state.cash = String(Math.max(toNum(state.cash) - monto, 0));
   state.payingTarget = null;
   state.payFormMonto = "";
   state.payFlash = true;
@@ -198,7 +202,7 @@ function removeCard(id) { pushUndo(); state.cards = state.cards.filter((x) => x.
 function resetAll() {
   pushUndo();
   state.ingreso = ""; state.subs = []; state.cards = []; state.savingsRate = 20;
-  state.ahorroActual = ""; state.metaAhorro = ""; state.debito = ""; state.resultado = null; state.confirmReset = false;
+  state.ahorroActual = ""; state.metaAhorro = ""; state.debito = ""; state.cash = ""; state.resultado = null; state.confirmReset = false;
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.ingresosLog = []; state.loans = [];
   state.job = { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false };
   state.turnos = []; state.turnoActivo = null; state.pagosTrabajo = [];
