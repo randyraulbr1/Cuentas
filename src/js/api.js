@@ -32,14 +32,20 @@ async function apiFetch(path, options) {
   const headers = Object.assign({ "Content-Type": "application/json" }, options.headers || {});
   if (state.authToken) headers.Authorization = "Bearer " + state.authToken;
   let resp;
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timeoutId = controller ? setTimeout(() => controller.abort(), 25000) : null;
   try {
     resp = await fetch(apiUrl(path), {
       method: options.method || "GET",
       headers: headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
+      signal: controller ? controller.signal : undefined,
     });
   } catch (e) {
+    if (e && e.name === "AbortError") return { ok: false, status: 0, error: t("apiTimeout") };
     return { ok: false, status: 0, error: t("apiErrorRed") };
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
   let data = null;
   try { data = await resp.json(); } catch (e) {}
