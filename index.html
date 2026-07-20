@@ -32,11 +32,11 @@ body { min-height: 100vh; background: var(--bg); color: var(--text); font-family
 :root { --tabbar-h: 62px; }
 
 .tab-bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card-bg); border-top: 1px solid var(--border); display: flex; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); z-index: 30; box-shadow: 0 -1px 6px rgba(0,0,0,0.06); }
-.tab-btn { flex: 1; background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 10px; cursor: pointer; font-family: inherit; }
+.tab-btn { flex: 1; min-width: 0; background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 1px; border-radius: 10px; cursor: pointer; font-family: inherit; }
 .tab-btn.active { color: #007AFF; }
 [data-theme="dark"] .tab-btn.active { color: #6DB4FF; }
-.tab-icon { font-size: 19px; line-height: 1; }
-.tab-label { font-size: 10.5px; font-weight: 600; }
+.tab-icon { font-size: 17px; line-height: 1; }
+.tab-label { font-size: 9.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
 .tab-subheader { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .tab-subheader h2 { font-size: 19px; font-weight: 800; margin: 0; }
@@ -232,7 +232,27 @@ const I18N = {
     subtitle: "Ingreso, pagos fijos, tarjetas y ahorro.",
     helloProfile: (n) => "Hola, " + n,
     optionsTitle: "Opciones", close: "Cerrar",
-    tabInicio: "Inicio", tabTarjetas: "Tarjetas", tabPagos: "Pagos", tabHistorial: "Historial", atras: "Atrás",
+    tabInicio: "Inicio", tabTrabajo: "Trabajo", tabTarjetas: "Tarjetas", tabPagos: "Pagos", tabHistorial: "Historial", atras: "Atrás",
+    miTrabajoTitle: "Mi trabajo", miTrabajoHint: "Configura tu pago para calcular tus turnos.",
+    trabajoNombrePh: "Nombre del trabajo", trabajoNombreLbl: "Nombre", pagoHoraLbl: "Pago por hora",
+    pagoDiaLbl: "Pago por día", impuestoPctLbl: "Impuesto/descuento %", frecuenciaPagoLbl: "Frecuencia de pago",
+    freqDosVecesMes: "2x al mes", horasExtraDespuesLbl: "Extra después de (h/semana)", multiplicadorExtraLbl: "Multiplicador extra",
+    descansoPagadoLbl: "¿Descanso pagado?",
+    ganadoEsteMesLbl: "Ganado este mes", recibidoEsteMesLbl: "Recibido este mes", pendienteLbl: "Pendiente de pago",
+    horasSemanaLbl: "Horas esta semana",
+    enBreakLbl: "En descanso", trabajandoAhoraLbl: "Trabajando ahora", brutoAcumuladoLbl: "Bruto acumulado",
+    empezarBreakBtn: "Empezar break", terminarBreakBtn: "Terminar break", terminarTrabajoBtn: "Terminar trabajo",
+    confirmTerminarMsg: "¿Terminar tu turno ahora?", empezarTrabajoBtn: "▶ Empezar trabajo",
+    agregarPagoTrabajoTitle: "Registrar pago recibido", fechaLbl: "Fecha", montoNetoLbl: "Monto neto",
+    montoBrutoLbl: "Monto bruto", metodoLbl: "Método", metodoPh: "Ej. depósito", turnosIncluidosLbl: "Turnos que cubre este pago",
+    agregarPagoTrabajoBtn: "+ Agregar pago recibido",
+    turnosTitle: "Tus turnos", turnosHint: "Historial de jornadas trabajadas.",
+    confirmDeleteTurnoMsg: (f) => "¿Eliminar el turno del " + f + "?",
+    estadoPagado: "Pagado", estadoTrabajado: "Sin pagar", brutoLbl: "bruto",
+    propinasLbl: "Propinas", bonosLbl: "Bonos", notasLbl: "Notas", notasPh: "Opcional",
+    eliminarTurnoLink: "Eliminar turno", turnosEmpty: "Aún no has registrado turnos.",
+    pagosRecibidosTitle: "Pagos recibidos", confirmDeletePagoMsg: (f) => "¿Eliminar el pago del " + f + "?",
+    pagoTrabajoRegistrado: "Pago registrado ✓",
     secPerfil: "Perfil", secIdioma: "Idioma", secMoneda: "Moneda", secTema: "Tema", secPago: "Frecuencia de pago", secAhorroPct: "% a ahorrar", secDatos: "Datos",
     exportarDatos: "Exportar mis datos", exportarHint: "Copia este texto y pégalo en ChatGPT (o donde quieras) para pedir consejos.",
     copiarTexto: "Copiar", copiado: "Copiado ✓",
@@ -341,7 +361,27 @@ const I18N = {
     subtitle: "Income, fixed bills, cards and savings.",
     helloProfile: (n) => "Hi, " + n,
     optionsTitle: "Options", close: "Close",
-    tabInicio: "Home", tabTarjetas: "Cards", tabPagos: "Bills", tabHistorial: "History", atras: "Back",
+    tabInicio: "Home", tabTrabajo: "Work", tabTarjetas: "Cards", tabPagos: "Bills", tabHistorial: "History", atras: "Back",
+    miTrabajoTitle: "My job", miTrabajoHint: "Set up your pay to calculate your shifts.",
+    trabajoNombrePh: "Job name", trabajoNombreLbl: "Name", pagoHoraLbl: "Pay per hour",
+    pagoDiaLbl: "Pay per day", impuestoPctLbl: "Tax/deduction %", frecuenciaPagoLbl: "Pay frequency",
+    freqDosVecesMes: "2x a month", horasExtraDespuesLbl: "Overtime after (h/week)", multiplicadorExtraLbl: "Overtime multiplier",
+    descansoPagadoLbl: "Paid break?",
+    ganadoEsteMesLbl: "Earned this month", recibidoEsteMesLbl: "Received this month", pendienteLbl: "Pending payment",
+    horasSemanaLbl: "Hours this week",
+    enBreakLbl: "On break", trabajandoAhoraLbl: "Working now", brutoAcumuladoLbl: "Gross so far",
+    empezarBreakBtn: "Start break", terminarBreakBtn: "End break", terminarTrabajoBtn: "Clock out",
+    confirmTerminarMsg: "End your shift now?", empezarTrabajoBtn: "▶ Clock in",
+    agregarPagoTrabajoTitle: "Log payment received", fechaLbl: "Date", montoNetoLbl: "Net amount",
+    montoBrutoLbl: "Gross amount", metodoLbl: "Method", metodoPh: "e.g. deposit", turnosIncluidosLbl: "Shifts this payment covers",
+    agregarPagoTrabajoBtn: "+ Log payment received",
+    turnosTitle: "Your shifts", turnosHint: "History of shifts worked.",
+    confirmDeleteTurnoMsg: (f) => "Delete the shift from " + f + "?",
+    estadoPagado: "Paid", estadoTrabajado: "Unpaid", brutoLbl: "gross",
+    propinasLbl: "Tips", bonosLbl: "Bonuses", notasLbl: "Notes", notasPh: "Optional",
+    eliminarTurnoLink: "Delete shift", turnosEmpty: "You have not logged any shifts yet.",
+    pagosRecibidosTitle: "Payments received", confirmDeletePagoMsg: (f) => "Delete the payment from " + f + "?",
+    pagoTrabajoRegistrado: "Payment recorded ✓",
     secPerfil: "Profile", secIdioma: "Language", secMoneda: "Currency", secTema: "Theme", secPago: "Pay frequency", secAhorroPct: "% to save", secDatos: "Data",
     exportarDatos: "Export my data", exportarHint: "Copy this text and paste it into ChatGPT (or anywhere) to ask for advice.",
     copiarTexto: "Copy", copiado: "Copied ✓",
@@ -454,7 +494,7 @@ const toNum = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v23";
+const APP_VERSION = "v24";
 let uidCounter = 1;
 const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
 
@@ -506,7 +546,7 @@ function saveUserDataNow() {
       ingreso: state.ingreso, subs: state.subs, cards: state.cards,
       savingsRate: state.savingsRate, ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, debito: state.debito, history: state.history,
       payFrequency: state.payFrequency, ultimoPago: state.ultimoPago, proximoPagoAjuste: state.proximoPagoAjuste,
-      ingresosLog: state.ingresosLog, loans: state.loans,
+      ingresosLog: state.ingresosLog, loans: state.loans, job: state.job, turnos: state.turnos, turnoActivo: state.turnoActivo, pagosTrabajo: state.pagosTrabajo,
     }));
     state.storageError = false;
   } catch (e) { state.storageError = true; }
@@ -534,6 +574,10 @@ const state = {
 
   ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", debito: "", history: [],
   payFrequency: "mensual", ultimoPago: "", proximoPagoAjuste: "", ingresosLog: [], loans: [],
+  job: { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false },
+  turnos: [], turnoActivo: null, pagosTrabajo: [],
+  editingJob: false, confirmTerminarTrabajo: false, confirmDeleteTurnoId: null, expandedTurnoIds: {},
+  showPagoTrabajo: false, pagoTrabajoForm: null, workPagoFlash: false, confirmDeletePagoTrabajoId: null,
   resultado: null, confirmReset: false, savedFlash: false, storageError: false,
 };
 LANG = state.lang;
@@ -548,7 +592,7 @@ function pushUndo() {
     subs: state.subs, cards: state.cards, ingreso: state.ingreso, savingsRate: state.savingsRate,
     ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, debito: state.debito, history: state.history,
     payFrequency: state.payFrequency, ultimoPago: state.ultimoPago, proximoPagoAjuste: state.proximoPagoAjuste,
-    ingresosLog: state.ingresosLog, loans: state.loans,
+    ingresosLog: state.ingresosLog, loans: state.loans, job: state.job, turnos: state.turnos, turnoActivo: state.turnoActivo, pagosTrabajo: state.pagosTrabajo,
   })));
   if (undoStack.length > 15) undoStack.shift();
 }
@@ -575,10 +619,18 @@ function enterProfile(id) {
   state.proximoPagoAjuste = d.proximoPagoAjuste || "";
   state.ingresosLog = d.ingresosLog || [];
   state.loans = d.loans || [];
+  state.job = d.job || { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false };
+  state.turnos = d.turnos || [];
+  state.turnoActivo = d.turnoActivo || null;
+  state.pagosTrabajo = d.pagosTrabajo || [];
   state.resultado = null; state.confirmReset = false; state.showOptions = false;
   state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payingSubId = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
   state.autoPagoNotif = null;
+  state.editingJob = false; state.confirmTerminarTrabajo = false; state.confirmDeleteTurnoId = null; state.expandedTurnoIds = {};
+  state.showPagoTrabajo = false; state.pagoTrabajoForm = null; state.workPagoFlash = false; state.confirmDeletePagoTrabajoId = null;
   processAutoPayments();
+  stopTimerLoop();
+  if (state.turnoActivo) startTimerLoop();
   undoStack.length = 0;
   state.screen = "app";
   render();
@@ -755,6 +807,187 @@ function processAutoPayments() {
     scheduleSave();
   }
 }
+/* ---------- Trabajo: turnos, breaks, pagos ---------- */
+let timerHandle = null;
+function startTimerLoop() {
+  if (timerHandle) return;
+  timerHandle = setInterval(() => { if (state.activeTab === "trabajo") render(); }, 1000);
+}
+function stopTimerLoop() {
+  if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+}
+
+function breakDurationMs(b) {
+  if (!b.inicio) return 0;
+  const fin = b.fin ? new Date(b.fin) : new Date();
+  return Math.max(fin - new Date(b.inicio), 0);
+}
+function turnoDurationMs(turno, hastaAhora) {
+  if (!turno.horaInicio) return 0;
+  const fin = turno.horaFin ? new Date(turno.horaFin) : (hastaAhora ? new Date() : new Date(turno.horaInicio));
+  let total = Math.max(fin - new Date(turno.horaInicio), 0);
+  if (!state.job.descansoPagado) {
+    (turno.breaks || []).forEach((b) => { total -= breakDurationMs(b); });
+  }
+  return Math.max(total, 0);
+}
+function turnoHoras(turno, hastaAhora) { return turnoDurationMs(turno, hastaAhora) / 3600000; }
+function fmtHoras(h) {
+  const hh = Math.floor(h);
+  const mm = Math.round((h - hh) * 60);
+  return hh + "h " + String(mm).padStart(2, "0") + "m";
+}
+function fmtCronometro(ms) {
+  const s = Math.floor(ms / 1000);
+  const hh = String(Math.floor(s / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+  return hh + ":" + mm + ":" + ss;
+}
+
+function updateJobField(field, value) {
+  state.job[field] = value;
+  scheduleSave(); rerenderPreservingFocus();
+}
+
+function empezarTrabajo() {
+  pushUndo();
+  state.turnoActivo = { id: uid(), horaInicio: new Date().toISOString(), breakActivo: null, breaks: [], propinas: "", bonos: "", notas: "" };
+  startTimerLoop();
+  scheduleSave(); render();
+}
+function empezarBreak() {
+  if (!state.turnoActivo || state.turnoActivo.breakActivo) return;
+  state.turnoActivo.breakActivo = { inicio: new Date().toISOString() };
+  scheduleSave(); render();
+}
+function terminarBreak() {
+  if (!state.turnoActivo || !state.turnoActivo.breakActivo) return;
+  state.turnoActivo.breaks.push({ inicio: state.turnoActivo.breakActivo.inicio, fin: new Date().toISOString() });
+  state.turnoActivo.breakActivo = null;
+  scheduleSave(); render();
+}
+function askTerminarTrabajo() { state.confirmTerminarTrabajo = true; render(); }
+function cancelTerminarTrabajo() { state.confirmTerminarTrabajo = false; render(); }
+function terminarTrabajo() {
+  if (!state.turnoActivo) return;
+  pushUndo();
+  const t = state.turnoActivo;
+  if (t.breakActivo) { t.breaks.push({ inicio: t.breakActivo.inicio, fin: new Date().toISOString() }); t.breakActivo = null; }
+  t.horaFin = new Date().toISOString();
+  t.fecha = t.horaInicio.slice(0, 10);
+  t.estado = "trabajado";
+  delete t.breakActivo;
+  state.turnos.push(t);
+  state.turnos.sort((a, b) => (a.horaInicio < b.horaInicio ? 1 : -1));
+  state.turnoActivo = null;
+  state.confirmTerminarTrabajo = false;
+  stopTimerLoop();
+  scheduleSave();
+  rerenderPreservingFocus();
+}
+
+function askDeleteTurno(id) { state.confirmDeleteTurnoId = id; render(); }
+function cancelDeleteTurno() { state.confirmDeleteTurnoId = null; render(); }
+function removeTurno(id) { pushUndo(); state.turnos = state.turnos.filter((x) => x.id !== id); state.confirmDeleteTurnoId = null; scheduleSave(); rerenderPreservingFocus(); }
+function toggleExpandTurno(id) { state.expandedTurnoIds[id] = !state.expandedTurnoIds[id]; render(); }
+
+function turnoPagoBruto(turno) {
+  const horas = turnoHoras(turno, false);
+  const umbral = toNum(state.job.horasExtraDespues) || Infinity;
+  const mult = toNum(state.job.multiplicadorExtra) || 1;
+  const normales = Math.min(horas, umbral);
+  const extra = Math.max(horas - umbral, 0);
+  const pagoHora = toNum(state.job.pagoHora);
+  let bruto = normales * pagoHora + extra * pagoHora * mult;
+  if (toNum(state.job.pagoDia) > 0) bruto = Math.max(bruto, toNum(state.job.pagoDia));
+  bruto += toNum(turno.propinas) + toNum(turno.bonos);
+  return { horas, normales, extra, bruto };
+}
+function turnoPagoNetoEstimado(turno) {
+  const { bruto } = turnoPagoBruto(turno);
+  const tax = toNum(state.job.impuestoPct);
+  return bruto * (1 - tax / 100);
+}
+
+function rangoSemana(d) {
+  const day = new Date(d); day.setHours(0, 0, 0, 0);
+  const dow = day.getDay();
+  const inicio = new Date(day); inicio.setDate(day.getDate() - dow);
+  const fin = new Date(inicio); fin.setDate(inicio.getDate() + 7);
+  return { inicio, fin };
+}
+function totalesPeriodo(desde, hasta) {
+  const turnosPeriodo = state.turnos.filter((t) => { const d = new Date(t.horaInicio); return d >= desde && d < hasta; });
+  let horas = 0, bruto = 0, neto = 0, extra = 0;
+  turnosPeriodo.forEach((t) => {
+    const r = turnoPagoBruto(t);
+    horas += r.horas; extra += r.extra; bruto += r.bruto; neto += turnoPagoNetoEstimado(t);
+  });
+  return { horas, extra, bruto, neto, turnos: turnosPeriodo };
+}
+function totalesSemana() { const { inicio, fin } = rangoSemana(new Date()); return totalesPeriodo(inicio, fin); }
+function totalesMes() {
+  const now = new Date();
+  const inicio = new Date(now.getFullYear(), now.getMonth(), 1);
+  const fin = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  return totalesPeriodo(inicio, fin);
+}
+function ganadoEsteMes() { return totalesMes().bruto; }
+function recibidoEsteMes() {
+  const mk = monthKey();
+  return state.pagosTrabajo.filter((p) => (p.fecha || "").slice(0, 7) === mk).reduce((a, p) => a + toNum(p.montoNeto), 0);
+}
+function pendienteDePago() {
+  return state.turnos.filter((t) => t.estado !== "pagado").reduce((a, t) => a + turnoPagoNetoEstimado(t), 0);
+}
+
+function toggleEditJob() { state.editingJob = !state.editingJob; render(); }
+
+function startPagoTrabajo() {
+  state.showPagoTrabajo = true;
+  state.pagoTrabajoForm = { fecha: new Date().toISOString().slice(0, 10), montoBruto: "", montoNeto: "", bonos: "", horasExtra: "", descuentos: "", metodo: "", notas: "", turnosSel: {} };
+  render();
+}
+function cancelPagoTrabajo() { state.showPagoTrabajo = false; render(); }
+function updatePagoTrabajoField(field, value) { state.pagoTrabajoForm[field] = value; rerenderPreservingFocus(); }
+function toggleTurnoSel(id) {
+  state.pagoTrabajoForm.turnosSel[id] = !state.pagoTrabajoForm.turnosSel[id];
+  render();
+}
+function confirmPagoTrabajo() {
+  const f = state.pagoTrabajoForm;
+  const monto = toNum(f.montoNeto) || toNum(f.montoBruto);
+  if (monto <= 0) return;
+  pushUndo();
+  const seleccionados = Object.keys(f.turnosSel).filter((id) => f.turnosSel[id]);
+  const pago = {
+    id: uid(), fecha: f.fecha, montoBruto: f.montoBruto, montoNeto: f.montoNeto || f.montoBruto,
+    bonos: f.bonos, horasExtra: f.horasExtra, descuentos: f.descuentos, metodo: f.metodo, notas: f.notas,
+    turnosIncluidos: seleccionados,
+  };
+  state.pagosTrabajo.push(pago);
+  state.turnos.forEach((t) => { if (seleccionados.indexOf(t.id) !== -1) { t.estado = "pagado"; t.pagoId = pago.id; } });
+  if (state.payFrequency === "mensual") state.ingreso = String(toNum(state.ingreso) + toNum(pago.montoNeto));
+  else state.ingresosLog.push({ id: uid(), monto: pago.montoNeto, month: monthKey() });
+  state.showPagoTrabajo = false;
+  state.workPagoFlash = true;
+  scheduleSave();
+  rerenderPreservingFocus();
+  setTimeout(() => { state.workPagoFlash = false; rerenderPreservingFocus(); }, 1800);
+}
+function askDeletePagoTrabajo(id) { state.confirmDeletePagoTrabajoId = id; render(); }
+function cancelDeletePagoTrabajo() { state.confirmDeletePagoTrabajoId = null; render(); }
+function removePagoTrabajo(id) {
+  const pago = state.pagosTrabajo.find((p) => p.id === id);
+  if (!pago) return;
+  pushUndo();
+  state.turnos.forEach((t) => { if (t.pagoId === id) { t.estado = "trabajado"; delete t.pagoId; } });
+  state.pagosTrabajo = state.pagosTrabajo.filter((p) => p.id !== id);
+  state.confirmDeletePagoTrabajoId = null;
+  scheduleSave(); rerenderPreservingFocus();
+}
+
 function askDeleteLoan(id) { state.confirmDeleteLoanId = id; render(); }
 function cancelDeleteLoan() { state.confirmDeleteLoanId = null; render(); }
 function removeLoan(id) { pushUndo(); state.loans = state.loans.filter((x) => x.id !== id); state.confirmDeleteLoanId = null; scheduleSave(); rerenderPreservingFocus(); }
@@ -824,6 +1057,9 @@ function resetAll() {
   state.ingreso = ""; state.subs = []; state.cards = []; state.savingsRate = 20;
   state.ahorroActual = ""; state.metaAhorro = ""; state.debito = ""; state.resultado = null; state.confirmReset = false;
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.ingresosLog = []; state.loans = [];
+  state.job = { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false };
+  state.turnos = []; state.turnoActivo = null; state.pagosTrabajo = [];
+  stopTimerLoop();
   state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payingSubId = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
   scheduleSave(); rerenderPreservingFocus();
 }
@@ -1173,6 +1409,7 @@ function renderPagoBlock(type, item, saldoActual) {
 function renderTabBar() {
   const tabs = [
     { id: "inicio", icon: "\ud83c\udfe0", label: t("tabInicio") },
+    { id: "trabajo", icon: "\u23f1\ufe0f", label: t("tabTrabajo") },
     { id: "tarjetas", icon: "\ud83d\udcb3", label: t("tabTarjetas") },
     { id: "pagos", icon: "\ud83e\uddfe", label: t("tabPagos") },
     { id: "historial", icon: "\ud83d\udcca", label: t("tabHistorial") },
@@ -1403,6 +1640,135 @@ function renderApp() {
     html += '<div class="mini-total"><span>' + t("totalPrestamos") + '</span><b>' + sym() + fmt0(totalPrestamos) + '</b></div></div>';
   }
 
+  if (tab === "trabajo") {
+    if (state.workPagoFlash) html += '<div class="flash">' + t("pagoTrabajoRegistrado") + '</div>';
+
+    // panel configuracion del trabajo
+    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("miTrabajoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("miTrabajoHint") + '</p></div><button class="icon-pencil' + (state.editingJob ? " done" : "") + '" data-action="toggleEditJob">' + (state.editingJob ? "\u2713" : "\u270e") + '</button></div>';
+    if (!state.editingJob) {
+      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + esc(state.job.nombre || t("trabajoNombrePh")) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.job.pagoHora)) + '/h</span></div>';
+    } else {
+      html += '<div class="goal-grid">';
+      html += '<div class="goal-field"><label>' + t("trabajoNombreLbl") + '</label><input type="text" placeholder="' + t("trabajoNombrePh") + '" id="job-nombre" value="' + esc(state.job.nombre) + '" data-scope="job" data-field="nombre"></div>';
+      html += '<div class="goal-field"><label>' + t("pagoHoraLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="job-pagoHora" value="' + esc(state.job.pagoHora) + '" data-scope="job" data-field="pagoHora"></div>';
+      html += '</div>';
+      html += '<div class="goal-grid">';
+      html += '<div class="goal-field"><label>' + t("pagoDiaLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="job-pagoDia" value="' + esc(state.job.pagoDia) + '" data-scope="job" data-field="pagoDia"></div>';
+      html += '<div class="goal-field"><label>' + t("impuestoPctLbl") + '</label><input type="text" inputmode="decimal" placeholder="0" id="job-impuestoPct" value="' + esc(state.job.impuestoPct) + '" data-scope="job" data-field="impuestoPct"></div>';
+      html += '</div>';
+      html += '<div class="pay-config"><label>' + t("frecuenciaPagoLbl") + '</label><div class="seg" style="width:100%;">';
+      [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["dosVecesMes", "freqDosVecesMes"], ["mensual", "payMensual"]].forEach((f) => { html += '<button style="flex:1;" class="' + (state.job.frecuenciaPago === f[0] ? "active" : "") + '" data-action="setJobFrecuencia" data-freq="' + f[0] + '">' + t(f[1]) + '</button>'; });
+      html += '</div></div>';
+      html += '<div class="goal-grid" style="margin-top:8px;">';
+      html += '<div class="goal-field"><label>' + t("horasExtraDespuesLbl") + '</label><input type="text" inputmode="decimal" placeholder="40" id="job-horasExtraDespues" value="' + esc(state.job.horasExtraDespues) + '" data-scope="job" data-field="horasExtraDespues"></div>';
+      html += '<div class="goal-field"><label>' + t("multiplicadorExtraLbl") + '</label><input type="text" inputmode="decimal" placeholder="1.5" id="job-multiplicadorExtra" value="' + esc(state.job.multiplicadorExtra) + '" data-scope="job" data-field="multiplicadorExtra"></div>';
+      html += '</div>';
+      html += '<div class="opt-row" style="margin-top:8px;"><span class="opt-row-label">' + t("descansoPagadoLbl") + '</span><div class="seg"><button class="' + (!state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOff">' + t("off") + '</button><button class="' + (state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOn">' + t("on") + '</button></div></div>';
+    }
+    html += '</div>';
+
+    // resumen del mes/semana
+    const tm = totalesMes(); const ts = totalesSemana();
+    html += '<div class="summary">';
+    html += '<div class="sum-card"><div class="sum-label">' + t("ganadoEsteMesLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(ganadoEsteMes()) + '</div></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("recibidoEsteMesLbl") + '</div><div class="sum-val green">' + sym() + fmt0(recibidoEsteMes()) + '</div></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("pendienteLbl") + '</div><div class="sum-val red">' + sym() + fmt0(pendienteDePago()) + '</div></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("horasSemanaLbl") + '</div><div class="sum-val blue" style="font-size:16px;">' + fmtHoras(ts.horas) + '</div></div>';
+    html += '</div>';
+
+    // turno activo o boton empezar
+    if (state.turnoActivo) {
+      const t2live = state.turnoActivo;
+      const enBreak = !!t2live.breakActivo;
+      const ms = turnoDurationMs(Object.assign({}, t2live, { breaks: t2live.breaks.concat(t2live.breakActivo ? [{ inicio: t2live.breakActivo.inicio }] : []) }), true);
+      const bruto = toNum(state.job.pagoHora) * (ms / 3600000);
+      html += '<div class="panel" style="text-align:center;">';
+      html += '<p class="hint" style="margin-bottom:4px;">' + (enBreak ? t("enBreakLbl") : t("trabajandoAhoraLbl")) + '</p>';
+      html += '<div style="font-size:34px;font-weight:800;letter-spacing:-0.01em;font-family:monospace;">' + fmtCronometro(ms) + '</div>';
+      html += '<div class="opt-row-sub" style="margin:4px 0 12px;">' + t("brutoAcumuladoLbl") + ': ' + sym() + fmt0(bruto) + '</div>';
+      html += '<div style="display:flex;gap:8px;">';
+      if (!enBreak) html += '<button class="pill-btn wide" style="flex:1;" data-action="empezarBreak">' + t("empezarBreakBtn") + '</button>';
+      else html += '<button class="pill-btn wide confirm" style="flex:1;" data-action="terminarBreak">' + t("terminarBreakBtn") + '</button>';
+      html += '</div>';
+      if (!state.confirmTerminarTrabajo) {
+        html += '<button class="pay-trigger" style="margin-top:8px;background:#FF3B30;" data-action="askTerminarTrabajo">' + t("terminarTrabajoBtn") + '</button>';
+      } else {
+        html += '<div class="confirm-row" style="margin-top:8px;justify-content:center;"><span>' + t("confirmTerminarMsg") + '</span></div>';
+        html += '<div style="display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="terminarTrabajo">' + t("yesDelete") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelTerminarTrabajo">' + t("cancel") + '</button></div>';
+      }
+      html += '</div>';
+    } else {
+      html += '<button class="calc-btn" data-action="empezarTrabajo">' + t("empezarTrabajoBtn") + '</button>';
+    }
+
+    // registrar pago recibido
+    if (state.showPagoTrabajo) {
+      const f = state.pagoTrabajoForm;
+      const sinPagar = state.turnos.filter((x) => x.estado !== "pagado");
+      html += '<div class="panel"><h2>' + t("agregarPagoTrabajoTitle") + '</h2>';
+      html += '<div class="goal-grid">';
+      html += '<div class="goal-field"><label>' + t("fechaLbl") + '</label><input type="date" id="pt-fecha" value="' + esc(f.fecha) + '" data-scope="pagoTrabajo" data-field="fecha"></div>';
+      html += '<div class="goal-field"><label>' + t("montoNetoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="pt-neto" value="' + esc(f.montoNeto) + '" data-scope="pagoTrabajo" data-field="montoNeto"></div>';
+      html += '</div>';
+      html += '<div class="goal-grid">';
+      html += '<div class="goal-field"><label>' + t("montoBrutoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="pt-bruto" value="' + esc(f.montoBruto) + '" data-scope="pagoTrabajo" data-field="montoBruto"></div>';
+      html += '<div class="goal-field"><label>' + t("metodoLbl") + '</label><input type="text" placeholder="' + t("metodoPh") + '" id="pt-metodo" value="' + esc(f.metodo) + '" data-scope="pagoTrabajo" data-field="metodo"></div>';
+      html += '</div>';
+      if (sinPagar.length > 0) {
+        html += '<p class="opt-row-sub" style="margin:8px 0 6px;">' + t("turnosIncluidosLbl") + '</p>';
+        sinPagar.forEach((tn) => {
+          const r = turnoPagoBruto(tn);
+          const checked = !!f.turnosSel[tn.id];
+          html += '<div class="opt-row" style="padding:6px 0;"><span class="opt-row-label" style="font-weight:500;font-size:12.5px;">' + esc(tn.fecha) + ' \u00b7 ' + fmtHoras(r.horas) + ' \u00b7 ' + sym() + fmt0(r.bruto) + '</span><button class="paid-check' + (checked ? " checked" : "") + '" data-action="toggleTurnoSel" data-id="' + tn.id + '">' + (checked ? "\u2713" : "") + '</button></div>';
+        });
+      }
+      html += '<div style="display:flex;gap:8px;margin-top:10px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmPagoTrabajo">' + t("confirmarPago") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelPagoTrabajo">' + t("cancel") + '</button></div>';
+      html += '</div>';
+    } else {
+      html += '<button class="save-month-btn" data-action="startPagoTrabajo">' + t("agregarPagoTrabajoBtn") + '</button>';
+    }
+
+    // lista de turnos
+    html += '<div class="panel"><h2>' + t("turnosTitle") + '</h2><p class="hint">' + t("turnosHint") + '</p>';
+    const turnosRecientes = state.turnos.slice(0, 15);
+    turnosRecientes.forEach((tn) => {
+      const r = turnoPagoBruto(tn);
+      if (state.confirmDeleteTurnoId === tn.id) {
+        html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteTurnoMsg")(tn.fecha)) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeTurno" data-id="' + tn.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteTurno">' + t("cancel") + '</button></div></div>';
+        return;
+      }
+      const expanded = !!state.expandedTurnoIds[tn.id];
+      html += '<div class="card-entry">';
+      html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(tn.fecha) + ' \u00b7 ' + fmtHoras(r.horas) + '</span><span class="status-pill ' + (tn.estado === "pagado" ? "verde" : "amarillo") + '">' + (tn.estado === "pagado" ? t("estadoPagado") : t("estadoTrabajado")) + '</span></div>';
+      html += '<div class="history-meta"><span>' + sym() + fmt0(r.bruto) + ' ' + t("brutoLbl") + '</span><button class="icon-pencil" data-action="toggleExpandTurno" data-id="' + tn.id + '">' + (expanded ? "\u2713" : "\u270e") + '</button></div>';
+      if (expanded) {
+        html += '<div class="card-fields" style="margin-top:8px;">';
+        html += '<div><span class="field-label">' + t("propinasLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" data-scope="turno" data-id="' + tn.id + '" data-field="propinas" value="' + esc(tn.propinas) + '"></div>';
+        html += '<div><span class="field-label">' + t("bonosLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" data-scope="turno" data-id="' + tn.id + '" data-field="bonos" value="' + esc(tn.bonos) + '"></div>';
+        html += '</div>';
+        html += '<div class="goal-field" style="margin-top:8px;"><label>' + t("notasLbl") + '</label><input type="text" placeholder="' + t("notasPh") + '" data-scope="turno" data-id="' + tn.id + '" data-field="notas" value="' + esc(tn.notas) + '"></div>';
+        html += '<button class="delete-link" data-action="askDeleteTurno" data-id="' + tn.id + '">' + t("eliminarTurnoLink") + '</button>';
+      }
+      html += '</div>';
+    });
+    if (state.turnos.length === 0) html += '<div class="empty-state">' + t("turnosEmpty") + '</div>';
+    html += '</div>';
+
+    // lista de pagos recibidos
+    if (state.pagosTrabajo.length > 0) {
+      html += '<div class="panel"><h2>' + t("pagosRecibidosTitle") + '</h2>';
+      state.pagosTrabajo.slice().reverse().slice(0, 10).forEach((p) => {
+        if (state.confirmDeletePagoTrabajoId === p.id) {
+          html += '<div class="confirm-row"><span>' + esc(t("confirmDeletePagoMsg")(p.fecha)) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removePagoTrabajo" data-id="' + p.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeletePagoTrabajo">' + t("cancel") + '</button></div></div>';
+        } else {
+          html += '<div class="history-row"><div class="history-top"><span class="history-month" style="text-transform:none;">' + esc(p.fecha) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(p.montoNeto)) + '</span></div>';
+          html += '<div class="history-meta"><span>' + esc(p.metodo || "") + '</span><button class="history-del" data-action="askDeletePagoTrabajo" data-id="' + p.id + '">' + t("eliminar") + '</button></div></div>';
+        }
+      });
+      html += '</div>';
+    }
+  }
+
   if (tab === "tarjetas") {
     if (state.payFlash) html += '<div class="flash">' + t("pagoRegistrado") + '</div>';
     html += '<div class="panel"><div class="panel-head-row"><p class="hint" style="margin-bottom:0;">' + t("cardsHint") + '</p><button class="icon-pencil' + (state.editingCards ? " done" : "") + '" data-action="toggleEditCards">' + (state.editingCards ? "\u2713" : "\u270e") + '</button></div>';
@@ -1551,6 +1917,24 @@ root.addEventListener("input", (e) => {
     item[f] = (f === "nombre" || f === "ultimoPago") ? el.value : sanitizeNum(el.value);
     scheduleSave(); rerenderPreservingFocus(); return;
   }
+  if (scope === "job") {
+    const f = el.dataset.field;
+    state.job[f] = f === "nombre" ? el.value : sanitizeNum(el.value);
+    scheduleSave(); rerenderPreservingFocus(); return;
+  }
+  if (scope === "pagoTrabajo") {
+    const f = el.dataset.field;
+    const textFields = ["fecha", "metodo", "notas"];
+    state.pagoTrabajoForm[f] = textFields.indexOf(f) !== -1 ? el.value : sanitizeNum(el.value);
+    rerenderPreservingFocus(); return;
+  }
+  if (scope === "turno") {
+    const item = state.turnos.find((x) => x.id === el.dataset.id);
+    if (!item) return;
+    const f = el.dataset.field;
+    item[f] = f === "notas" ? el.value : sanitizeNum(el.value);
+    scheduleSave(); rerenderPreservingFocus(); return;
+  }
 });
 
 root.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target && e.target.id === "new-profile-input") createProfile(); });
@@ -1581,6 +1965,17 @@ root.addEventListener("click", (e) => {
     addLoan: addLoan, removeLoan: () => removeLoan(id), askDeleteLoan: () => askDeleteLoan(id), cancelDeleteLoan: cancelDeleteLoan,
     toggleEditLoans: toggleEditLoans, setLoanFrec: () => setLoanFrec(id, freq),
     loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
+    toggleEditJob: toggleEditJob,
+    setJobFrecuencia: () => updateJobField("frecuenciaPago", freq),
+    setDescansoPagadoOn: () => updateJobField("descansoPagado", true),
+    setDescansoPagadoOff: () => updateJobField("descansoPagado", false),
+    empezarTrabajo: empezarTrabajo, empezarBreak: empezarBreak, terminarBreak: terminarBreak,
+    askTerminarTrabajo: askTerminarTrabajo, cancelTerminarTrabajo: cancelTerminarTrabajo, terminarTrabajo: terminarTrabajo,
+    askDeleteTurno: () => askDeleteTurno(id), cancelDeleteTurno: cancelDeleteTurno, removeTurno: () => removeTurno(id),
+    toggleExpandTurno: () => toggleExpandTurno(id),
+    startPagoTrabajo: startPagoTrabajo, cancelPagoTrabajo: cancelPagoTrabajo, confirmPagoTrabajo: confirmPagoTrabajo,
+    toggleTurnoSel: () => toggleTurnoSel(id),
+    askDeletePagoTrabajo: () => askDeletePagoTrabajo(id), cancelDeletePagoTrabajo: cancelDeletePagoTrabajo, removePagoTrabajo: () => removePagoTrabajo(id),
     loanFuenteAhorro: () => setLoanFuente(id, "ahorro"), loanFuenteDebito: () => setLoanFuente(id, "debito"),
     startPago: () => startPago(payType, id), cancelPago: cancelPago, confirmPago: confirmPago,
     setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito, setPagoSourceNinguno: setPagoSourceNinguno,
