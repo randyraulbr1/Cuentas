@@ -172,4 +172,30 @@ router.get("/institutions-status", requireAuth, async (req, res) => {
   res.json({ items: result.rows });
 });
 
+router.get("/accounts", requireAuth, async (req, res) => {
+  const result = await query(
+    `SELECT a.id, a.name, a.official_name, a.mask, a.type, a.subtype,
+            a.balance_available, a.balance_current, a.balance_limit, a.currency,
+            pi.institution_name
+     FROM accounts a JOIN plaid_items pi ON pi.id = a.plaid_item_id
+     WHERE a.user_id = $1 AND pi.status = 'active'
+     ORDER BY a.created_at ASC`,
+    [req.userId]
+  );
+  res.json({ accounts: result.rows });
+});
+
+router.get("/transactions", requireAuth, async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit, 10) || 200, 500);
+  const result = await query(
+    `SELECT id, fecha, descripcion, merchant_name, monto, categoria, pendiente
+     FROM transactions
+     WHERE user_id = $1 AND removed = false
+     ORDER BY fecha DESC, created_at DESC
+     LIMIT $2`,
+    [req.userId, limit]
+  );
+  res.json({ transactions: result.rows });
+});
+
 module.exports = router;
