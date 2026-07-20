@@ -83,7 +83,14 @@ async function iniciarConectarBanco() {
         await refrescarDatosNube();
         state.cloudBusy = false;
         state.cloudFlash = t("bancoConectadoMsg");
-        render();
+
+        if (!state.activeProfileId) {
+          const bankName = (exch.data && exch.data.plaid_item && exch.data.plaid_item.institution_name) || t("bancoDesconocido");
+          state.newProfileName = bankName;
+          createProfile();
+        } else {
+          render();
+        }
         setTimeout(() => { state.cloudFlash = ""; rerenderPreservingFocus(); }, 2200);
       },
       onExit: (err) => {
