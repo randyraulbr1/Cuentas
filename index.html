@@ -27,8 +27,9 @@ input, textarea { user-select: text; -webkit-user-select: text; -moz-user-select
 }
 
 body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.4; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; transition: background 0.2s, color 0.2s; }
-.page { padding: 18px 14px 60px; padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+.page { padding: 18px 14px 60px; padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: calc(var(--tabbar-h) + 14px + env(safe-area-inset-bottom)); }
 .wrap { max-width: 760px; margin: 0 auto; }
+:root { --tabbar-h: 62px; }
 
 .tab-bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card-bg); border-top: 1px solid var(--border); display: flex; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); z-index: 30; box-shadow: 0 -1px 6px rgba(0,0,0,0.06); }
 .tab-btn { flex: 1; background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 10px; cursor: pointer; font-family: inherit; }
@@ -50,8 +51,8 @@ body { min-height: 100vh; background: var(--bg); color: var(--text); font-family
 h1 { font-size: 25px; font-weight: 800; letter-spacing: -0.025em; margin: 2px 0 3px; }
 .profile-line { color: var(--text-muted); font-size: 12.5px; margin: 0; font-weight: 600; letter-spacing: 0.01em; }
 
-.options-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
-.options-sheet { background: var(--card-bg); width: 100%; max-width: 480px; border-radius: 18px 18px 0 0; padding: 14px 16px calc(18px + env(safe-area-inset-bottom)); max-height: 88vh; overflow-y: auto; }
+.options-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: var(--tabbar-h); background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 50; }
+.options-sheet { background: var(--card-bg); width: 100%; max-width: 480px; border-radius: 18px 18px 0 0; margin-bottom: 8px; padding: 14px 16px 18px; max-height: 78vh; overflow-y: auto; }
 .options-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .options-head h2 { font-size: 17px; font-weight: 800; margin: 0; }
 .options-close { background: var(--pill-bg); border: none; color: var(--text); width: 28px; height: 28px; border-radius: 50%; font-size: 15px; cursor: pointer; }
@@ -271,6 +272,9 @@ const I18N = {
     loanTasaLbl: "Interés %", loanFrecLbl: "Frecuencia", loanUltimoPagoLbl: "Fecha del último pago",
     loanQuedan: (n) => "Quedan " + n + (n === 1 ? " pago" : " pagos"), loanPagado: "Pagado",
     loanMontoOriginalLbl: "Monto original", loanPagadoDe: "pagado de",
+    loanAutoLbl: "Pago automático", loanAutoHint: "Se descuenta solo el día que te toque pagar.",
+    loanAutoBadge: "Auto",
+    autoPagoAplicado: (n) => "Pago automático aplicado a: " + n + ".",
     loanInteresEstimado: (n) => "Interés estimado restante: " + sym() + n,
     addLoan: "+ Añadir préstamo", loanEmpty: "Aún no tienes préstamos o pagos a plazos.",
     confirmDeleteLoanMsg: (n) => '\u00bfEliminar "' + n + '"?',
@@ -375,6 +379,9 @@ const I18N = {
     loanTasaLbl: "Interest %", loanFrecLbl: "Frequency", loanUltimoPagoLbl: "Date of last payment",
     loanQuedan: (n) => n + (n === 1 ? " payment left" : " payments left"), loanPagado: "Paid off",
     loanMontoOriginalLbl: "Original amount", loanPagadoDe: "paid of",
+    loanAutoLbl: "Automatic payment", loanAutoHint: "It gets deducted on its own on the due date.",
+    loanAutoBadge: "Auto",
+    autoPagoAplicado: (n) => "Automatic payment applied to: " + n + ".",
     loanInteresEstimado: (n) => "Estimated remaining interest: " + sym() + n,
     addLoan: "+ Add loan", loanEmpty: "You have no installment loans yet.",
     confirmDeleteLoanMsg: (n) => 'Delete "' + n + '"?',
@@ -443,7 +450,7 @@ const toNum = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v19";
+const APP_VERSION = "v20";
 let uidCounter = 1;
 const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
 
@@ -518,7 +525,7 @@ const state = {
   confirmDeleteSubId: null, confirmDeleteCardId: null, confirmDeleteHistoryKey: null, confirmDeleteLoanId: null,
   editingSubs: false,
   editingIngreso: false, editingAhorro: false, editingCards: false, editingLoans: false,
-  payingTarget: null, payFormSource: "ahorro", payFormMonto: "", payFlash: false,
+  payingTarget: null, payFormSource: "ahorro", payFormMonto: "", payFlash: false, autoPagoNotif: null,
   expandedCardIds: {},
 
   ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", debito: "", history: [],
@@ -566,6 +573,8 @@ function enterProfile(id) {
   state.loans = d.loans || [];
   state.resultado = null; state.confirmReset = false; state.showOptions = false;
   state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
+  state.autoPagoNotif = null;
+  processAutoPayments();
   undoStack.length = 0;
   state.screen = "app";
   render();
@@ -631,9 +640,53 @@ function addSubPreset(key) {
 
 function toggleEditLoans() { state.editingLoans = !state.editingLoans; state.confirmDeleteLoanId = null; render(); }
 function addLoan() {
-  state.loans.push({ id: uid(), nombre: "", saldoTotal: "", montoOriginal: "", montoPago: "", tasa: "", frecuencia: "quincenal", ultimoPago: "" });
+  state.loans.push({ id: uid(), nombre: "", saldoTotal: "", montoOriginal: "", montoPago: "", tasa: "", frecuencia: "quincenal", ultimoPago: "", automatico: false, fuenteAutomatica: "debito" });
   state.editingLoans = true;
   scheduleSave(); rerenderPreservingFocus();
+}
+function setLoanAuto(id, val) {
+  const l = state.loans.find((x) => x.id === id);
+  if (!l) return;
+  l.automatico = val;
+  scheduleSave(); render();
+}
+function setLoanFuente(id, fuente) {
+  const l = state.loans.find((x) => x.id === id);
+  if (!l) return;
+  l.fuenteAutomatica = fuente;
+  scheduleSave(); render();
+}
+function oneStepNextDate(lastStr, frecuencia) {
+  const last = parseISODate(lastStr);
+  if (!last) return null;
+  const next = new Date(last);
+  if (frecuencia === "mensual") next.setMonth(next.getMonth() + 1);
+  else next.setDate(next.getDate() + (frecuencia === "semanal" ? 7 : 15));
+  return next;
+}
+function processAutoPayments() {
+  const aplicados = [];
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  state.loans.forEach((l) => {
+    if (!l.automatico) return;
+    let guard = 0;
+    while (toNum(l.saldoTotal) > 0 && guard < 24) {
+      const next = oneStepNextDate(l.ultimoPago, l.frecuencia);
+      if (!next || next > now) break;
+      const monto = Math.min(toNum(l.montoPago), toNum(l.saldoTotal));
+      if (monto <= 0) break;
+      l.saldoTotal = String(Math.max(toNum(l.saldoTotal) - monto, 0));
+      if (l.fuenteAutomatica === "debito") state.debito = String(Math.max(toNum(state.debito) - monto, 0));
+      else state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
+      l.ultimoPago = next.toISOString().slice(0, 10);
+      if (aplicados.indexOf(l.nombre || t("loanNombrePh")) === -1) aplicados.push(l.nombre || t("loanNombrePh"));
+      guard++;
+    }
+  });
+  if (aplicados.length > 0) {
+    state.autoPagoNotif = aplicados;
+    scheduleSave();
+  }
 }
 function askDeleteLoan(id) { state.confirmDeleteLoanId = id; render(); }
 function cancelDeleteLoan() { state.confirmDeleteLoanId = null; render(); }
@@ -768,8 +821,7 @@ function computeTotals() {
   const totalSubs = state.subs.reduce((a, s) => a + toNum(s.monto), 0);
   const totalMinimos = state.cards.reduce((a, c) => a + toNum(c.minimo), 0);
   const totalPrestamos = state.loans.reduce((a, l) => a + (toNum(l.saldoTotal) > 0 ? toNum(l.montoPago) : 0), 0);
-  const deudaPrestamos = state.loans.reduce((a, l) => a + Math.max(toNum(l.saldoTotal), 0), 0);
-  const totalDeuda = state.cards.reduce((a, c) => a + toNum(c.saldo), 0) + deudaPrestamos;
+  const totalDeuda = state.cards.reduce((a, c) => a + toNum(c.saldo), 0);
   const cardsConLimite = state.cards.filter((c) => toNum(c.limite) > 0);
   const creditoDisponible = cardsConLimite.reduce((a, c) => a + Math.max(toNum(c.limite) - toNum(c.saldo), 0), 0);
   const disponibleBruto = ingresoEfectivo - totalSubs - totalPrestamos;
@@ -1163,6 +1215,9 @@ function renderApp() {
   }
 
   if (tab === "pagos") {
+    if (state.autoPagoNotif && state.autoPagoNotif.length > 0) {
+      html += '<div class="flash">' + t("autoPagoAplicado")(state.autoPagoNotif.join(", ")) + '</div>';
+    }
     html += '<div class="panel"><div class="panel-head-row"><div><p class="hint" style="margin-bottom:0;">' + t("subsHint") + '</p></div><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? "\u2713" : "\u270e") + '</button></div>';
     if (state.editingSubs) {
       html += '<div class="preset-row">';
@@ -1211,7 +1266,7 @@ function renderApp() {
       }
 
       if (!state.editingLoans) {
-        html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(l.nombre || t("loanNombrePh")) + '</span>' + (pagado ? '<span class="status-pill verde">' + t("loanPagado") + '</span>' : '<span class="status-pill amarillo">' + t("loanQuedan")(pagosRestantes) + '</span>') + '</div>';
+        html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(l.nombre || t("loanNombrePh")) + (l.automatico ? ' <span class="status-pill verde" style="font-size:9.5px;">' + t("loanAutoBadge") + '</span>' : '') + '</span>' + (pagado ? '<span class="status-pill verde">' + t("loanPagado") + '</span>' : '<span class="status-pill amarillo">' + t("loanQuedan")(pagosRestantes) + '</span>') + '</div>';
         html += '<div class="card-collapsed-balance"><span class="field-label">' + t("loanSaldoLbl") + ' ' + sym() + '</span><span class="locked-amount" style="font-size:19px;">' + sym() + fmt0(saldo) + '</span></div>';
         if (progreso !== null) {
           html += '<div class="progress-track"><div class="progress-fill" style="width:' + progreso + '%"></div></div>';
@@ -1235,6 +1290,8 @@ function renderApp() {
         [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["mensual", "payMensual"]].forEach((f) => { html += '<button style="flex:1;" class="' + (l.frecuencia === f[0] ? "active" : "") + '" data-action="setLoanFrec" data-id="' + l.id + '" data-freq="' + f[0] + '">' + t(f[1]) + '</button>'; });
         html += '</div></div>';
         html += '<div class="pay-config"><label>' + t("loanUltimoPagoLbl") + '</label><input type="date" id="loan-ultimo-' + l.id + '" data-scope="loan" data-id="' + l.id + '" data-field="ultimoPago" value="' + esc(l.ultimoPago) + '"></div>';
+        html += '<div class="pay-config"><label>' + t("loanAutoLbl") + '</label><div class="seg" style="width:100%;"><button style="flex:1;" class="' + (!l.automatico ? "active" : "") + '" data-action="loanAutoOff" data-id="' + l.id + '">' + t("off") + '</button><button style="flex:1;" class="' + (l.automatico ? "active" : "") + '" data-action="loanAutoOn" data-id="' + l.id + '">' + t("on") + '</button></div></div>';
+        if (l.automatico) html += '<div class="pay-config"><label>' + t("pagarDesdeLbl") + '</label><div class="seg" style="width:100%;"><button style="flex:1;" class="' + (l.fuenteAutomatica === "ahorro" ? "active" : "") + '" data-action="loanFuenteAhorro" data-id="' + l.id + '">' + t("ahorroActualLbl") + '</button><button style="flex:1;" class="' + (l.fuenteAutomatica === "debito" ? "active" : "") + '" data-action="loanFuenteDebito" data-id="' + l.id + '">' + t("debitoLbl") + '</button></div><p class="opt-row-sub" style="margin-top:4px;">' + t("loanAutoHint") + '</p></div>';
         if (pago > 0 && saldo > 0) {
           html += '<p class="opt-row-sub" style="margin-top:8px;">' + t("loanQuedan")(pagosRestantes) + '</p>';
           if (interesEstimado > 0) html += '<p class="opt-row-sub">' + t("loanInteresEstimado")(fmt0(interesEstimado)) + '</p>';
@@ -1423,6 +1480,8 @@ root.addEventListener("click", (e) => {
     toggleCardExpand: () => toggleCardExpand(id),
     addLoan: addLoan, removeLoan: () => removeLoan(id), askDeleteLoan: () => askDeleteLoan(id), cancelDeleteLoan: cancelDeleteLoan,
     toggleEditLoans: toggleEditLoans, setLoanFrec: () => setLoanFrec(id, freq),
+    loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
+    loanFuenteAhorro: () => setLoanFuente(id, "ahorro"), loanFuenteDebito: () => setLoanFuente(id, "debito"),
     startPago: () => startPago(payType, id), cancelPago: cancelPago, confirmPago: confirmPago,
     setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito,
     guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
