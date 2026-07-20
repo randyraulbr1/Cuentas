@@ -151,9 +151,9 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .util-bar-track { position: relative; height: 6px; background: var(--border); border-radius: 4px; margin-top: 10px; overflow: visible; }
 .util-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
 .util-bar-fill.verde { background: #34C759; } .util-bar-fill.amarillo { background: #FF9500; } .util-bar-fill.rojo { background: #FF3B30; }
+.util-bar-fill.blink { animation: blinkBar 1s infinite; }
+@keyframes blinkBar { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 .util-bar-marker { position: absolute; top: -3px; bottom: -3px; left: 30%; width: 2px; background: var(--text-muted); border-radius: 1px; }
-.util-bar-marker.blink { background: #FF3B30; animation: blinkMarker 1s infinite; }
-@keyframes blinkMarker { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
 .util-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
 .goal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
@@ -391,7 +391,7 @@ const toNum = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v13";
+const APP_VERSION = "v14";
 let uidCounter = 1;
 const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
 
@@ -459,6 +459,7 @@ const state = {
   activeTab: "inicio",
   confirmDeleteSubId: null, confirmDeleteCardId: null, confirmDeleteHistoryKey: null,
   editingSubs: false,
+  editingIngreso: false, editingAhorro: false, editingCards: false,
   expandedCardIds: {},
 
   ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", debito: "", history: [],
@@ -549,6 +550,9 @@ function goInicio() { goTab("inicio"); }
 /* ---------- acciones de datos ---------- */
 function addSub() { state.subs.push({ id: uid(), nombre: "", monto: "" }); scheduleSave(); rerenderPreservingFocus(); }
 function toggleEditSubs() { state.editingSubs = !state.editingSubs; state.confirmDeleteSubId = null; render(); }
+function toggleEditIngreso() { state.editingIngreso = !state.editingIngreso; render(); }
+function toggleEditAhorro() { state.editingAhorro = !state.editingAhorro; render(); }
+function toggleEditCards() { state.editingCards = !state.editingCards; state.confirmDeleteCardId = null; render(); }
 function askDeleteSub(id) { state.confirmDeleteSubId = id; render(); }
 function cancelDeleteSub() { state.confirmDeleteSubId = null; render(); }
 function removeSub(id) { pushUndo(); state.subs = state.subs.filter((x) => x.id !== id); state.confirmDeleteSubId = null; scheduleSave(); rerenderPreservingFocus(); }
@@ -631,10 +635,9 @@ function computeTotals() {
   return { ingresoEfectivo, totalSubs, totalMinimos, totalDeuda, cardsConLimite, creditoDisponible, disponibleBruto, ratioComprometido, liveStatus };
 }
 
-function calcular() {
-  const t2 = computeTotals();
+function computeResultado(t2) {
   const restoTrasMinimos = t2.disponibleBruto - t2.totalMinimos;
-  if (restoTrasMinimos < 0) { state.resultado = { insuficiente: true, faltante: Math.abs(restoTrasMinimos) }; rerenderPreservingFocus(); return; }
+  if (restoTrasMinimos < 0) return { insuficiente: true, faltante: Math.abs(restoTrasMinimos) };
   const ahorroCrudo = restoTrasMinimos * (state.savingsRate / 100);
   const ahorro = Math.round(ahorroCrudo / 10) * 10;
   let extraParaTarjetas = Math.round((restoTrasMinimos - ahorro) * 100) / 100;
@@ -653,18 +656,18 @@ function calcular() {
     return Object.assign({}, c, { pagoExtra, pagoTotal: Math.round((c.minimo + pagoExtra) * 100) / 100 });
   });
   const ahorroFinal = Math.round((ahorro + restante) / 10) * 10;
-  state.resultado = { insuficiente: false, ahorro: ahorroFinal, asignaciones };
-  rerenderPreservingFocus();
+  return { insuficiente: false, ahorro: ahorroFinal, asignaciones };
 }
 
 function guardarMes() {
-  if (!state.resultado) return;
-  pushUndo();
   const t2 = computeTotals();
+  if (t2.ingresoEfectivo <= 0) return;
+  const resultado = computeResultado(t2);
+  pushUndo();
   const key = monthKey();
   const entry = {
     month: key, ingreso: t2.ingresoEfectivo, comprometido: t2.totalSubs + t2.totalMinimos, ratio: t2.ratioComprometido,
-    ahorro: state.resultado.insuficiente ? 0 : state.resultado.ahorro, insuficiente: !!state.resultado.insuficiente, status: t2.liveStatus.key,
+    ahorro: resultado.insuficiente ? 0 : resultado.ahorro, insuficiente: !!resultado.insuficiente, status: t2.liveStatus.key,
   };
   state.history = state.history.filter((x) => x.month !== key);
   state.history.push(entry);
@@ -692,9 +695,9 @@ async function actualizarApp() {
 }
 
 /* ---------- sugerencias ---------- */
-function buildSugerencias(t2) {
+function buildSugerencias(t2, resultado) {
   const s = [];
-  const r = state.resultado;
+  const r = resultado;
   if (!r) return s;
   if (r.insuficiente) {
     s.push(t("faltan") + " " + sym() + fmt0(r.faltante) + ".");
@@ -827,7 +830,7 @@ function renderOptionsSheet() {
 
 function utilBarHtml(uso, usoNivel) {
   const blink = uso >= 30 ? " blink" : "";
-  return '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div><div class="util-bar-marker' + blink + '"></div></div>';
+  return '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + blink + '" style="width:' + uso + '%"></div><div class="util-bar-marker"></div></div>';
 }
 
 function renderTabBar() {
@@ -839,16 +842,18 @@ function renderTabBar() {
   ];
   let h = '<div class="tab-bar">';
   tabs.forEach((tb) => {
-    h += '<button class="tab-btn' + (state.activeTab === tb.id ? " active" : "") + '" data-action="goTab" data-id="' + tb.id + '"><span class="tab-icon">' + tb.icon + '</span><span class="tab-label">' + esc(tb.label) + '</span></button>';
+    h += '<button class="tab-btn' + (state.activeTab === tb.id && !state.showOptions ? " active" : "") + '" data-action="goTab" data-id="' + tb.id + '"><span class="tab-icon">' + tb.icon + '</span><span class="tab-label">' + esc(tb.label) + '</span></button>';
   });
+  h += '<button class="tab-btn' + (state.showOptions ? " active" : "") + '" data-action="toggleOptions"><span class="tab-icon">\u2699\ufe0f' + (UPDATE_AVAILABLE ? '<span class="dot" style="top:2px;right:14px;"></span>' : '') + '</span><span class="tab-label">' + esc(t("optionsTitle")) + '</span></button>';
   h += '</div>';
   return h;
 }
 
 function renderApp() {
   const t2 = computeTotals();
+  const resultado = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
   const metaProgreso = toNum(state.metaAhorro) > 0 ? Math.min((toNum(state.ahorroActual) / toNum(state.metaAhorro)) * 100, 100) : 0;
-  const sugerencias = buildSugerencias(t2);
+  const sugerencias = buildSugerencias(t2, resultado);
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
   const np = nextPayInfo();
   const tab = state.activeTab;
@@ -884,8 +889,10 @@ function renderApp() {
       html += '</div>';
     }
 
-    html += '<div class="panel"><h2>' + t("ingresoTitle") + '</h2><p class="hint">' + (state.payFrequency === "mensual" ? t("ingresoMensualHint") : t("ingresoHint")) + '</p>';
-    if (state.payFrequency === "mensual") {
+    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("ingresoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + (state.payFrequency === "mensual" ? t("ingresoMensualHint") : t("ingresoHint")) + '</p></div><button class="icon-pencil' + (state.editingIngreso ? " done" : "") + '" data-action="toggleEditIngreso">' + (state.editingIngreso ? "\u2713" : "\u270e") + '</button></div>';
+    if (!state.editingIngreso) {
+      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + t("totalCalculado") + '</span><span class="locked-amount" style="font-size:19px;">' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
+    } else if (state.payFrequency === "mensual") {
       html += '<input type="text" inputmode="decimal" placeholder="0" id="ingreso-input" data-scope="ingreso" value="' + esc(state.ingreso) + '" style="width:100%;font-size:20px;font-weight:700;">';
     } else if (state.payFrequency === "quincenal") {
       html += '<div class="goal-grid">';
@@ -900,33 +907,41 @@ function renderApp() {
     }
     html += '</div>';
 
-    html += '<div class="panel"><h2>' + t("tuAhorroTitle") + '</h2><p class="hint">' + t("tuAhorroHint") + '</p>';
-    html += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '" style="width:100%;"></div>';
-    html += '<div class="goal-grid">';
-    html += '<div class="goal-field"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '"></div>';
-    html += '<div class="goal-field"><label>' + t("metaAhorroLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="meta-ahorro-input" data-scope="metaAhorro" value="' + esc(state.metaAhorro) + '"></div>';
-    html += '</div>';
-    if (toNum(state.metaAhorro) > 0) {
-      html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
-      html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
+    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("tuAhorroTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("tuAhorroHint") + '</p></div><button class="icon-pencil' + (state.editingAhorro ? " done" : "") + '" data-action="toggleEditAhorro">' + (state.editingAhorro ? "\u2713" : "\u270e") + '</button></div>';
+    if (!state.editingAhorro) {
+      html += '<div class="sub-row-locked"><span class="locked-name">' + t("debitoLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.debito)) + '</span></div>';
+      html += '<div class="sub-row-locked"><span class="locked-name">' + t("ahorroActualLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.ahorroActual)) + '</span></div>';
+      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + t("metaAhorroLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.metaAhorro)) + '</span></div>';
+      if (toNum(state.metaAhorro) > 0) {
+        html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
+        html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
+      }
+    } else {
+      html += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '" style="width:100%;"></div>';
+      html += '<div class="goal-grid">';
+      html += '<div class="goal-field"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '"></div>';
+      html += '<div class="goal-field"><label>' + t("metaAhorroLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="meta-ahorro-input" data-scope="metaAhorro" value="' + esc(state.metaAhorro) + '"></div>';
+      html += '</div>';
+      if (toNum(state.metaAhorro) > 0) {
+        html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
+        html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
+      }
     }
     html += '<p class="hint" style="margin-top:10px;">' + t("ahorroPctTitle") + ': <b>' + state.savingsRate + '%</b> \u2014 <span style="color:#007AFF;cursor:pointer;font-weight:600;" data-action="toggleOptions">\u2699\ufe0f ' + t("optionsTitle") + '</span></p>';
     html += '</div>';
 
-    html += '<button class="calc-btn" data-action="calcular">' + t("calcBtn") + '</button>';
-
-    if (state.resultado && state.resultado.insuficiente) {
-      html += '<div class="warn-box"><b>' + t("noAlcanza") + '</b><br>' + t("faltan") + ' <b>' + sym() + fmt0(state.resultado.faltante) + '</b>.</div>';
+    if (resultado && resultado.insuficiente) {
+      html += '<div class="warn-box"><b>' + t("noAlcanza") + '</b><br>' + t("faltan") + ' <b>' + sym() + fmt0(resultado.faltante) + '</b>.</div>';
     }
-    if (state.resultado && !state.resultado.insuficiente) {
+    if (resultado && !resultado.insuficiente) {
       html += '<div class="result-card">';
       html += '<div class="result-line"><span>' + t("ingresoLbl") + '</span><span>' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
       html += '<div class="result-line"><span>' + t("pagosFijosLbl") + '</span><span>\u2212' + sym() + fmt0(t2.totalSubs) + '</span></div>';
-      state.resultado.asignaciones.forEach((c) => {
+      resultado.asignaciones.forEach((c) => {
         html += '<div class="result-line"><span class="name">' + esc(c.nombre || t("tarjetaFallback")) + (c.pagoExtra > 0 ? '<span class="badge">' + t("extraBadge") + '</span>' : '') + '</span><span>\u2212' + sym() + fmt0(c.pagoTotal) + '</span></div>';
       });
       if (state.cards.length === 0) html += '<div class="result-line"><span>' + t("sinTarjetas") + '</span><span>\u2014</span></div>';
-      html += '<div class="result-line"><span>' + t("ahorroSugerido") + '</span><span>' + sym() + fmt10(state.resultado.ahorro) + '</span></div>';
+      html += '<div class="result-line"><span>' + t("ahorroSugerido") + '</span><span>' + sym() + fmt10(resultado.ahorro) + '</span></div>';
       html += '<div class="result-total"><span>' + t("totalRepartido") + '</span><span>' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
       html += '</div>';
     }
@@ -937,7 +952,7 @@ function renderApp() {
       html += '</ul></div>';
     }
 
-    if (state.resultado) html += '<button class="save-month-btn" data-action="guardarMes">' + t("guardarMes") + '</button>';
+    if (resultado) html += '<button class="save-month-btn" data-action="guardarMes">' + t("guardarMes") + '</button>';
     if (state.savedFlash) html += '<div class="flash">' + t("mesGuardado") + '</div>';
     html += '<p class="save-note">' + (state.storageError ? t("saveNoteErr") : t("saveNoteOk")) + ' · ' + APP_VERSION + '</p>';
   }
@@ -962,7 +977,14 @@ function renderApp() {
   }
 
   if (tab === "tarjetas") {
-    html += '<div class="panel"><p class="hint">' + t("cardsHint") + '</p>';
+    html += '<div class="panel"><div class="panel-head-row"><p class="hint" style="margin-bottom:0;">' + t("cardsHint") + '</p><button class="icon-pencil' + (state.editingCards ? " done" : "") + '" data-action="toggleEditCards">' + (state.editingCards ? "\u2713" : "\u270e") + '</button></div>';
+    if (!state.editingCards) {
+      state.cards.forEach((c) => {
+        html += '<div class="sub-row-locked"><span class="locked-name">' + esc(c.nombre || t("cardNombrePh")) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(c.saldo)) + '</span></div>';
+      });
+      if (state.cards.length === 0) html += '<div class="empty-state">' + t("cardsEmpty") + '</div>';
+      html += '<div class="mini-total"><span>' + t("totalMinimos") + '</span><b>' + sym() + fmt0(t2.totalMinimos) + '</b></div></div>';
+    } else {
     state.cards.forEach((c) => {
       const lim = toNum(c.limite);
       const saldo = toNum(c.saldo);
@@ -1004,6 +1026,7 @@ function renderApp() {
     if (state.cards.length === 0) html += '<div class="empty-state">' + t("cardsEmpty") + '</div>';
     html += '<button class="add-btn" data-action="addCard">' + t("addCard") + '</button>';
     html += '<div class="mini-total"><span>' + t("totalMinimos") + '</span><b>' + sym() + fmt0(t2.totalMinimos) + '</b></div></div>';
+    }
   }
 
   if (tab === "historial") {
@@ -1104,9 +1127,10 @@ root.addEventListener("click", (e) => {
     cancelReset: () => { state.confirmReset = false; render(); },
     resetAll: resetAll,
     addSub: addSub, removeSub: () => removeSub(id), askDeleteSub: () => askDeleteSub(id), cancelDeleteSub: cancelDeleteSub, toggleEditSubs: toggleEditSubs,
+    toggleEditIngreso: toggleEditIngreso, toggleEditAhorro: toggleEditAhorro, toggleEditCards: toggleEditCards,
     addCard: addCard, removeCard: () => removeCard(id), askDeleteCard: () => askDeleteCard(id), cancelDeleteCard: cancelDeleteCard,
     toggleCardExpand: () => toggleCardExpand(id),
-    calcular: calcular, guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
+    guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
     switchUser: switchUser,
     toggleTheme: toggleTheme, toggleLang: toggleLang, toggleCurrency: toggleCurrency,
     setLangEs: () => { if (state.lang !== "es") toggleLang(); },
