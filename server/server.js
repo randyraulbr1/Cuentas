@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
+const { ensureExtensions } = require("./db");
 const authRoutes = require("./routes/auth");
 const plaidRoutes = require("./routes/plaid");
 const webhookRoutes = require("./routes/webhooks");
@@ -28,7 +29,9 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
-  app.listen(PORT, () => console.log("Cuentas Claras backend escuchando en puerto " + PORT));
+  ensureExtensions().finally(() => {
+    app.listen(PORT, () => console.log("Cuentas Claras backend escuchando en puerto " + PORT));
+  });
 }
 
 module.exports = app;
