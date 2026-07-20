@@ -27,8 +27,19 @@ input, textarea { user-select: text; -webkit-user-select: text; -moz-user-select
 }
 
 body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; transition: background 0.2s, color 0.2s; }
-.page { padding: 18px 14px 60px; padding-top: max(18px, env(safe-area-inset-top)); }
+.page { padding: 18px 14px 60px; padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
 .wrap { max-width: 760px; margin: 0 auto; }
+
+.tab-bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card-bg); border-top: 1px solid var(--border); display: flex; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); z-index: 30; box-shadow: 0 -1px 6px rgba(0,0,0,0.06); }
+.tab-btn { flex: 1; background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 10px; cursor: pointer; font-family: inherit; }
+.tab-btn.active { color: #007AFF; }
+[data-theme="dark"] .tab-btn.active { color: #6DB4FF; }
+.tab-icon { font-size: 19px; line-height: 1; }
+.tab-label { font-size: 10.5px; font-weight: 600; }
+
+.tab-subheader { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.tab-subheader h2 { font-size: 19px; font-weight: 800; margin: 0; }
+.back-btn { background: var(--pill-bg); border: none; color: var(--text); border-radius: 16px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
 
 .top-action { border-radius: 12px; padding: 10px 14px; font-size: 13.5px; font-weight: 700; text-align: center; margin-bottom: 12px; }
 .top-action.rojo { background: #FFE5E3; color: #D70015; }
@@ -137,9 +148,12 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .field-label { font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-bottom: 3px; display: block; }
 .card-fields input { width: 100%; }
 
-.util-bar-track { height: 6px; background: var(--border); border-radius: 4px; margin-top: 10px; overflow: hidden; }
+.util-bar-track { position: relative; height: 6px; background: var(--border); border-radius: 4px; margin-top: 10px; overflow: visible; }
 .util-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
 .util-bar-fill.verde { background: #34C759; } .util-bar-fill.amarillo { background: #FF9500; } .util-bar-fill.rojo { background: #FF3B30; }
+.util-bar-marker { position: absolute; top: -3px; bottom: -3px; left: 30%; width: 2px; background: var(--text-muted); border-radius: 1px; }
+.util-bar-marker.blink { background: #FF3B30; animation: blinkMarker 1s infinite; }
+@keyframes blinkMarker { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
 .util-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
 .goal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
@@ -213,6 +227,7 @@ const I18N = {
     subtitle: "Ingreso, pagos fijos, tarjetas y ahorro.",
     helloProfile: (n) => "Hola, " + n,
     optionsTitle: "Opciones", close: "Cerrar",
+    tabInicio: "Inicio", tabTarjetas: "Tarjetas", tabPagos: "Pagos", tabHistorial: "Historial", atras: "Atrás",
     secPerfil: "Perfil", secIdioma: "Idioma", secMoneda: "Moneda", secTema: "Tema", secPago: "Frecuencia de pago", secAhorroPct: "% a ahorrar", secDatos: "Datos",
     saludCreditoTitle: "Salud de tu crédito", saludCreditoHint: "Mantener bajo el uso de cada tarjeta (idealmente menos del 30%) ayuda a fortalecer tu historial crediticio.",
     ahorroNormal: "Normal", ahorroMedio: "Medio", ahorroAgresivo: "Agresivo",
@@ -292,6 +307,7 @@ const I18N = {
     subtitle: "Income, fixed bills, cards and savings.",
     helloProfile: (n) => "Hi, " + n,
     optionsTitle: "Options", close: "Close",
+    tabInicio: "Home", tabTarjetas: "Cards", tabPagos: "Bills", tabHistorial: "History", atras: "Back",
     secPerfil: "Profile", secIdioma: "Language", secMoneda: "Currency", secTema: "Theme", secPago: "Pay frequency", secAhorroPct: "% to save", secDatos: "Data",
     saludCreditoTitle: "Your credit health", saludCreditoHint: "Keeping each card's usage low (ideally under 30%) helps strengthen your credit history.",
     ahorroNormal: "Normal", ahorroMedio: "Medium", ahorroAgresivo: "Aggressive",
@@ -439,6 +455,7 @@ const state = {
   currency: settingsInit.currency || "usd",
   newProfileName: "",
   showOptions: false,
+  activeTab: "inicio",
   confirmDeleteSubId: null, confirmDeleteCardId: null, confirmDeleteHistoryKey: null,
   editingSubs: false,
   expandedCardIds: {},
@@ -525,6 +542,8 @@ function toggleCurrency() { state.currency = state.currency === "usd" ? "eur" : 
 function setPayFrequency(f) { state.payFrequency = f; scheduleSave(); render(); }
 function setSavingsRate(n) { state.savingsRate = n; scheduleSave(); render(); }
 function toggleOptions() { state.showOptions = !state.showOptions; render(); }
+function goTab(id) { state.activeTab = id; render(); window.scrollTo(0, 0); }
+function goInicio() { goTab("inicio"); }
 
 /* ---------- acciones de datos ---------- */
 function addSub() { state.subs.push({ id: uid(), nombre: "", monto: "" }); scheduleSave(); rerenderPreservingFocus(); }
@@ -803,172 +822,206 @@ function renderOptionsSheet() {
   return h;
 }
 
+function utilBarHtml(uso, usoNivel) {
+  const blink = uso >= 30 ? " blink" : "";
+  return '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div><div class="util-bar-marker' + blink + '"></div></div>';
+}
+
+function renderTabBar() {
+  const tabs = [
+    { id: "inicio", icon: "\ud83c\udfe0", label: t("tabInicio") },
+    { id: "tarjetas", icon: "\ud83d\udcb3", label: t("tabTarjetas") },
+    { id: "pagos", icon: "\ud83e\uddfe", label: t("tabPagos") },
+    { id: "historial", icon: "\ud83d\udcca", label: t("tabHistorial") },
+  ];
+  let h = '<div class="tab-bar">';
+  tabs.forEach((tb) => {
+    h += '<button class="tab-btn' + (state.activeTab === tb.id ? " active" : "") + '" data-action="goTab" data-id="' + tb.id + '"><span class="tab-icon">' + tb.icon + '</span><span class="tab-label">' + esc(tb.label) + '</span></button>';
+  });
+  h += '</div>';
+  return h;
+}
+
 function renderApp() {
   const t2 = computeTotals();
   const metaProgreso = toNum(state.metaAhorro) > 0 ? Math.min((toNum(state.ahorroActual) / toNum(state.metaAhorro)) * 100, 100) : 0;
   const sugerencias = buildSugerencias(t2);
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
   const np = nextPayInfo();
+  const tab = state.activeTab;
 
   let html = '<div class="page"><div class="wrap">';
   const topAction = computeTopAction(t2);
   if (topAction) html += '<div class="top-action ' + topAction.level + '">' + esc(topAction.text) + '</div>';
   html += '<div class="app-header"><div class="app-header-text"><h1>' + t("brand") + '</h1><p class="subtitle">' + t("subtitle") + '</p>';
   if (activeProfile) html += '<p class="profile-line">' + esc(t("helloProfile")(activeProfile.nombre)) + '</p>';
-  html += '</div><button class="options-btn" data-action="toggleOptions">⚙️' + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button></div>';
+  html += '</div><button class="options-btn" data-action="toggleOptions">\u2699\ufe0f' + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button></div>';
 
-  html += '<div class="summary">';
-  html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
-  html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
-  html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></div>';
-  if (t2.cardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
-  if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + (np.ajustado ? " ✎" : "") + '</div></div>';
-  html += '</div>';
-
-  if (t2.cardsConLimite.length > 0) {
-    html += '<div class="panel"><h2>' + t("saludCreditoTitle") + '</h2><p class="hint">' + t("saludCreditoHint") + '</p>';
-    t2.cardsConLimite.forEach((c) => {
-      const uso = Math.min((toNum(c.saldo) / toNum(c.limite)) * 100, 100);
-      const usoNivel = uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
-      html += '<div style="margin-bottom:10px;"><div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(c.nombre || t("cardNombrePh")) + '</span><span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span></div>';
-      html += '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div></div></div>';
-    });
-    html += '</div>';
+  if (tab !== "inicio") {
+    html += '<div class="tab-subheader"><button class="back-btn" data-action="goInicio">\u2039 ' + t("atras") + '</button><h2>' + t(tab === "tarjetas" ? "tabTarjetas" : tab === "pagos" ? "tabPagos" : "tabHistorial") + '</h2></div>';
   }
 
-  html += '<div class="panel"><h2>' + t("ingresoTitle") + '</h2><p class="hint">' + (state.payFrequency === "mensual" ? t("ingresoMensualHint") : t("ingresoHint")) + '</p>';
-  if (state.payFrequency === "mensual") {
-    html += '<input type="text" inputmode="decimal" placeholder="0" id="ingreso-input" data-scope="ingreso" value="' + esc(state.ingreso) + '" style="width:100%;font-size:20px;font-weight:700;">';
-  } else if (state.payFrequency === "quincenal") {
+  if (tab === "inicio") {
+    html += '<div class="summary">';
+    html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></div>';
+    if (t2.cardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
+    if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + (np.ajustado ? " \u270e" : "") + '</div></div>';
+    html += '</div>';
+
+    if (t2.cardsConLimite.length > 0) {
+      html += '<div class="panel"><h2>' + t("saludCreditoTitle") + '</h2><p class="hint">' + t("saludCreditoHint") + '</p>';
+      t2.cardsConLimite.forEach((c) => {
+        const uso = Math.min((toNum(c.saldo) / toNum(c.limite)) * 100, 100);
+        const usoNivel = uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
+        html += '<div style="margin-bottom:14px;"><div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(c.nombre || t("cardNombrePh")) + '</span><span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span></div>';
+        html += utilBarHtml(uso, usoNivel) + '</div>';
+      });
+      html += '</div>';
+    }
+
+    html += '<div class="panel"><h2>' + t("ingresoTitle") + '</h2><p class="hint">' + (state.payFrequency === "mensual" ? t("ingresoMensualHint") : t("ingresoHint")) + '</p>';
+    if (state.payFrequency === "mensual") {
+      html += '<input type="text" inputmode="decimal" placeholder="0" id="ingreso-input" data-scope="ingreso" value="' + esc(state.ingreso) + '" style="width:100%;font-size:20px;font-weight:700;">';
+    } else if (state.payFrequency === "quincenal") {
+      html += '<div class="goal-grid">';
+      html += '<div class="goal-field"><label>' + t("ingresoQuincena1Lbl") + '</label><input type="text" inputmode="decimal" placeholder="0" id="q1-monto" data-scope="quincena1Monto" value="' + esc(state.quincena1Monto) + '"></div>';
+      html += '<div class="goal-field"><label>' + t("ingresoQuincena2Lbl") + '</label><input type="text" inputmode="decimal" placeholder="0" id="q2-monto" data-scope="quincena2Monto" value="' + esc(state.quincena2Monto) + '"></div>';
+      html += '</div>';
+      html += '<div class="mini-total"><span>' + t("totalCalculado") + '</span><b>' + sym() + fmt0(t2.ingresoEfectivo) + '</b></div>';
+    } else if (state.payFrequency === "semanal") {
+      html += '<input type="text" inputmode="decimal" placeholder="0" id="semana-monto" data-scope="semanaMonto" value="' + esc(state.semanaMonto) + '" style="width:100%;font-size:20px;font-weight:700;">';
+      const veces = semanaOcurrenciasEsteMes();
+      html += '<div class="mini-total"><span>' + t("vecesEsteMes")(veces) + '</span><b>' + sym() + fmt0(t2.ingresoEfectivo) + '</b></div>';
+    }
+    html += '</div>';
+
+    html += '<div class="panel"><h2>' + t("tuAhorroTitle") + '</h2><p class="hint">' + t("tuAhorroHint") + '</p>';
+    html += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '" style="width:100%;"></div>';
     html += '<div class="goal-grid">';
-    html += '<div class="goal-field"><label>' + t("ingresoQuincena1Lbl") + '</label><input type="text" inputmode="decimal" placeholder="0" id="q1-monto" data-scope="quincena1Monto" value="' + esc(state.quincena1Monto) + '"></div>';
-    html += '<div class="goal-field"><label>' + t("ingresoQuincena2Lbl") + '</label><input type="text" inputmode="decimal" placeholder="0" id="q2-monto" data-scope="quincena2Monto" value="' + esc(state.quincena2Monto) + '"></div>';
+    html += '<div class="goal-field"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '"></div>';
+    html += '<div class="goal-field"><label>' + t("metaAhorroLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="meta-ahorro-input" data-scope="metaAhorro" value="' + esc(state.metaAhorro) + '"></div>';
     html += '</div>';
-    html += '<div class="mini-total"><span>' + t("totalCalculado") + '</span><b>' + sym() + fmt0(t2.ingresoEfectivo) + '</b></div>';
-  } else if (state.payFrequency === "semanal") {
-    html += '<input type="text" inputmode="decimal" placeholder="0" id="semana-monto" data-scope="semanaMonto" value="' + esc(state.semanaMonto) + '" style="width:100%;font-size:20px;font-weight:700;">';
-    const veces = semanaOcurrenciasEsteMes();
-    html += '<div class="mini-total"><span>' + t("vecesEsteMes")(veces) + '</span><b>' + sym() + fmt0(t2.ingresoEfectivo) + '</b></div>';
-  }
-  html += '</div>';
-
-  html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("subsTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("subsHint") + '</p></div><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? "✓" : "✎") + '</button></div>';
-  state.subs.forEach((s) => {
-    if (state.confirmDeleteSubId === s.id) {
-      html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteSubMsg")(s.nombre || t("subNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeSub" data-id="' + s.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteSub">' + t("cancel") + '</button></div></div>';
-    } else if (state.editingSubs) {
-      html += '<div class="sub-row">';
-      html += '<input type="text" placeholder="' + t("subNombrePh") + '" id="sub-nombre-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="nombre" value="' + esc(s.nombre) + '">';
-      html += '<input type="text" inputmode="decimal" placeholder="' + sym() + '" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '">';
-      html += '<button class="icon-del" data-action="askDeleteSub" data-id="' + s.id + '">×</button></div>';
-    } else {
-      html += '<div class="sub-row-locked"><span class="locked-name">' + esc(s.nombre || t("subNombrePh")) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(s.monto)) + '</span></div>';
+    if (toNum(state.metaAhorro) > 0) {
+      html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
+      html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
     }
-  });
-  if (state.subs.length === 0 && !state.editingSubs) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
-  if (state.editingSubs) html += '<button class="add-btn" data-action="addSub">' + t("addSub") + '</button>';
-  html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(t2.totalSubs) + '</b></div></div>';
+    html += '<p class="hint" style="margin-top:10px;">' + t("ahorroPctTitle") + ': <b>' + state.savingsRate + '%</b> \u2014 <span style="color:#007AFF;cursor:pointer;font-weight:600;" data-action="toggleOptions">\u2699\ufe0f ' + t("optionsTitle") + '</span></p>';
+    html += '</div>';
 
-  html += '<div class="panel"><h2>' + t("cardsTitle") + '</h2><p class="hint">' + t("cardsHint") + '</p>';
-  state.cards.forEach((c) => {
-    const lim = toNum(c.limite);
-    const saldo = toNum(c.saldo);
-    const uso = lim > 0 ? Math.min((saldo / lim) * 100, 100) : null;
-    const usoNivel = uso === null ? "" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
+    html += '<button class="calc-btn" data-action="calcular">' + t("calcBtn") + '</button>';
 
-    if (state.confirmDeleteCardId === c.id) {
-      html += '<div class="card-entry"><div class="confirm-row"><span>' + esc(t("confirmDeleteCardMsg")(c.nombre || t("cardNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeCard" data-id="' + c.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteCard">' + t("cancel") + '</button></div></div></div>';
-      return;
+    if (state.resultado && state.resultado.insuficiente) {
+      html += '<div class="warn-box"><b>' + t("noAlcanza") + '</b><br>' + t("faltan") + ' <b>' + sym() + fmt0(state.resultado.faltante) + '</b>.</div>';
     }
-
-    if (state.expandedCardIds[c.id]) {
-      html += '<div class="card-entry">';
-      html += '<div class="card-entry-top"><input type="text" placeholder="' + t("cardNombrePh") + '" id="card-nombre-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="nombre" value="' + esc(c.nombre) + '">';
-      html += '<button class="icon-pencil done" data-action="toggleCardExpand" data-id="' + c.id + '">✓</button></div>';
-      html += '<div class="card-fields">';
-      html += '<div><span class="field-label">' + t("saldoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + esc(c.saldo) + '"></div>';
-      html += '<div><span class="field-label">' + t("limiteLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="card-limite-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="limite" value="' + esc(c.limite) + '"></div>';
-      html += '<div><span class="field-label">' + t("taeLbl") + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-apr-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="apr" value="' + esc(c.apr) + '"></div>';
-      html += '<div><span class="field-label">' + t("minimoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-minimo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="minimo" value="' + esc(c.minimo) + '"></div>';
+    if (state.resultado && !state.resultado.insuficiente) {
+      html += '<div class="result-card">';
+      html += '<div class="result-line"><span>' + t("ingresoLbl") + '</span><span>' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
+      html += '<div class="result-line"><span>' + t("pagosFijosLbl") + '</span><span>\u2212' + sym() + fmt0(t2.totalSubs) + '</span></div>';
+      state.resultado.asignaciones.forEach((c) => {
+        html += '<div class="result-line"><span class="name">' + esc(c.nombre || t("tarjetaFallback")) + (c.pagoExtra > 0 ? '<span class="badge">' + t("extraBadge") + '</span>' : '') + '</span><span>\u2212' + sym() + fmt0(c.pagoTotal) + '</span></div>';
+      });
+      if (state.cards.length === 0) html += '<div class="result-line"><span>' + t("sinTarjetas") + '</span><span>\u2014</span></div>';
+      html += '<div class="result-line"><span>' + t("ahorroSugerido") + '</span><span>' + sym() + fmt10(state.resultado.ahorro) + '</span></div>';
+      html += '<div class="result-total"><span>' + t("totalRepartido") + '</span><span>' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
       html += '</div>';
-      if (uso !== null) {
-        html += '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div></div>';
-        html += '<div class="util-label">' + t("usoLimite") + Math.round(uso) + '%</div>';
+    }
+
+    if (sugerencias.length > 0) {
+      html += '<div class="sugerencias"><h2>' + t("sugerenciasTitle") + '</h2><ul>';
+      sugerencias.forEach((s) => { html += '<li>' + esc(s) + '</li>'; });
+      html += '</ul></div>';
+    }
+
+    if (state.resultado) html += '<button class="save-month-btn" data-action="guardarMes">' + t("guardarMes") + '</button>';
+    if (state.savedFlash) html += '<div class="flash">' + t("mesGuardado") + '</div>';
+    html += '<p class="save-note">' + (state.storageError ? t("saveNoteErr") : t("saveNoteOk")) + '</p>';
+  }
+
+  if (tab === "pagos") {
+    html += '<div class="panel"><div class="panel-head-row"><div><p class="hint" style="margin-bottom:0;">' + t("subsHint") + '</p></div><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? "\u2713" : "\u270e") + '</button></div>';
+    state.subs.forEach((s) => {
+      if (state.confirmDeleteSubId === s.id) {
+        html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteSubMsg")(s.nombre || t("subNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeSub" data-id="' + s.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteSub">' + t("cancel") + '</button></div></div>';
+      } else if (state.editingSubs) {
+        html += '<div class="sub-row">';
+        html += '<input type="text" placeholder="' + t("subNombrePh") + '" id="sub-nombre-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="nombre" value="' + esc(s.nombre) + '">';
+        html += '<input type="text" inputmode="decimal" placeholder="' + sym() + '" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '">';
+        html += '<button class="icon-del" data-action="askDeleteSub" data-id="' + s.id + '">\u00d7</button></div>';
+      } else {
+        html += '<div class="sub-row-locked"><span class="locked-name">' + esc(s.nombre || t("subNombrePh")) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(s.monto)) + '</span></div>';
       }
-      html += '<button class="delete-link" data-action="askDeleteCard" data-id="' + c.id + '">' + t("deleteCardLink") + '</button>';
-      html += '</div>';
-    } else {
-      html += '<div class="card-entry">';
-      html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(c.nombre || t("cardNombrePh")) + '</span><button class="icon-pencil" data-action="toggleCardExpand" data-id="' + c.id + '">✎</button></div>';
-      html += '<div class="card-collapsed-balance"><span class="field-label">' + t("debesAhoraLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + esc(c.saldo) + '" style="font-size:19px;font-weight:800;"></div>';
-      if (uso !== null) {
-        html += '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div></div>';
-        html += '<div class="util-label">' + t("usoLimite") + Math.round(uso) + '%</div>';
-      }
-      html += '</div>';
-    }
-  });
-  if (state.cards.length === 0) html += '<div class="empty-state">' + t("cardsEmpty") + '</div>';
-  html += '<button class="add-btn" data-action="addCard">' + t("addCard") + '</button>';
-  html += '<div class="mini-total"><span>' + t("totalMinimos") + '</span><b>' + sym() + fmt0(t2.totalMinimos) + '</b></div></div>';
-
-  html += '<div class="panel"><h2>' + t("tuAhorroTitle") + '</h2><p class="hint">' + t("tuAhorroHint") + '</p>';
-  html += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '" style="width:100%;"></div>';
-  html += '<div class="goal-grid">';
-  html += '<div class="goal-field"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '"></div>';
-  html += '<div class="goal-field"><label>' + t("metaAhorroLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="meta-ahorro-input" data-scope="metaAhorro" value="' + esc(state.metaAhorro) + '"></div>';
-  html += '</div>';
-  if (toNum(state.metaAhorro) > 0) {
-    html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
-    html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
-  }
-  html += '<p class="hint" style="margin-top:10px;">' + t("ahorroPctTitle") + ': <b>' + state.savingsRate + '%</b> — <span style="color:#007AFF;cursor:pointer;font-weight:600;" data-action="toggleOptions">⚙️ ' + t("optionsTitle") + '</span></p>';
-  html += '</div>';
-
-  html += '<button class="calc-btn" data-action="calcular">' + t("calcBtn") + '</button>';
-
-  if (state.resultado && state.resultado.insuficiente) {
-    html += '<div class="warn-box"><b>' + t("noAlcanza") + '</b><br>' + t("faltan") + ' <b>' + sym() + fmt0(state.resultado.faltante) + '</b>.</div>';
-  }
-  if (state.resultado && !state.resultado.insuficiente) {
-    html += '<div class="result-card">';
-    html += '<div class="result-line"><span>' + t("ingresoLbl") + '</span><span>' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
-    html += '<div class="result-line"><span>' + t("pagosFijosLbl") + '</span><span>−' + sym() + fmt0(t2.totalSubs) + '</span></div>';
-    state.resultado.asignaciones.forEach((c) => {
-      html += '<div class="result-line"><span class="name">' + esc(c.nombre || t("tarjetaFallback")) + (c.pagoExtra > 0 ? '<span class="badge">' + t("extraBadge") + '</span>' : '') + '</span><span>−' + sym() + fmt0(c.pagoTotal) + '</span></div>';
     });
-    if (state.cards.length === 0) html += '<div class="result-line"><span>' + t("sinTarjetas") + '</span><span>—</span></div>';
-    html += '<div class="result-line"><span>' + t("ahorroSugerido") + '</span><span>' + sym() + fmt10(state.resultado.ahorro) + '</span></div>';
-    html += '<div class="result-total"><span>' + t("totalRepartido") + '</span><span>' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
+    if (state.subs.length === 0 && !state.editingSubs) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
+    if (state.editingSubs) html += '<button class="add-btn" data-action="addSub">' + t("addSub") + '</button>';
+    html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(t2.totalSubs) + '</b></div></div>';
+  }
+
+  if (tab === "tarjetas") {
+    html += '<div class="panel"><p class="hint">' + t("cardsHint") + '</p>';
+    state.cards.forEach((c) => {
+      const lim = toNum(c.limite);
+      const saldo = toNum(c.saldo);
+      const uso = lim > 0 ? Math.min((saldo / lim) * 100, 100) : null;
+      const usoNivel = uso === null ? "" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
+
+      if (state.confirmDeleteCardId === c.id) {
+        html += '<div class="card-entry"><div class="confirm-row"><span>' + esc(t("confirmDeleteCardMsg")(c.nombre || t("cardNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeCard" data-id="' + c.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteCard">' + t("cancel") + '</button></div></div></div>';
+        return;
+      }
+
+      if (state.expandedCardIds[c.id]) {
+        html += '<div class="card-entry">';
+        html += '<div class="card-entry-top"><input type="text" placeholder="' + t("cardNombrePh") + '" id="card-nombre-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="nombre" value="' + esc(c.nombre) + '">';
+        html += '<button class="icon-pencil done" data-action="toggleCardExpand" data-id="' + c.id + '">\u2713</button></div>';
+        html += '<div class="card-fields">';
+        html += '<div><span class="field-label">' + t("saldoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + esc(c.saldo) + '"></div>';
+        html += '<div><span class="field-label">' + t("limiteLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="card-limite-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="limite" value="' + esc(c.limite) + '"></div>';
+        html += '<div><span class="field-label">' + t("taeLbl") + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-apr-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="apr" value="' + esc(c.apr) + '"></div>';
+        html += '<div><span class="field-label">' + t("minimoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-minimo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="minimo" value="' + esc(c.minimo) + '"></div>';
+        html += '</div>';
+        if (uso !== null) {
+          html += utilBarHtml(uso, usoNivel);
+          html += '<div class="util-label">' + t("usoLimite") + Math.round(uso) + '%</div>';
+        }
+        html += '<button class="delete-link" data-action="askDeleteCard" data-id="' + c.id + '">' + t("deleteCardLink") + '</button>';
+        html += '</div>';
+      } else {
+        html += '<div class="card-entry">';
+        html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(c.nombre || t("cardNombrePh")) + '</span><button class="icon-pencil" data-action="toggleCardExpand" data-id="' + c.id + '">\u270e</button></div>';
+        html += '<div class="card-collapsed-balance"><span class="field-label">' + t("debesAhoraLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + esc(c.saldo) + '" style="font-size:19px;font-weight:800;"></div>';
+        if (uso !== null) {
+          html += utilBarHtml(uso, usoNivel);
+          html += '<div class="util-label">' + t("usoLimite") + Math.round(uso) + '%</div>';
+        }
+        html += '</div>';
+      }
+    });
+    if (state.cards.length === 0) html += '<div class="empty-state">' + t("cardsEmpty") + '</div>';
+    html += '<button class="add-btn" data-action="addCard">' + t("addCard") + '</button>';
+    html += '<div class="mini-total"><span>' + t("totalMinimos") + '</span><b>' + sym() + fmt0(t2.totalMinimos) + '</b></div></div>';
+  }
+
+  if (tab === "historial") {
+    html += '<div class="panel"><p class="hint">' + t("historialHint") + '</p>';
+    if (state.history.length === 0) html += '<div class="empty-state">' + t("historialEmpty") + '</div>';
+    state.history.forEach((h) => {
+      const label = h.status === "verde" ? t("statusVerde") : h.status === "amarillo" ? t("statusAmarillo") : t("statusRojo");
+      const metaLine = t("comprometidoDe").split("{s}").join(sym()).split("{a}").join(fmt0(h.comprometido)).split("{b}").join(fmt0(h.ingreso)).split("{c}").join(fmt0(h.ahorro));
+      html += '<div class="history-row"><div class="history-top"><span class="history-month">' + esc(monthLabel(h.month)) + '</span><span class="status-pill ' + h.status + '">' + label + '</span></div>';
+      html += '<div class="hbar-track"><div class="hbar-fill util-bar-fill ' + h.status + '" style="width:' + Math.min(h.ratio * 100, 100) + '%"></div></div>';
+      if (state.confirmDeleteHistoryKey === h.month) {
+        html += '<div class="history-meta"><span>' + esc(t("confirmDeleteHistoryMsg")(monthLabel(h.month))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeHistory" data-id="' + h.month + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteHistory">' + t("cancel") + '</button></div></div></div>';
+      } else {
+        html += '<div class="history-meta"><span>' + esc(metaLine) + '</span><button class="history-del" data-action="askDeleteHistory" data-id="' + h.month + '">' + t("eliminar") + '</button></div></div>';
+      }
+    });
     html += '</div>';
   }
 
-  if (sugerencias.length > 0) {
-    html += '<div class="sugerencias"><h2>' + t("sugerenciasTitle") + '</h2><ul>';
-    sugerencias.forEach((s) => { html += '<li>' + esc(s) + '</li>'; });
-    html += '</ul></div>';
-  }
-
-  if (state.resultado) html += '<button class="save-month-btn" data-action="guardarMes">' + t("guardarMes") + '</button>';
-  if (state.savedFlash) html += '<div class="flash">' + t("mesGuardado") + '</div>';
-
-  html += '<div class="panel"><h2>' + t("historialTitle") + '</h2><p class="hint">' + t("historialHint") + '</p>';
-  if (state.history.length === 0) html += '<div class="empty-state">' + t("historialEmpty") + '</div>';
-  state.history.forEach((h) => {
-    const label = h.status === "verde" ? t("statusVerde") : h.status === "amarillo" ? t("statusAmarillo") : t("statusRojo");
-    const metaLine = t("comprometidoDe").split("{s}").join(sym()).split("{a}").join(fmt0(h.comprometido)).split("{b}").join(fmt0(h.ingreso)).split("{c}").join(fmt0(h.ahorro));
-    html += '<div class="history-row"><div class="history-top"><span class="history-month">' + esc(monthLabel(h.month)) + '</span><span class="status-pill ' + h.status + '">' + label + '</span></div>';
-    html += '<div class="hbar-track"><div class="hbar-fill util-bar-fill ' + h.status + '" style="width:' + Math.min(h.ratio * 100, 100) + '%"></div></div>';
-    if (state.confirmDeleteHistoryKey === h.month) {
-      html += '<div class="history-meta"><span>' + esc(t("confirmDeleteHistoryMsg")(monthLabel(h.month))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeHistory" data-id="' + h.month + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteHistory">' + t("cancel") + '</button></div></div></div>';
-    } else {
-      html += '<div class="history-meta"><span>' + esc(metaLine) + '</span><button class="history-del" data-action="askDeleteHistory" data-id="' + h.month + '">' + t("eliminar") + '</button></div></div>';
-    }
-  });
   html += '</div>';
-
-  html += '<p class="save-note">' + (state.storageError ? t("saveNoteErr") : t("saveNoteOk")) + '</p>';
-  html += '</div>';
+  html += renderTabBar();
   if (state.showOptions) html += renderOptionsSheet();
   html += '</div>';
 
@@ -1066,6 +1119,7 @@ root.addEventListener("click", (e) => {
     setAhorroMedio: () => setSavingsRate(20),
     setAhorroAgresivo: () => setSavingsRate(35),
     toggleOptions: toggleOptions,
+    goTab: () => goTab(id), goInicio: goInicio,
     enterProfile: () => enterProfile(id),
     askDeleteProfile: () => askDeleteProfile(id),
     cancelDeleteProfile: cancelDeleteProfile,
