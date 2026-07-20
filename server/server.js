@@ -4,6 +4,7 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import plaidRoutes from "./routes/plaid.js";
+import { initializeTokenStore } from "./tokenStore.js";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -17,7 +18,7 @@ app.use(express.json({ limit: "100kb" }));
 app.use(express.static(publicDir));
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, environment: process.env.PLAID_ENV || "sandbox" });
+  res.json({ ok: true, environment: process.env.PLAID_ENV || "sandbox", persistent: Boolean(process.env.DATABASE_URL) });
 });
 
 app.use("/api/plaid", plaidRoutes);
@@ -31,7 +32,7 @@ app.use((error, _req, res, _next) => {
   });
 });
 
+await initializeTokenStore();
 app.listen(port, "0.0.0.0", () => {
-  console.log(`App disponible en http://localhost:${port}`);
-  console.log(`En Android, abre http://IP-DE-TU-PC:${port} estando en la misma Wi-Fi.`);
+  console.log(`Cuentas Claras activa en ${appUrl}`);
 });
