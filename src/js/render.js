@@ -176,6 +176,46 @@ function renderApp() {
     if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + (np.ajustado ? ' ' + icon("pencil") : "") + '</div></div>';
     html += '</div>';
 
+    if (state.bankImportMsg) html += '<div class="flash">' + esc(state.bankImportMsg) + '</div>';
+
+    html += '<div class="panel">';
+    html += '<div class="panel-head-row"><div><h2>' + t("bankTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("bankHint") + '</p></div></div>';
+    html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="startImportarBanco">' + icon("bank") + ' ' + t("bankImportBtn") + '</button>';
+
+    const bt = bankTotalsEsteMes();
+    if (state.bankTransactions.length > 0) {
+      html += '<div class="mini-total"><span>' + t("bankIngresosMes") + '</span><b class="locked-amount" style="color:#34C759;">' + sym() + fmt0(bt.ingresos) + '</b></div>';
+      html += '<div class="mini-total"><span>' + t("bankGastosMes") + '</span><b class="locked-amount" style="color:#FF3B30;">' + sym() + fmt0(bt.gastos) + '</b></div>';
+    }
+
+    if (state.bankPendingCategoria.length > 0) {
+      html += '<p class="opt-row-sub" style="margin-top:10px;color:#B25E00;">' + t("bankPendientesMsg")(state.bankPendingCategoria.length) + '</p>';
+      const pendingId = state.bankPendingCategoria[0];
+      const tx = state.bankTransactions.find((x) => x.id === pendingId);
+      if (tx) {
+        html += '<div class="card-entry"><p class="opt-row-sub" style="margin-bottom:6px;">' + esc(tx.fecha) + ' \u00b7 ' + esc(tx.descripcion) + ' \u00b7 ' + sym() + fmt0(Math.abs(tx.monto)) + '</p>';
+        html += '<select id="bank-cat-select" style="width:100%;">';
+        BANK_CATEGORIES.forEach((c) => { html += '<option value="' + c + '">' + t("cat_" + c) + '</option>'; });
+        html += '</select>';
+        html += '<button class="pay-trigger" style="margin-top:8px;" data-action="confirmTxCategoria" data-id="' + tx.id + '">' + t("bankAsignarBtn") + '</button>';
+        html += '</div>';
+      }
+    }
+
+    if (state.bankTransactions.length > 0) {
+      state.bankTransactions.slice(0, 8).forEach((tx) => {
+        if (state.confirmDeleteBankTxId === tx.id) {
+          html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteTxMsg")(tx.descripcion)) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeBankTx" data-id="' + tx.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteBankTx">' + t("cancel") + '</button></div></div>';
+        } else {
+          html += '<div class="history-row"><div class="history-top"><span class="history-month" style="text-transform:none;">' + esc(tx.descripcion) + '</span><span class="' + (tx.monto > 0 ? "locked-amount" : "locked-amount") + '" style="color:' + (tx.monto > 0 ? "#34C759" : "var(--text)") + ';">' + (tx.monto > 0 ? "+" : "\u2212") + sym() + fmt0(Math.abs(tx.monto)) + '</span></div>';
+          html += '<div class="history-meta"><span>' + esc(tx.fecha) + (tx.categoria ? " \u00b7 " + t("cat_" + tx.categoria) : "") + '</span><button class="history-del" data-action="askDeleteBankTx" data-id="' + tx.id + '">' + t("eliminar") + '</button></div></div>';
+        }
+      });
+    } else if (!state.bankImportMsg) {
+      html += '<div class="empty-state">' + t("bankEmpty") + '</div>';
+    }
+    html += '</div>';
+
     if (t2.cardsConLimite.length > 0) {
       html += '<div class="panel"><h2>' + t("saludCreditoTitle") + '</h2><p class="hint">' + t("saludCreditoHint") + '</p>';
       t2.cardsConLimite.forEach((c) => {

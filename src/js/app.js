@@ -14,6 +14,11 @@ async function enterProfile(id) {
   state.ahorroActual = d.ahorroActual != null ? d.ahorroActual : "";
   state.debito = d.debito != null ? d.debito : "";
   state.cash = d.cash != null ? d.cash : "";
+  state.bankTransactions = d.bankTransactions || [];
+  state.categoriaAprendida = d.categoriaAprendida || {};
+  state.bankPendingCategoria = state.bankTransactions.filter((tx) => !tx.categoria).map((tx) => tx.id);
+  state.bankImportMsg = "";
+  state.confirmDeleteBankTxId = null;
   state.metaAhorro = d.metaAhorro != null ? d.metaAhorro : "";
   state.history = d.history || [];
   state.payFrequency = d.payFrequency || "mensual";
@@ -234,6 +239,8 @@ root.addEventListener("click", (e) => {
     addLoan: addLoan, removeLoan: () => removeLoan(id), askDeleteLoan: () => askDeleteLoan(id), cancelDeleteLoan: cancelDeleteLoan,
     toggleEditLoans: toggleEditLoans, setLoanFrec: () => setLoanFrec(id, freq),
     loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
+    startImportarBanco: startImportarBanco, confirmTxCategoria: () => confirmTxCategoria(id),
+    askDeleteBankTx: () => askDeleteBankTx(id), cancelDeleteBankTx: cancelDeleteBankTx, removeBankTx: () => removeBankTx(id),
     toggleEditJob: toggleEditJob,
     setJobFrecuencia: () => updateJobField("frecuenciaPago", freq),
     setDescansoPagadoOn: () => updateJobField("descansoPagado", true),

@@ -203,6 +203,7 @@ function resetAll() {
   pushUndo();
   state.ingreso = ""; state.subs = []; state.cards = []; state.savingsRate = 20;
   state.ahorroActual = ""; state.metaAhorro = ""; state.debito = ""; state.cash = ""; state.resultado = null; state.confirmReset = false;
+  state.bankTransactions = []; state.categoriaAprendida = {}; state.bankPendingCategoria = []; state.bankImportMsg = ""; state.confirmDeleteBankTxId = null;
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.ingresosLog = []; state.loans = [];
   state.job = { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false };
   state.turnos = []; state.turnoActivo = null; state.pagosTrabajo = [];
