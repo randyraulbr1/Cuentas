@@ -3,7 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
-const { ensureExtensions } = require("./db");
+const { ensureExtensions, getDbStatus } = require("./db");
 const authRoutes = require("./routes/auth");
 const plaidRoutes = require("./routes/plaid");
 const webhookRoutes = require("./routes/webhooks");
@@ -15,7 +15,7 @@ app.use(cors({ origin: allowedOrigin }));
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, env: process.env.PLAID_ENV || "sandbox", time: new Date().toISOString() });
+  res.json({ ok: true, env: process.env.PLAID_ENV || "sandbox", time: new Date().toISOString(), database: getDbStatus() });
 });
 
 app.use("/api/auth", authRoutes);

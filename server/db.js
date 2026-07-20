@@ -10,6 +10,9 @@ const pool = new Pool({
   ssl: process.env.DATABASE_SSL === "false" ? false : { rejectUnauthorized: false },
 });
 
+let dbStatus = { ok: null, error: null, checkedAt: null };
+function getDbStatus() { return dbStatus; }
+
 async function query(text, params) {
   return pool.query(text, params);
 }
@@ -23,11 +26,14 @@ async function ensureExtensions() {
     const schemaSql = fs.readFileSync(schemaPath, "utf8");
     await pool.query(schemaSql);
     console.log("Esquema de base de datos verificado/creado correctamente.");
+    dbStatus = { ok: true, error: null, checkedAt: new Date().toISOString() };
     return true;
   } catch (e) {
-    console.error("No se pudo aplicar el esquema automaticamente:", e.message);
+    const msg = (e && e.message) || String(e);
+    console.error("No se pudo aplicar el esquema automaticamente: " + msg);
+    dbStatus = { ok: false, error: msg, checkedAt: new Date().toISOString() };
     return false;
   }
 }
 
-module.exports = { pool, query, ensureExtensions };
+module.exports = { pool, query, ensureExtensions, getDbStatus };
