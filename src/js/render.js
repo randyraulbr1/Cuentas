@@ -272,11 +272,20 @@ function renderApp() {
     }
     html += '</div>';
 
-    if (state.authUser) {
+    {
       html += '<div class="panel">';
       html += '<div class="panel-head-row"><div><h2>' + t("bancoNubeTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("bancoNubeHint") + '</p></div></div>';
       if (state.cloudErrorMsg) html += '<p class="opt-row-sub" style="color:#FF3B30;margin:8px 0;">' + esc(state.cloudErrorMsg) + '</p>';
       if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
+
+      if (!state.authUser) {
+        html += '<div class="seg" style="width:100%;margin-bottom:8px;"><button style="flex:1;" class="' + (state.authMode === "login" ? "active" : "") + '" data-action="setAuthLogin">' + t("iniciarSesion") + '</button><button style="flex:1;" class="' + (state.authMode === "register" ? "active" : "") + '" data-action="setAuthRegister">' + t("crearCuenta") + '</button></div>';
+        html += '<input type="text" placeholder="' + t("correoPh") + '" id="auth-email" data-scope="authEmail" value="' + esc(state.authEmail) + '" style="width:100%;margin-bottom:8px;">';
+        html += '<input type="password" placeholder="' + t("contrasenaPh") + '" id="auth-password" data-scope="authPassword" value="' + esc(state.authPassword) + '" style="width:100%;margin-bottom:8px;">';
+        if (state.authFormError) html += '<p class="opt-row-sub" style="color:#FF3B30;margin-bottom:8px;">' + esc(state.authFormError) + '</p>';
+        html += '<button class="pill-btn wide confirm" data-action="submitAuthForm"' + (state.cloudBusy ? " disabled" : "") + '>' + (state.authMode === "login" ? t("iniciarSesion") : t("crearCuenta")) + '</button>';
+        html += '<p class="opt-row-sub" style="margin-top:8px;">' + t("apiBaseUrlLbl") + ': ' + esc(state.apiBaseUrl || t("apiSinConfigurarCorto")) + '</p>';
+      } else {
 
       state.cloudInstitutions.forEach((inst) => {
         if (state.confirmDisconnectId === inst.id) {
@@ -303,6 +312,7 @@ function renderApp() {
         state.cloudTransactions.slice(0, 8).forEach((tx) => {
           html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10));
         });
+      }
       }
       html += '</div>';
     }
