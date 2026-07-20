@@ -231,7 +231,10 @@ const I18N = {
     optionsTitle: "Opciones", close: "Cerrar",
     tabInicio: "Inicio", tabTarjetas: "Tarjetas", tabPagos: "Pagos", tabHistorial: "Historial", atras: "Atrás",
     secPerfil: "Perfil", secIdioma: "Idioma", secMoneda: "Moneda", secTema: "Tema", secPago: "Frecuencia de pago", secAhorroPct: "% a ahorrar", secDatos: "Datos",
-    secCredito: "Salud de crédito", cuidarCreditoLbl: "Cuidar mi crédito", cuidarCreditoHint: "Te digo cuánto pagar en cada tarjeta para mantenerte bajo 30% y fortalecer tu historial.", on: "Activado", off: "Desactivado",
+    secCredito: "Objetivo financiero",
+    objetivoHint: "Ajusta cómo reparto tu dinero extra cada mes.",
+    objEquilibrado: "Equilibrado", objCredito: "Mejorar crédito", objAhorro: "Ahorrar",
+    on: "Activado", off: "Desactivado",
     saludCreditoTitle: "Salud de tu crédito", saludCreditoHint: "Mantener bajo el uso de cada tarjeta (idealmente menos del 30%) ayuda a fortalecer tu historial crediticio.",
     ahorroNormal: "Normal", ahorroMedio: "Medio", ahorroAgresivo: "Agresivo",
     switchUser: "Cambiar de usuario",
@@ -311,6 +314,8 @@ const I18N = {
     fuenteIngreso: "Págalo desde tu ingreso de este mes.",
     usaAhorro: (n) => "Es un momento razonable para usar parte de tu ahorro (tienes " + sym() + n + ") y cubrir el faltante sin dejar de pagar tus tarjetas.",
     sinAhorroRecorta: "Antes de que la deuda crezca, revisa si puedes recortar algún pago fijo este mes.",
+    esperaAntesDeUsar: "Aún faltan pagos de este mes por registrar; espera a tenerlos antes de tocar tu ahorro o débito.",
+    topEsperaPago: "Te alcanzaría con tu débito, pero espera a registrar el resto de tus pagos de este mes.",
     pagaPrimeroExtra: (n, apr, pago) => 'Destina ' + sym() + pago + ' a "' + n + '" (tasa más alta, ' + apr + '%). Es para mantener el equilibrio: no hace falta pagarla completa, solo lo necesario para seguir un buen ritmo.',
     pagaPrimeroSinExtra: (n, apr) => 'Mantén al día el mínimo de "' + n + '" (tasa más alta, ' + apr + '%). Este mes no te sobra para adelantar más, y no pasa nada.',
     vaBien: "Este mes va bien. No necesitas tocar tu ahorro; es buen momento para seguir sumando a él.",
@@ -328,7 +333,10 @@ const I18N = {
     optionsTitle: "Options", close: "Close",
     tabInicio: "Home", tabTarjetas: "Cards", tabPagos: "Bills", tabHistorial: "History", atras: "Back",
     secPerfil: "Profile", secIdioma: "Language", secMoneda: "Currency", secTema: "Theme", secPago: "Pay frequency", secAhorroPct: "% to save", secDatos: "Data",
-    secCredito: "Credit health", cuidarCreditoLbl: "Protect my credit", cuidarCreditoHint: "Shows how much to pay on each card to stay under 30% and build your credit history.", on: "On", off: "Off",
+    secCredito: "Financial goal",
+    objetivoHint: "Adjusts how I split your extra money each month.",
+    objEquilibrado: "Balanced", objCredito: "Build credit", objAhorro: "Save",
+    on: "On", off: "Off",
     saludCreditoTitle: "Your credit health", saludCreditoHint: "Keeping each card's usage low (ideally under 30%) helps strengthen your credit history.",
     ahorroNormal: "Normal", ahorroMedio: "Medium", ahorroAgresivo: "Aggressive",
     switchUser: "Switch user",
@@ -408,6 +416,8 @@ const I18N = {
     fuenteIngreso: "Pay it from this month's income.",
     usaAhorro: (n) => "It's a reasonable time to use part of your savings (you have " + sym() + n + ") to cover the gap without missing card payments.",
     sinAhorroRecorta: "Before debt grows, check if you can cut a fixed bill this month.",
+    esperaAntesDeUsar: "You still have payments to log this month; wait until they are all in before touching savings or debit.",
+    topEsperaPago: "Your debit would cover it, but wait until you log the rest of this month payments.",
     pagaPrimeroExtra: (n, apr, pago) => "Put " + sym() + pago + ' toward "' + n + '" (highest rate, ' + apr + "%). This is to keep things balanced: you don't need to pay it off in full, just enough to stay on a good pace.",
     pagaPrimeroSinExtra: (n, apr) => 'Keep the minimum on "' + n + '" (highest rate, ' + apr + "%) current. There's no extra to put toward it this month, and that's fine.",
     vaBien: "This month looks good. You don't need to touch your savings; it's a good time to keep adding to it.",
@@ -427,7 +437,7 @@ const toNum = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v17";
+const APP_VERSION = "v18";
 let uidCounter = 1;
 const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
 
@@ -461,7 +471,7 @@ function esc(v) { return String(v == null ? "" : v).replace(/&/g,"&amp;").replac
 function loadProfiles() { try { return JSON.parse(localStorage.getItem(PROFILES_KEY)) || []; } catch (e) { return []; } }
 function saveProfiles(list) { try { localStorage.setItem(PROFILES_KEY, JSON.stringify(list)); } catch (e) {} }
 function loadSettings() { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch (e) { return {}; } }
-function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme: state.theme, lang: state.lang, currency: state.currency, cuidarCredito: state.cuidarCredito })); } catch (e) {} }
+function saveSettings() { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ theme: state.theme, lang: state.lang, currency: state.currency, objetivo: state.objetivo })); } catch (e) {} }
 
 /* Carga con migración: intenta la llave actual (v3); si no hay nada, recupera datos guardados
    antes bajo la llave anterior (v2) para que una actualización de la app nunca borre lo ya puesto. */
@@ -495,7 +505,7 @@ const state = {
   theme: settingsInit.theme || "light",
   lang: settingsInit.lang || "es",
   currency: settingsInit.currency || "usd",
-  cuidarCredito: settingsInit.cuidarCredito || false,
+  objetivo: settingsInit.objetivo || "equilibrado",
   newProfileName: "",
   showOptions: false,
   activeTab: "inicio",
@@ -583,7 +593,7 @@ function deleteProfile(id) {
 function toggleTheme() { state.theme = state.theme === "dark" ? "light" : "dark"; saveSettings(); applyTheme(); render(); }
 function toggleLang() { state.lang = state.lang === "es" ? "en" : "es"; LANG = state.lang; saveSettings(); render(); }
 function toggleCurrency() { state.currency = state.currency === "usd" ? "eur" : "usd"; saveSettings(); render(); }
-function toggleCuidarCredito() { state.cuidarCredito = !state.cuidarCredito; saveSettings(); render(); }
+function setObjetivo(v) { state.objetivo = v; saveSettings(); render(); }
 function setPayFrequency(f) { state.payFrequency = f; scheduleSave(); render(); }
 function setSavingsRate(n) { state.savingsRate = n; scheduleSave(); render(); }
 function toggleOptions() { state.showOptions = !state.showOptions; render(); }
@@ -753,15 +763,22 @@ function computeTotals() {
 function computeResultado(t2) {
   const restoTrasMinimos = t2.disponibleBruto - t2.totalMinimos;
   if (restoTrasMinimos < 0) return { insuficiente: true, faltante: Math.abs(restoTrasMinimos) };
-  const ahorroCrudo = restoTrasMinimos * (state.savingsRate / 100);
+
+  let effectiveRate = state.savingsRate;
+  if (state.objetivo === "ahorro") effectiveRate = 100;
+  else if (state.objetivo === "credito") effectiveRate = 0;
+
+  const ahorroCrudo = restoTrasMinimos * (effectiveRate / 100);
   const ahorro = Math.round(ahorroCrudo / 10) * 10;
   let extraParaTarjetas = Math.round((restoTrasMinimos - ahorro) * 100) / 100;
   if (extraParaTarjetas < 0) extraParaTarjetas = 0;
 
-  const ordenAvalancha = state.cards
-    .map((c) => ({ ...c, saldo: toNum(c.saldo), apr: toNum(c.apr), minimo: toNum(c.minimo) }))
-    .filter((c) => c.saldo > 0 || c.minimo > 0 || c.nombre)
-    .sort((a, b) => b.apr - a.apr);
+  const ordenBase = state.cards
+    .map((c) => ({ ...c, saldo: toNum(c.saldo), apr: toNum(c.apr), minimo: toNum(c.minimo), limite: toNum(c.limite) }))
+    .filter((c) => c.saldo > 0 || c.minimo > 0 || c.nombre);
+  const ordenAvalancha = state.objetivo === "credito"
+    ? ordenBase.sort((a, b) => (b.limite > 0 ? b.saldo / b.limite : b.apr / 100) - (a.limite > 0 ? a.saldo / a.limite : a.apr / 100))
+    : ordenBase.sort((a, b) => b.apr - a.apr);
 
   let restante = extraParaTarjetas;
   const asignaciones = ordenAvalancha.map((c) => {
@@ -823,7 +840,9 @@ function buildSugerencias(t2, resultado) {
     s.push(t("faltan") + " " + sym() + fmt0(r.faltante) + ".");
     const debito = toNum(state.debito);
     const ahorro = toNum(state.ahorroActual);
-    if (debito >= r.faltante) s.push(t("usaDebito")(fmt0(r.faltante)));
+    const completos = pagosCompletosEsteMes();
+    if (!completos) s.push(t("esperaAntesDeUsar"));
+    else if (debito >= r.faltante) s.push(t("usaDebito")(fmt0(r.faltante)));
     else if (debito > 0 && debito + ahorro >= r.faltante) s.push(t("usaDebitoYAhorro")(fmt0(debito), fmt0(r.faltante - debito)));
     else if (ahorro > 0) s.push(t("usaAhorro")(fmt0(ahorro)));
     else s.push(t("sinAhorroRecorta"));
@@ -851,23 +870,29 @@ function buildSugerencias(t2, resultado) {
   return s;
 }
 
+function pagosCompletosEsteMes() {
+  if (state.payFrequency === "mensual") return true;
+  return ingresosEsteMes().length >= expectedPagosEsteMes();
+}
+
 function computeTopAction(t2, resultado) {
   if (t2.ingresoEfectivo <= 0) return null;
   const faltante = t2.totalMinimos - t2.disponibleBruto;
   if (faltante > 0) {
     const debito = toNum(state.debito);
-    if (debito >= faltante) return { level: "amarillo", text: t("topUsaDebito")(fmt0(faltante)) };
+    if (debito >= faltante) {
+      if (!pagosCompletosEsteMes()) return { level: "amarillo", text: t("topEsperaPago") };
+      return { level: "amarillo", text: t("topUsaDebito")(fmt0(faltante)) };
+    }
     return { level: "rojo", text: t("topFaltante")(fmt0(faltante)) };
   }
-  if (state.cuidarCredito) {
-    const sobreLimite = t2.cardsConLimite
-      .map((c) => ({ nombre: c.nombre, uso: (toNum(c.saldo) / toNum(c.limite)) * 100, monto: Math.max(toNum(c.saldo) - toNum(c.limite) * 0.3, 0) }))
-      .filter((c) => c.monto > 0)
-      .sort((a, b) => b.uso - a.uso);
-    if (sobreLimite.length > 0) {
-      const top = sobreLimite[0];
-      return { level: top.uso >= 70 ? "rojo" : "amarillo", text: t("topCuidarCredito")(top.nombre || t("tarjetaFallback"), fmt0(top.monto)) };
-    }
+  const sobreLimite = t2.cardsConLimite
+    .map((c) => ({ nombre: c.nombre, uso: (toNum(c.saldo) / toNum(c.limite)) * 100, monto: Math.max(toNum(c.saldo) - toNum(c.limite) * 0.3, 0) }))
+    .filter((c) => c.monto > 0)
+    .sort((a, b) => b.uso - a.uso);
+  if (sobreLimite.length > 0 && (state.objetivo === "credito" || sobreLimite[0].uso >= 70)) {
+    const top = sobreLimite[0];
+    return { level: top.uso >= 70 ? "rojo" : "amarillo", text: t("topCuidarCredito")(top.nombre || t("tarjetaFallback"), fmt0(top.monto)) };
   }
   if (t2.liveStatus.key !== "verde" && resultado && !resultado.insuficiente) {
     const conExtra = resultado.asignaciones.filter((c) => c.pagoExtra > 0);
@@ -924,7 +949,12 @@ function renderOptionsSheet() {
   h += '<div class="opt-row"><span class="opt-row-label">' + t("secTema") + '</span><div class="seg"><button class="' + (state.theme === "light" ? "active" : "") + '" data-action="setThemeLight">☀️</button><button class="' + (state.theme === "dark" ? "active" : "") + '" data-action="setThemeDark">🌙</button></div></div></div>';
 
   h += '<div class="opt-section"><p class="opt-section-title">' + t("secCredito") + '</p>';
-  h += '<div class="opt-row"><div><span class="opt-row-label">' + t("cuidarCreditoLbl") + '</span><p class="opt-row-sub">' + t("cuidarCreditoHint") + '</p></div><div class="seg"><button class="' + (!state.cuidarCredito ? "active" : "") + '" data-action="setCuidarCreditoOff">' + t("off") + '</button><button class="' + (state.cuidarCredito ? "active" : "") + '" data-action="setCuidarCreditoOn">' + t("on") + '</button></div></div></div>';
+  h += '<p class="opt-row-sub" style="margin-bottom:6px;">' + t("objetivoHint") + '</p>';
+  h += '<div class="seg" style="width:100%;margin-top:6px;">';
+  h += '<button style="flex:1;" class="' + (state.objetivo === "equilibrado" ? "active" : "") + '" data-action="setObjEquilibrado">' + t("objEquilibrado") + '</button>';
+  h += '<button style="flex:1;" class="' + (state.objetivo === "credito" ? "active" : "") + '" data-action="setObjCredito">' + t("objCredito") + '</button>';
+  h += '<button style="flex:1;" class="' + (state.objetivo === "ahorro" ? "active" : "") + '" data-action="setObjAhorro">' + t("objAhorro") + '</button>';
+  h += '</div></div>';
 
   h += '<div class="opt-section"><p class="opt-section-title">' + t("secPago") + '</p>';
   h += '<div class="seg" style="width:100%;">';
@@ -1357,9 +1387,8 @@ root.addEventListener("click", (e) => {
     setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito,
     guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
     switchUser: switchUser,
-    toggleTheme: toggleTheme, toggleLang: toggleLang, toggleCurrency: toggleCurrency, toggleCuidarCredito: toggleCuidarCredito,
-    setCuidarCreditoOn: () => { if (!state.cuidarCredito) toggleCuidarCredito(); },
-    setCuidarCreditoOff: () => { if (state.cuidarCredito) toggleCuidarCredito(); },
+    toggleTheme: toggleTheme, toggleLang: toggleLang, toggleCurrency: toggleCurrency,
+    setObjEquilibrado: () => setObjetivo("equilibrado"), setObjCredito: () => setObjetivo("credito"), setObjAhorro: () => setObjetivo("ahorro"),
     setLangEs: () => { if (state.lang !== "es") toggleLang(); },
     setLangEn: () => { if (state.lang !== "en") toggleLang(); },
     setCurUsd: () => { if (state.currency !== "usd") toggleCurrency(); },
