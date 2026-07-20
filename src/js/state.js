@@ -6,7 +6,7 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v32";
+const APP_VERSION = "v33";
 
 let uidCounter = 1;
 
@@ -74,7 +74,7 @@ const state = {
   bankTransactions: [], categoriaAprendida: {}, bankPendingCategoria: [], bankImportMsg: "", confirmDeleteBankTxId: null,
   consentimientoAceptado: false, consentimientoFecha: "", showConsentimiento: false,
 
-  apiBaseUrl: settingsInit.apiBaseUrl || "", authToken: null, authUser: null,
+  apiBaseUrl: settingsInit.apiBaseUrl || "https://cuentas-1duj.onrender.com", authToken: null, authUser: null,
   authMode: "login", authEmail: "", authPassword: "", authFormError: "",
   cloudAccounts: [], cloudTransactions: [], cloudInstitutions: [], cloudLastSync: "",
   cloudErrorMsg: "", cloudBusy: false, cloudFlash: "", confirmDisconnectId: null,

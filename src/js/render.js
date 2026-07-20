@@ -7,6 +7,13 @@ function renderSelector() {
   html += '<div class="selector-logo">' + sym() + '</div>';
   html += '<h1 class="selector-title">' + t("selectorTitle") + '</h1>';
   html += '<p class="selector-hint">' + t("selectorHint") + '</p>';
+
+  html += '<div class="panel" style="text-align:left;">';
+  html += '<h2 style="margin-bottom:2px;">' + t("bancoNubeTitle") + '</h2><p class="hint" style="margin-bottom:10px;">' + t("bancoNubeHint") + '</p>';
+  if (state.cloudErrorMsg) html += '<p class="opt-row-sub" style="color:#FF3B30;margin-bottom:8px;">' + esc(state.cloudErrorMsg) + '</p>';
+  if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
+  html += '<button class="pay-trigger" style="background:#3D5AFE;margin-top:0;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + t("conectarBancoPlaidBtn") + '</button>';
+  html += '</div>';
   state.profiles.forEach((p) => {
     const initial = (p.nombre || "?").trim().charAt(0).toUpperCase();
     if (state.confirmDeleteProfileId === p.id) {
