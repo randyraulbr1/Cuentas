@@ -25,8 +25,17 @@ async function ensureCloudSession() {
     try { await idbSet(DEVICE_CREDS_KEY, creds); } catch (e) {}
   }
   let r = await apiRegister(creds.email, creds.password);
-  if (!r.ok && r.status === 409) r = await apiLogin(creds.email, creds.password);
+  if (!r.ok) r = await apiLogin(creds.email, creds.password);
   return r;
+}
+
+function resetConexionNube() {
+  clearAuthSession();
+  try { idbSet(DEVICE_CREDS_KEY, null); } catch (e) {}
+  state.authToken = null; state.authUser = null;
+  state.cloudAccounts = []; state.cloudTransactions = []; state.cloudInstitutions = []; state.cloudLastSync = "";
+  state.cloudErrorMsg = ""; state.cloudBusy = false;
+  render();
 }
 
 async function iniciarConectarBanco() {
@@ -34,53 +43,59 @@ async function iniciarConectarBanco() {
   state.cloudBusy = true;
   render();
 
-  const sessionRes = await ensureCloudSession();
-  if (!sessionRes.ok) {
-    state.cloudBusy = false;
-    state.cloudErrorMsg = sessionRes.error;
-    render();
-    return;
-  }
-
-  const linkRes = await apiCreateLinkToken();
-  if (!linkRes.ok) {
-    state.cloudBusy = false;
-    state.cloudErrorMsg = linkRes.error;
-    render();
-    return;
-  }
-
   try {
-    await loadPlaidScript();
+    const sessionRes = await ensureCloudSession();
+    if (!sessionRes.ok) {
+      state.cloudBusy = false;
+      state.cloudErrorMsg = sessionRes.error;
+      render();
+      return;
+    }
+
+    const linkRes = await apiCreateLinkToken();
+    if (!linkRes.ok) {
+      state.cloudBusy = false;
+      state.cloudErrorMsg = linkRes.error;
+      render();
+      return;
+    }
+
+    try {
+      await loadPlaidScript();
+    } catch (e) {
+      state.cloudBusy = false;
+      state.cloudErrorMsg = t("apiErrorPlaidScript");
+      render();
+      return;
+    }
+
+    state.cloudBusy = false;
+    render();
+
+    const handler = window.Plaid.create({
+      token: linkRes.data.link_token,
+      onSuccess: async (public_token) => {
+        state.cloudBusy = true; state.cloudErrorMsg = ""; render();
+        const exch = await apiExchangePublicToken(public_token);
+        if (!exch.ok) { state.cloudBusy = false; state.cloudErrorMsg = exch.error; render(); return; }
+        const sync = await apiSyncTransactions();
+        if (!sync.ok) { state.cloudBusy = false; state.cloudErrorMsg = sync.error; render(); return; }
+        await refrescarDatosNube();
+        state.cloudBusy = false;
+        state.cloudFlash = t("bancoConectadoMsg");
+        render();
+        setTimeout(() => { state.cloudFlash = ""; rerenderPreservingFocus(); }, 2200);
+      },
+      onExit: (err) => {
+        if (err) { state.cloudErrorMsg = t("apiErrorPlaidExit"); render(); }
+      },
+    });
+    handler.open();
   } catch (e) {
     state.cloudBusy = false;
-    state.cloudErrorMsg = t("apiErrorPlaidScript");
+    state.cloudErrorMsg = t("apiErrorGenerico") + " (" + (e && e.message ? e.message : "?") + ")";
     render();
-    return;
   }
-
-  state.cloudBusy = false;
-  render();
-
-  const handler = window.Plaid.create({
-    token: linkRes.data.link_token,
-    onSuccess: async (public_token) => {
-      state.cloudBusy = true; state.cloudErrorMsg = ""; render();
-      const exch = await apiExchangePublicToken(public_token);
-      if (!exch.ok) { state.cloudBusy = false; state.cloudErrorMsg = exch.error; render(); return; }
-      const sync = await apiSyncTransactions();
-      if (!sync.ok) { state.cloudBusy = false; state.cloudErrorMsg = sync.error; render(); return; }
-      await refrescarDatosNube();
-      state.cloudBusy = false;
-      state.cloudFlash = t("bancoConectadoMsg");
-      render();
-      setTimeout(() => { state.cloudFlash = ""; rerenderPreservingFocus(); }, 2200);
-    },
-    onExit: (err) => {
-      if (err) { state.cloudErrorMsg = t("apiErrorPlaidExit"); render(); }
-    },
-  });
-  handler.open();
 }
 
 async function actualizarDatosNube() {

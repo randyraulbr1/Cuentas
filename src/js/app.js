@@ -250,7 +250,7 @@ root.addEventListener("click", (e) => {
     setAuthLogin: () => { state.authMode = "login"; state.authFormError = ""; render(); },
     setAuthRegister: () => { state.authMode = "register"; state.authFormError = ""; render(); },
     submitAuthForm: submitAuthForm, apiLogout: apiLogout, apiDeleteCloudAccount: apiDeleteCloudAccount,
-    iniciarConectarBanco: iniciarConectarBanco, actualizarDatosNube: actualizarDatosNube,
+    iniciarConectarBanco: iniciarConectarBanco, actualizarDatosNube: actualizarDatosNube, resetConexionNube: resetConexionNube,
     askDisconnectBank: () => askDisconnectBank(id), cancelDisconnectBank: cancelDisconnectBank,
     confirmDisconnectBank: () => confirmDisconnectBank(id),
     aceptarConsentimiento: aceptarConsentimiento, cancelarConsentimiento: cancelarConsentimiento,

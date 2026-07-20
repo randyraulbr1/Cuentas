@@ -287,6 +287,7 @@ function renderApp() {
 
       if (!state.authUser) {
         html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + t("conectarBancoPlaidBtn") + '</button>';
+        html += '<button class="delete-link" style="display:block;margin:8px auto 0;" data-action="resetConexionNube">' + t("restablecerConexionBtn") + '</button>';
       } else {
 
       state.cloudInstitutions.forEach((inst) => {
