@@ -1,13 +1,5 @@
 {
   "name": "cuentas-claras",
   "private": true,
-  "description": "App web/PWA de finanzas personales. Sin backend activo por ahora: todo corre en el navegador (localStorage/IndexedDB) y se sirve como sitio estatico por GitHub Pages.",
-  "scripts": {
-    "dev": "echo 'No hay backend activo todavia. Fase 2 documentada en README.md y .env.example.' && exit 1",
-    "start": "echo 'No hay backend activo todavia. Fase 2 documentada en README.md y .env.example.' && exit 1"
-  },
-  "dependencies": {
-    "fake-indexeddb": "^6.2.5",
-    "jsdom": "^29.1.1"
-  }
+  "description": "App web/PWA de finanzas personales. El backend real vive en server/ (Node/Express, Render). Este package.json es solo del frontend estatico servido por GitHub Pages; no tiene dependencias ni scripts que ejecutar."
 }
