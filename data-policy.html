@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Retención y eliminación de datos — Cuentas Claras</title>
+<meta name="theme-color" content="#3D5AFE" />
+<link rel="icon" href="icon-192.png" />
+<link rel="stylesheet" href="src/css/base.css" />
+<link rel="stylesheet" href="src/css/components.css" />
+<style>
+  .doc { max-width: 680px; margin: 0 auto; padding: 28px 18px 60px; }
+  .doc h1 { font-size: 24px; margin-bottom: 4px; }
+  .doc .updated { color: var(--text-muted); font-size: 12.5px; margin-bottom: 24px; }
+  .doc h2 { font-size: 17px; margin: 28px 0 8px; }
+  .doc p, .doc li { font-size: 14.5px; line-height: 1.6; color: var(--text); }
+  .doc ul { padding-left: 20px; margin: 8px 0; }
+  .doc .box { background: var(--card-bg); border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow); margin: 14px 0; }
+  .doc .future { border-left: 3px solid #3D5AFE; padding-left: 14px; }
+  .doc a { color: #3D5AFE; }
+  .back-link { display: inline-block; margin-bottom: 18px; font-size: 13.5px; color: #3D5AFE; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="page"><div class="doc">
+<a class="back-link" href="index.html">&larr; Volver a la app</a>
+<h1>Retención y eliminación de datos</h1>
+<p class="updated">Última actualización: 20 de julio de 2026</p>
+
+<h2>Cuánto tiempo se conservan tus datos</h2>
+<p>Hoy, tus datos viven exclusivamente en tu dispositivo (IndexedDB/localStorage del navegador) y se conservan indefinidamente hasta que tú los borres, desinstales la app, o borres los datos del sitio desde la configuración de tu navegador. No hay un servidor que guarde copias.</p>
+
+<h2>Cómo eliminar tus datos</h2>
+<ul>
+  <li><strong>Un solo dato:</strong> bórralo directamente en la pantalla correspondiente (tarjeta, pago, transacción importada, etc.).</li>
+  <li><strong>Todo un perfil:</strong> Opciones → "Restablecer todo".</li>
+  <li><strong>Un perfil completo (incluyendo su historial):</strong> elimínalo desde la pantalla de selección de perfiles.</li>
+  <li><strong>Absolutamente todo:</strong> borra los datos del sitio/app desde tu navegador o desinstala la app.</li>
+</ul>
+
+<h2 class="future">Qué ocurre al desconectar una cuenta bancaria (función planeada, aún no activa)</h2>
+<div class="future">
+<p>Cuando la conexión bancaria esté disponible:</p>
+<ul>
+  <li>Al desconectar un banco, se detiene inmediatamente cualquier sincronización futura.</li>
+  <li>El token de acceso de esa conexión se elimina del servidor de forma permanente.</li>
+  <li>Podrás elegir si quieres conservar o borrar las transacciones ya importadas de esa cuenta.</li>
+  <li>Los movimientos manuales que hayas hecho tú (tarjetas, pagos fijos, préstamos, ahorro) nunca se borran por desconectar un banco — son datos separados e independientes.</li>
+</ul>
+</div>
+
+<h2>Eliminar tu cuenta</h2>
+<p>Dentro de Opciones puedes usar "Eliminar mi cuenta" para borrar tu perfil completo: datos financieros, historial, preferencias y (cuando exista) cualquier conexión bancaria y sus tokens asociados. Esta acción no se puede deshacer.</p>
+
+<p><a href="privacy.html">&larr; Ver política de privacidad</a></p>
+</div></div>
+</body>
+</html>

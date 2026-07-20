@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Política de privacidad — Cuentas Claras</title>
+<meta name="theme-color" content="#3D5AFE" />
+<link rel="icon" href="icon-192.png" />
+<link rel="stylesheet" href="src/css/base.css" />
+<link rel="stylesheet" href="src/css/components.css" />
+<style>
+  .doc { max-width: 680px; margin: 0 auto; padding: 28px 18px 60px; }
+  .doc h1 { font-size: 24px; margin-bottom: 4px; }
+  .doc .updated { color: var(--text-muted); font-size: 12.5px; margin-bottom: 24px; }
+  .doc h2 { font-size: 17px; margin: 28px 0 8px; }
+  .doc p, .doc li { font-size: 14.5px; line-height: 1.6; color: var(--text); }
+  .doc ul { padding-left: 20px; margin: 8px 0; }
+  .doc .box { background: var(--card-bg); border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow); margin: 14px 0; }
+  .doc .future { border-left: 3px solid #3D5AFE; padding-left: 14px; }
+  .doc a { color: #3D5AFE; }
+  .back-link { display: inline-block; margin-bottom: 18px; font-size: 13.5px; color: #3D5AFE; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="page"><div class="doc">
+<a class="back-link" href="index.html">&larr; Volver a la app</a>
+<h1>Política de privacidad</h1>
+<p class="updated">Última actualización: 20 de julio de 2026</p>
+
+<div class="box">
+<p><strong>Resumen en una frase:</strong> Cuentas Claras guarda tus datos financieros únicamente en tu propio teléfono (localStorage e IndexedDB del navegador). Hoy no existe ningún servidor: nada de lo que escribes en la app sale de tu dispositivo, ni nosotros ni nadie más lo puede ver.</p>
+</div>
+
+<h2>Qué datos recopila la app hoy</h2>
+<p>Todo lo que tú ingresas manualmente: ingreso, pagos fijos, tarjetas, préstamos, ahorro, turnos de trabajo y, si eliges importarlo, el contenido de un archivo CSV de estado de cuenta que tú mismo descargas de tu banco.</p>
+<ul>
+  <li>Estos datos se guardan solo en tu dispositivo (IndexedDB/localStorage del navegador).</li>
+  <li>Un archivo CSV que importes se procesa dentro del propio navegador y nunca se envía a ningún servidor.</li>
+  <li>No usamos cookies de rastreo, analítica de terceros ni publicidad.</li>
+</ul>
+
+<h2>Para qué se usan tus datos</h2>
+<p>Únicamente para calcular tus resúmenes, sugerencias y categorías dentro de la propia app, en tu propio dispositivo. No se usan para ningún otro fin.</p>
+
+<h2>Qué NO hacemos con tus datos</h2>
+<ul>
+  <li>No vendemos, alquilamos ni compartimos tus datos financieros con nadie.</li>
+  <li>No los usamos para publicidad.</li>
+  <li>No los enviamos a ningún servidor propio ni de terceros mientras la app funcione en su modo actual (100% local).</li>
+</ul>
+
+<h2>Cómo eliminar tu información</h2>
+<p>Dentro de la app: Opciones → "Restablecer todo" borra todos los datos del perfil activo. También puedes eliminar un perfil completo desde la pantalla de selección de perfiles. Como todo vive en tu dispositivo, desinstalar la app o borrar los datos del sitio en tu navegador elimina absolutamente todo de forma permanente.</p>
+
+<h2 class="future">Si en el futuro conectas tu banco (función planeada, aún no activa)</h2>
+<div class="future">
+<p>Estamos preparando una función opcional para conectar tu cuenta bancaria mediante un proveedor especializado (como Plaid), a través de un servidor propio. Esa función <strong>todavía no está activa</strong>. Cuando lo esté, aplicará lo siguiente:</p>
+<ul>
+  <li>Nunca vemos ni guardamos tu usuario ni contraseña del banco — eso lo maneja directamente el proveedor de conexión bancaria.</li>
+  <li>Solo se leerán los datos que autorices: cuentas, saldos, tarjetas, préstamos, movimientos y transacciones recurrentes.</li>
+  <li>Los tokens de acceso se guardarán cifrados en el servidor, nunca en tu teléfono ni en el código de la app.</li>
+  <li>Podrás desconectar tu banco cuando quieras desde la app.</li>
+  <li>Te pediremos tu consentimiento explícito antes de conectar cualquier cuenta, y podrás revocarlo en cualquier momento.</li>
+</ul>
+</div>
+
+<h2>Cómo contactar al desarrollador</h2>
+<p>Para preguntas sobre esta política o tus datos, escribe a: <a href="mailto:soporte@cuentasclaras.app">soporte@cuentasclaras.app</a> (actualiza esta dirección por la tuya real antes de publicar).</p>
+
+<p><a href="data-policy.html">Ver política de retención y eliminación de datos &rarr;</a></p>
+</div></div>
+</body>
+</html>

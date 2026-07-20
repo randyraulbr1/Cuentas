@@ -16,6 +16,9 @@ async function enterProfile(id) {
   state.cash = d.cash != null ? d.cash : "";
   state.bankTransactions = d.bankTransactions || [];
   state.categoriaAprendida = d.categoriaAprendida || {};
+  state.consentimientoAceptado = !!d.consentimientoAceptado;
+  state.consentimientoFecha = d.consentimientoFecha || "";
+  state.showConsentimiento = false;
   state.bankPendingCategoria = state.bankTransactions.filter((tx) => !tx.categoria).map((tx) => tx.id);
   state.bankImportMsg = "";
   state.confirmDeleteBankTxId = null;
@@ -215,6 +218,7 @@ root.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target && e
 
 root.addEventListener("click", (e) => {
   if (e.target.classList && e.target.classList.contains("options-overlay")) {
+    if (state.showConsentimiento) { state.showConsentimiento = false; render(); return; }
     if (state.showExport) { state.showExport = false; state.exportCopied = false; render(); return; }
     state.showOptions = false; render(); return;
   }
@@ -240,6 +244,7 @@ root.addEventListener("click", (e) => {
     toggleEditLoans: toggleEditLoans, setLoanFrec: () => setLoanFrec(id, freq),
     loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
     startImportarBanco: startImportarBanco, confirmTxCategoria: () => confirmTxCategoria(id),
+    aceptarConsentimiento: aceptarConsentimiento, cancelarConsentimiento: cancelarConsentimiento,
     askDeleteBankTx: () => askDeleteBankTx(id), cancelDeleteBankTx: cancelDeleteBankTx, removeBankTx: () => removeBankTx(id),
     toggleEditJob: toggleEditJob,
     setJobFrecuencia: () => updateJobField("frecuenciaPago", freq),

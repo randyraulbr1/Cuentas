@@ -74,9 +74,20 @@ function csvRowsToTransactions(rows) {
 }
 
 function startImportarBanco() {
+  if (!state.consentimientoAceptado) { state.showConsentimiento = true; render(); return; }
   const input = document.getElementById("bank-file-input");
   if (input) input.click();
 }
+function aceptarConsentimiento() {
+  state.consentimientoAceptado = true;
+  state.consentimientoFecha = new Date().toISOString();
+  state.showConsentimiento = false;
+  scheduleSave();
+  render();
+  const input = document.getElementById("bank-file-input");
+  if (input) input.click();
+}
+function cancelarConsentimiento() { state.showConsentimiento = false; render(); }
 
 function handleBankFile(fileInputEl) {
   const file = fileInputEl.files && fileInputEl.files[0];

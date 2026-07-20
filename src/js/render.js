@@ -32,6 +32,22 @@ function renderSelector() {
   root.innerHTML = html;
 }
 
+function renderConsentimientoSheet() {
+  let h = '<div class="options-overlay">';
+  h += '<div class="options-sheet">';
+  h += '<div class="options-head"><h2>' + t("consentTitle") + '</h2></div>';
+  h += '<p class="opt-row-sub" style="margin-bottom:10px;">' + t("consentIntro") + '</p>';
+  h += '<ul style="margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.6;color:var(--text);">';
+  [t("consentItem1"), t("consentItem2"), t("consentItem3"), t("consentItem4")].forEach((it) => { h += "<li>" + esc(it) + "</li>"; });
+  h += "</ul>";
+  h += '<p class="opt-row-sub" style="margin-bottom:12px;">' + t("consentPoliza") + ' <a href="privacy.html" style="color:#3D5AFE;" target="_blank" rel="noopener">' + t("consentPolizaLink") + "</a></p>";
+  h += '<div style="display:flex;gap:8px;">';
+  h += '<button class="pill-btn confirm" style="flex:1;" data-action="aceptarConsentimiento">' + t("consentAceptar") + "</button>";
+  h += '<button class="pill-btn" style="flex:1;" data-action="cancelarConsentimiento">' + t("cancel") + "</button>";
+  h += "</div></div></div>";
+  return h;
+}
+
 function renderExportSheet() {
   const json = JSON.stringify(buildExportData(), null, 2);
   let h = '<div class="options-overlay">';
@@ -52,7 +68,13 @@ function renderOptionsSheet() {
 
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
   h += '<div class="opt-section"><p class="opt-section-title">' + t("secPerfil") + '</p>';
-  h += '<div class="opt-row"><span class="opt-row-label">' + esc(activeProfile ? activeProfile.nombre : "") + '</span><button class="pill-btn" data-action="switchUser">' + t("switchUser") + '</button></div></div>';
+  h += '<div class="opt-row"><span class="opt-row-label">' + esc(activeProfile ? activeProfile.nombre : "") + '</span><button class="pill-btn" data-action="switchUser">' + t("switchUser") + '</button></div>';
+  if (state.confirmDeleteProfileId === state.activeProfileId) {
+    h += '<div class="confirm-row" style="margin-top:8px;"><span>' + t("confirmEliminarCuentaMsg") + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="deleteProfile" data-id="' + state.activeProfileId + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteProfile">' + t("cancel") + '</button></div></div>';
+  } else {
+    h += '<button class="pill-btn danger wide" style="margin-top:8px;width:100%;" data-action="askDeleteProfile" data-id="' + state.activeProfileId + '">' + t("eliminarCuentaBtn") + '</button>';
+  }
+  h += '</div>';
 
   h += '<div class="opt-section"><div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div>';
   h += '<div class="opt-row"><span class="opt-row-label">' + t("secMoneda") + '</span><div class="seg"><button class="' + (state.currency === "usd" ? "active" : "") + '" data-action="setCurUsd">$</button><button class="' + (state.currency === "eur" ? "active" : "") + '" data-action="setCurEur">€</button></div></div>';
@@ -94,6 +116,13 @@ function renderOptionsSheet() {
     h += '<p style="font-size:12px;color:var(--text-muted);text-align:center;margin:4px 0;">' + t("confirmResetMsg") + '</p>';
     h += '<div style="display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="resetAll">' + t("yesDelete") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelReset">' + t("cancel") + '</button></div>';
   }
+  h += '</div></div>';
+
+  h += '<div class="opt-section"><p class="opt-section-title">' + t("secLegal") + '</p><div class="opt-btn-stack">';
+  h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="privacy.html" target="_blank" rel="noopener">' + t("verPrivacidad") + '</a>';
+  h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="data-policy.html" target="_blank" rel="noopener">' + t("verDatosPolitica") + '</a>';
+  h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="terms.html" target="_blank" rel="noopener">' + t("verTerminos") + '</a>';
+  h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="contact.html" target="_blank" rel="noopener">' + t("verContacto") + '</a>';
   h += '</div></div>';
 
   h += '</div></div>';
@@ -613,6 +642,7 @@ function renderApp() {
   html += renderTabBar();
   if (state.showOptions) html += renderOptionsSheet();
   if (state.showExport) html += renderExportSheet();
+  if (state.showConsentimiento) html += renderConsentimientoSheet();
   html += '</div>';
 
   root.innerHTML = html;

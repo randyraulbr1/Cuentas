@@ -1,10 +1,14 @@
-const CACHE = "cuentas-claras-v27";
+const CACHE = "cuentas-claras-v28";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
+  "./privacy.html",
+  "./data-policy.html",
+  "./terms.html",
+  "./contact.html",
   "./src/css/base.css",
   "./src/css/components.css",
   "./src/css/pages.css",
