@@ -284,7 +284,7 @@ const I18N = {
     preset_renta: "Renta", preset_wifi: "WiFi", preset_telefono: "Teléfono", preset_seguro: "Seguro",
     saldoLbl: "Saldo", limiteLbl: "Límite", taeLbl: "TAE %", minimoLbl: "Mínimo",
     debesAhoraLbl: "Debes ahora",
-    pagarBtn: "💳 Pagar", pagarDesdeLbl: "Pagar desde", confirmarPago: "Confirmar pago", pagoRegistrado: "Pago registrado ✓",
+    pagarBtn: "💳 Pagar", pagarDesdeLbl: "Pagar desde", noDescontar: "No descontar", confirmarPago: "Confirmar pago", pagoRegistrado: "Pago registrado ✓",
     confirmDeleteSubMsg: (n) => '¿Eliminar "' + n + '"?',
     confirmDeleteCardMsg: (n) => '¿Eliminar la tarjeta "' + n + '"?',
     confirmDeleteHistoryMsg: (m) => "¿Eliminar " + m + "?",
@@ -391,7 +391,7 @@ const I18N = {
     preset_renta: "Rent", preset_wifi: "WiFi", preset_telefono: "Phone", preset_seguro: "Insurance",
     saldoLbl: "Balance", limiteLbl: "Limit", taeLbl: "APR %", minimoLbl: "Minimum",
     debesAhoraLbl: "You currently owe",
-    pagarBtn: "💳 Pay", pagarDesdeLbl: "Pay from", confirmarPago: "Confirm payment", pagoRegistrado: "Payment recorded ✓",
+    pagarBtn: "💳 Pay", pagarDesdeLbl: "Pay from", noDescontar: "Do not deduct", confirmarPago: "Confirm payment", pagoRegistrado: "Payment recorded ✓",
     confirmDeleteSubMsg: (n) => 'Delete "' + n + '"?',
     confirmDeleteCardMsg: (n) => 'Delete card "' + n + '"?',
     confirmDeleteHistoryMsg: (m) => "Delete " + m + "?",
@@ -450,7 +450,7 @@ const toNum = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v21";
+const APP_VERSION = "v22";
 let uidCounter = 1;
 const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
 
@@ -626,13 +626,13 @@ function toggleSubPagado(id) {
     const monto = toNum(s.pagadoMonto);
     if (monto > 0) {
       if (s.pagadoFuente === "debito") state.debito = String(toNum(state.debito) + monto);
-      else state.ahorroActual = String(toNum(state.ahorroActual) + monto);
+      else if (s.pagadoFuente === "ahorro") state.ahorroActual = String(toNum(state.ahorroActual) + monto);
     }
     s.pagadoMes = null; s.pagadoFuente = null; s.pagadoMonto = null;
     scheduleSave(); rerenderPreservingFocus();
   } else {
     state.payingSubId = id;
-    state.payFormSource = toNum(state.debito) >= toNum(state.ahorroActual) ? "debito" : "ahorro";
+    state.payFormSource = "debito";
     state.payFormMonto = String(toNum(s.monto));
     render();
   }
@@ -645,7 +645,7 @@ function confirmPagoSub() {
   if (monto <= 0) return;
   pushUndo();
   if (state.payFormSource === "debito") state.debito = String(Math.max(toNum(state.debito) - monto, 0));
-  else state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
+  else if (state.payFormSource === "ahorro") state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
   s.pagadoMes = monthKey();
   s.pagadoFuente = state.payFormSource;
   s.pagadoMonto = String(monto);
@@ -739,13 +739,14 @@ function startPago(type, targetId) {
     if (loan && toNum(loan.montoPago) > 0) sugerido = String(toNum(loan.montoPago));
   }
   state.payingTarget = { type: type, id: targetId };
-  state.payFormSource = toNum(state.debito) >= toNum(state.ahorroActual) ? "debito" : "ahorro";
+  state.payFormSource = "debito";
   state.payFormMonto = sugerido;
   render();
 }
 function cancelPago() { state.payingTarget = null; state.payFormMonto = ""; render(); }
 function setPagoSourceAhorro() { state.payFormSource = "ahorro"; render(); }
 function setPagoSourceDebito() { state.payFormSource = "debito"; render(); }
+function setPagoSourceNinguno() { state.payFormSource = "ninguno"; render(); }
 function confirmPago() {
   if (!state.payingTarget) return;
   const monto = toNum(state.payFormMonto);
@@ -757,7 +758,7 @@ function confirmPago() {
   pushUndo();
   item[field] = String(Math.max(toNum(item[field]) - monto, 0));
   if (state.payFormSource === "debito") state.debito = String(Math.max(toNum(state.debito) - monto, 0));
-  else state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
+  else if (state.payFormSource === "ahorro") state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
   state.payingTarget = null;
   state.payFormMonto = "";
   state.payFlash = true;
@@ -1104,9 +1105,10 @@ function renderPagoBlock(type, item, saldoActual) {
   const debitoDisp = toNum(state.debito);
   let h = '<div class="pay-form">';
   h += '<p class="opt-row-sub" style="margin-bottom:6px;">' + t("pagarDesdeLbl") + '</p>';
-  h += '<div class="seg" style="width:100%;">';
-  h += '<button style="flex:1;" class="' + (state.payFormSource === "ahorro" ? "active" : "") + '" data-action="setPagoSourceAhorro">' + t("ahorroActualLbl") + ' ' + sym() + fmt0(ahorroDisp) + '</button>';
-  h += '<button style="flex:1;" class="' + (state.payFormSource === "debito" ? "active" : "") + '" data-action="setPagoSourceDebito">' + t("debitoLbl") + ' ' + sym() + fmt0(debitoDisp) + '</button>';
+  h += '<div class="seg" style="width:100%;flex-wrap:wrap;">';
+  h += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ahorro" ? "active" : "") + '" data-action="setPagoSourceAhorro">' + t("ahorroActualLbl") + ' ' + sym() + fmt0(ahorroDisp) + '</button>';
+  h += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "debito" ? "active" : "") + '" data-action="setPagoSourceDebito">' + t("debitoLbl") + ' ' + sym() + fmt0(debitoDisp) + '</button>';
+  h += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ninguno" ? "active" : "") + '" data-action="setPagoSourceNinguno">' + t("noDescontar") + '</button>';
   h += '</div>';
   h += '<input type="text" inputmode="decimal" placeholder="0" id="pago-monto-' + item.id + '" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
   h += '<div style="display:flex;gap:8px;margin-top:8px;">';
@@ -1270,9 +1272,10 @@ function renderApp() {
         if (state.payingSubId === s.id) {
           html += '<div class="pay-form" style="margin:8px 0;">';
           html += '<p class="opt-row-sub" style="margin-bottom:6px;">' + esc(s.nombre || t("subNombrePh")) + ' \u00b7 ' + t("pagarDesdeLbl") + '</p>';
-          html += '<div class="seg" style="width:100%;">';
-          html += '<button style="flex:1;" class="' + (state.payFormSource === "ahorro" ? "active" : "") + '" data-action="setPagoSourceAhorro">' + t("ahorroActualLbl") + ' ' + sym() + fmt0(toNum(state.ahorroActual)) + '</button>';
-          html += '<button style="flex:1;" class="' + (state.payFormSource === "debito" ? "active" : "") + '" data-action="setPagoSourceDebito">' + t("debitoLbl") + ' ' + sym() + fmt0(toNum(state.debito)) + '</button>';
+          html += '<div class="seg" style="width:100%;flex-wrap:wrap;">';
+          html += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ahorro" ? "active" : "") + '" data-action="setPagoSourceAhorro">' + t("ahorroActualLbl") + ' ' + sym() + fmt0(toNum(state.ahorroActual)) + '</button>';
+          html += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "debito" ? "active" : "") + '" data-action="setPagoSourceDebito">' + t("debitoLbl") + ' ' + sym() + fmt0(toNum(state.debito)) + '</button>';
+          html += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ninguno" ? "active" : "") + '" data-action="setPagoSourceNinguno">' + t("noDescontar") + '</button>';
           html += '</div>';
           html += '<input type="text" inputmode="decimal" placeholder="0" id="pago-sub-monto-' + s.id + '" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
           html += '<div style="display:flex;gap:8px;margin-top:8px;">';
@@ -1526,7 +1529,7 @@ root.addEventListener("click", (e) => {
     loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
     loanFuenteAhorro: () => setLoanFuente(id, "ahorro"), loanFuenteDebito: () => setLoanFuente(id, "debito"),
     startPago: () => startPago(payType, id), cancelPago: cancelPago, confirmPago: confirmPago,
-    setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito,
+    setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito, setPagoSourceNinguno: setPagoSourceNinguno,
     guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
     switchUser: switchUser,
     toggleTheme: toggleTheme, toggleLang: toggleLang, toggleCurrency: toggleCurrency,
