@@ -15,7 +15,7 @@ function renderBancoNubePanel() {
     return html;
   }
 
-  state.cloudInstitutions.forEach((inst) => {
+  state.cloudInstitutions.filter((inst) => inst.status === "active").forEach((inst) => {
     if (state.confirmDisconnectId === inst.id) {
       html += '<div class="confirm-row"><span>' + esc(t("confirmDesconectarMsg")(inst.institution_name || "")) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="confirmDisconnectBank" data-id="' + inst.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDisconnectBank">' + t("cancel") + '</button></div></div>';
     } else {
@@ -179,19 +179,11 @@ function renderOptionsSheet() {
   }
   h += '</div></div>';
 
-  h += '<div class="opt-section"><p class="opt-section-title">' + t("secNube") + '</p>';
-  h += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("apiBaseUrlLbl") + '</label><input type="text" placeholder="https://tu-servidor.onrender.com" id="api-base-url" data-scope="apiBaseUrl" value="' + esc(state.apiBaseUrl) + '" style="width:100%;font-size:12.5px;"></div>';
   if (state.authUser) {
-    h += '<div class="opt-row"><span class="opt-row-label">' + esc(state.authUser.email) + '</span><button class="pill-btn" data-action="apiLogout">' + t("cerrarSesion") + '</button></div>';
-    h += '<button class="pill-btn wide danger" style="margin-top:10px;" data-action="apiDeleteCloudAccount">' + t("eliminarCuentaNubeBtn") + '</button>';
-  } else {
-    h += '<div class="seg" style="width:100%;margin-bottom:8px;"><button style="flex:1;" class="' + (state.authMode === "login" ? "active" : "") + '" data-action="setAuthLogin">' + t("iniciarSesion") + '</button><button style="flex:1;" class="' + (state.authMode === "register" ? "active" : "") + '" data-action="setAuthRegister">' + t("crearCuenta") + '</button></div>';
-    h += '<input type="text" placeholder="' + t("correoPh") + '" id="auth-email" data-scope="authEmail" value="' + esc(state.authEmail) + '" style="width:100%;margin-bottom:8px;">';
-    h += '<input type="password" placeholder="' + t("contrasenaPh") + '" id="auth-password" data-scope="authPassword" value="' + esc(state.authPassword) + '" style="width:100%;margin-bottom:8px;">';
-    if (state.authFormError) h += '<p class="opt-row-sub" style="color:#FF3B30;margin-bottom:8px;">' + esc(state.authFormError) + '</p>';
-    h += '<button class="pill-btn wide confirm" data-action="submitAuthForm"' + (state.cloudBusy ? " disabled" : "") + '>' + (state.authMode === "login" ? t("iniciarSesion") : t("crearCuenta")) + '</button>';
+    h += '<div class="opt-section"><p class="opt-section-title">' + t("secNube") + '</p>';
+    h += '<button class="pill-btn wide danger" data-action="apiDeleteCloudAccount">' + t("eliminarCuentaNubeBtn") + '</button>';
+    h += '</div>';
   }
-  h += '</div>';
 
   h += '<div class="opt-section"><p class="opt-section-title">' + t("secLegal") + '</p><div class="opt-btn-stack">';
   h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="privacy.html" target="_blank" rel="noopener">' + t("verPrivacidad") + '</a>';
@@ -237,7 +229,6 @@ function renderPagoBlock(type, item, saldoActual) {
 function renderTabBar() {
   const tabs = [
     { id: "inicio", icon: "home", label: t("tabInicio") },
-    { id: "trabajo", icon: "clock", label: t("tabTrabajo") },
     { id: "tarjetas", icon: "card", label: t("tabTarjetas") },
     { id: "pagos", icon: "receipt", label: t("tabPagos") },
     { id: "historial", icon: "chart", label: t("tabHistorial") },
@@ -264,11 +255,10 @@ function renderApp() {
   const topAction = computeTopAction(t2, resultado);
   if (topAction) html += '<div class="top-action ' + topAction.level + '">' + esc(topAction.text) + '</div>';
   html += '<div class="app-header"><h1>' + t("brand") + '</h1>';
-  if (activeProfile) html += '<p class="profile-line">' + esc(t("helloProfile")(activeProfile.nombre)) + '</p>';
   html += '</div>';
 
   if (tab !== "inicio") {
-    html += '<div class="tab-subheader"><button class="back-btn" data-action="goInicio">\u2039 ' + t("atras") + '</button><h2>' + t(tab === "tarjetas" ? "tabTarjetas" : tab === "pagos" ? "tabPagos" : "tabHistorial") + '</h2></div>';
+    html += '<div class="tab-subheader"><h2>' + t(tab === "tarjetas" ? "tabTarjetas" : tab === "pagos" ? "tabPagos" : "tabHistorial") + '</h2></div>';
   }
 
   if (tab === "inicio") {
@@ -276,57 +266,31 @@ function renderApp() {
     html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("debitoLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito)) + '</div></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("cashLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.cash)) + '</div></div>';
     if (t2.cardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
     if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + (np.ajustado ? ' ' + icon("pencil") : "") + '</div></div>';
     html += '</div>';
 
-    if (state.bankImportMsg) html += '<div class="flash">' + esc(state.bankImportMsg) + '</div>';
-
-    html += '<div class="panel">';
-    html += '<div class="panel-head-row"><div><h2>' + t("bankTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("bankHint") + '</p></div></div>';
-    html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="startImportarBanco">' + icon("bank") + ' ' + t("bankImportBtn") + '</button>';
-
-    const bt = bankTotalsEsteMes();
-    if (state.bankTransactions.length > 0) {
-      html += '<div class="mini-total"><span>' + t("bankIngresosMes") + '</span><b class="locked-amount" style="color:#34C759;">' + sym() + fmt0(bt.ingresos) + '</b></div>';
-      html += '<div class="mini-total"><span>' + t("bankGastosMes") + '</span><b class="locked-amount" style="color:#FF3B30;">' + sym() + fmt0(bt.gastos) + '</b></div>';
-    }
-
-    if (state.bankPendingCategoria.length > 0) {
-      html += '<p class="opt-row-sub" style="margin-top:10px;color:#B25E00;">' + t("bankPendientesMsg")(state.bankPendingCategoria.length) + '</p>';
-      const pendingId = state.bankPendingCategoria[0];
-      const tx = state.bankTransactions.find((x) => x.id === pendingId);
-      if (tx) {
-        html += '<div class="card-entry"><p class="opt-row-sub" style="margin-bottom:6px;">' + esc(tx.fecha) + ' \u00b7 ' + esc(tx.descripcion) + ' \u00b7 ' + sym() + fmt0(Math.abs(tx.monto)) + '</p>';
-        html += '<select id="bank-cat-select" style="width:100%;">';
-        BANK_CATEGORIES.forEach((c) => { html += '<option value="' + c + '">' + t("cat_" + c) + '</option>'; });
-        html += '</select>';
-        html += '<button class="pay-trigger" style="margin-top:8px;" data-action="confirmTxCategoria" data-id="' + tx.id + '">' + t("bankAsignarBtn") + '</button>';
-        html += '</div>';
-      }
-    }
-
-    if (state.bankTransactions.length > 0) {
-      state.bankTransactions.slice(0, 8).forEach((tx) => {
-        if (state.confirmDeleteBankTxId === tx.id) {
-          html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteTxMsg")(tx.descripcion)) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeBankTx" data-id="' + tx.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteBankTx">' + t("cancel") + '</button></div></div>';
-        } else {
-          html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, tx.fecha, '<button class="history-del" style="margin-left:6px;" data-action="askDeleteBankTx" data-id="' + tx.id + '">' + t("eliminar") + '</button>');
-        }
-      });
-    } else if (!state.bankImportMsg) {
-      html += '<div class="empty-state">' + t("bankEmpty") + '</div>';
-    }
-    html += '</div>';
-
     html += renderBancoNubePanel();
 
-    if (t2.cardsConLimite.length > 0) {
+    if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) {
       html += '<div class="panel"><h2>' + t("saludCreditoTitle") + '</h2><p class="hint">' + t("saludCreditoHint") + '</p>';
       t2.cardsConLimite.forEach((c) => {
         const uso = Math.min((toNum(c.saldo) / toNum(c.limite)) * 100, 100);
         const usoNivel = uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
         html += '<div style="margin-bottom:14px;"><div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(c.nombre || t("cardNombrePh")) + '</span><span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span></div>';
+        html += '<div class="opt-row-sub" style="margin-bottom:4px;">' + sym() + fmt0(toNum(c.saldo)) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(toNum(c.limite)) + (toNum(c.apr) > 0 ? ' \u00b7 ' + t("cardAprLbl") + ' ' + c.apr + '%' : '') + '</div>';
+        html += utilBarHtml(uso, usoNivel) + '</div>';
+      });
+      t2.cloudCardsConLimite.forEach((c) => {
+        const saldo = toNum(c.balance_current);
+        const limite = toNum(c.balance_limit);
+        const uso = Math.min((saldo / limite) * 100, 100);
+        const usoNivel = uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
+        const liab = state.cloudLiabilities[c.account_id];
+        html += '<div style="margin-bottom:14px;"><div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(c.name || t("cardNombrePh")) + (c.mask ? " ****" + esc(c.mask) : "") + '</span><span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span></div>';
+        html += '<div class="opt-row-sub" style="margin-bottom:4px;">' + sym() + fmt0(saldo) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(limite) + (liab && liab.apr ? ' \u00b7 ' + t("cardAprLbl") + ' ' + liab.apr + '%' : '') + '</div>';
         html += utilBarHtml(uso, usoNivel) + '</div>';
       });
       html += '</div>';
@@ -408,6 +372,15 @@ function renderApp() {
   if (tab === "pagos") {
     if (state.autoPagoNotif && state.autoPagoNotif.length > 0) {
       html += '<div class="flash">' + t("autoPagoAplicado")(state.autoPagoNotif.join(", ")) + '</div>';
+    }
+
+    const pagosRecibidos = state.cloudTransactions.filter((tx) => toNum(tx.monto) > 0);
+    if (pagosRecibidos.length > 0) {
+      html += '<div class="panel"><h2>' + t("pagosRecibidosBancoTitle") + '</h2><p class="hint">' + t("pagosRecibidosBancoHint") + '</p>';
+      pagosRecibidos.slice(0, 30).forEach((tx) => {
+        html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10));
+      });
+      html += '</div>';
     }
     html += '<div class="panel"><div class="panel-head-row"><div><p class="hint" style="margin-bottom:0;">' + t("subsHint") + '</p></div><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? icon("check") : icon("pencil")) + '</button></div>';
     if (state.editingSubs) {
@@ -512,134 +485,6 @@ function renderApp() {
     html += '<div class="mini-total"><span>' + t("totalPrestamos") + '</span><b>' + sym() + fmt0(totalPrestamos) + '</b></div></div>';
   }
 
-  if (tab === "trabajo") {
-    if (state.workPagoFlash) html += '<div class="flash">' + icon("check") + ' ' + t("pagoTrabajoRegistrado") + '</div>';
-
-    // panel configuracion del trabajo
-    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("miTrabajoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("miTrabajoHint") + '</p></div><button class="icon-pencil' + (state.editingJob ? " done" : "") + '" data-action="toggleEditJob">' + (state.editingJob ? icon("check") : icon("pencil")) + '</button></div>';
-    if (!state.editingJob) {
-      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + esc(state.job.nombre || t("trabajoNombrePh")) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.job.pagoHora)) + '/h</span></div>';
-    } else {
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("trabajoNombreLbl") + '</label><input type="text" placeholder="' + t("trabajoNombrePh") + '" id="job-nombre" value="' + esc(state.job.nombre) + '" data-scope="job" data-field="nombre"></div>';
-      html += '<div class="goal-field"><label>' + t("pagoHoraLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="job-pagoHora" value="' + esc(state.job.pagoHora) + '" data-scope="job" data-field="pagoHora"></div>';
-      html += '</div>';
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("pagoDiaLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="job-pagoDia" value="' + esc(state.job.pagoDia) + '" data-scope="job" data-field="pagoDia"></div>';
-      html += '<div class="goal-field"><label>' + t("impuestoPctLbl") + '</label><input type="text" inputmode="decimal" placeholder="0" id="job-impuestoPct" value="' + esc(state.job.impuestoPct) + '" data-scope="job" data-field="impuestoPct"></div>';
-      html += '</div>';
-      html += '<div class="pay-config"><label>' + t("frecuenciaPagoLbl") + '</label><div class="seg" style="width:100%;">';
-      [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["dosVecesMes", "freqDosVecesMes"], ["mensual", "payMensual"]].forEach((f) => { html += '<button style="flex:1;" class="' + (state.job.frecuenciaPago === f[0] ? "active" : "") + '" data-action="setJobFrecuencia" data-freq="' + f[0] + '">' + t(f[1]) + '</button>'; });
-      html += '</div></div>';
-      html += '<div class="goal-grid" style="margin-top:8px;">';
-      html += '<div class="goal-field"><label>' + t("horasExtraDespuesLbl") + '</label><input type="text" inputmode="decimal" placeholder="40" id="job-horasExtraDespues" value="' + esc(state.job.horasExtraDespues) + '" data-scope="job" data-field="horasExtraDespues"></div>';
-      html += '<div class="goal-field"><label>' + t("multiplicadorExtraLbl") + '</label><input type="text" inputmode="decimal" placeholder="1.5" id="job-multiplicadorExtra" value="' + esc(state.job.multiplicadorExtra) + '" data-scope="job" data-field="multiplicadorExtra"></div>';
-      html += '</div>';
-      html += '<div class="opt-row" style="margin-top:8px;"><span class="opt-row-label">' + t("descansoPagadoLbl") + '</span><div class="seg"><button class="' + (!state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOff">' + t("off") + '</button><button class="' + (state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOn">' + t("on") + '</button></div></div>';
-    }
-    html += '</div>';
-
-    // resumen del mes/semana
-    const tm = totalesMes(); const ts = totalesSemana();
-    html += '<div class="summary">';
-    html += '<div class="sum-card"><div class="sum-label">' + t("ganadoEsteMesLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(ganadoEsteMes()) + '</div></div>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("recibidoEsteMesLbl") + '</div><div class="sum-val green">' + sym() + fmt0(recibidoEsteMes()) + '</div></div>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("pendienteLbl") + '</div><div class="sum-val red">' + sym() + fmt0(pendienteDePago()) + '</div></div>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("horasSemanaLbl") + '</div><div class="sum-val blue" style="font-size:16px;">' + fmtHoras(ts.horas) + '</div></div>';
-    html += '</div>';
-
-    // turno activo o boton empezar
-    if (state.turnoActivo) {
-      const t2live = state.turnoActivo;
-      const enBreak = !!t2live.breakActivo;
-      const ms = turnoDurationMs(Object.assign({}, t2live, { breaks: t2live.breaks.concat(t2live.breakActivo ? [{ inicio: t2live.breakActivo.inicio }] : []) }), true);
-      const bruto = toNum(state.job.pagoHora) * (ms / 3600000);
-      html += '<div class="panel" style="text-align:center;">';
-      html += '<p class="hint" style="margin-bottom:4px;">' + (enBreak ? t("enBreakLbl") : t("trabajandoAhoraLbl")) + '</p>';
-      html += '<div style="font-size:34px;font-weight:800;letter-spacing:-0.01em;font-family:monospace;">' + fmtCronometro(ms) + '</div>';
-      html += '<div class="opt-row-sub" style="margin:4px 0 12px;">' + t("brutoAcumuladoLbl") + ': ' + sym() + fmt0(bruto) + '</div>';
-      html += '<div style="display:flex;gap:8px;">';
-      if (!enBreak) html += '<button class="pill-btn wide" style="flex:1;" data-action="empezarBreak">' + t("empezarBreakBtn") + '</button>';
-      else html += '<button class="pill-btn wide confirm" style="flex:1;" data-action="terminarBreak">' + t("terminarBreakBtn") + '</button>';
-      html += '</div>';
-      if (!state.confirmTerminarTrabajo) {
-        html += '<button class="pay-trigger" style="margin-top:8px;background:#FF3B30;" data-action="askTerminarTrabajo">' + t("terminarTrabajoBtn") + '</button>';
-      } else {
-        html += '<div class="confirm-row" style="margin-top:8px;justify-content:center;"><span>' + t("confirmTerminarMsg") + '</span></div>';
-        html += '<div style="display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="terminarTrabajo">' + t("yesDelete") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelTerminarTrabajo">' + t("cancel") + '</button></div>';
-      }
-      html += '</div>';
-    } else {
-      html += '<button class="calc-btn" data-action="empezarTrabajo">' + t("empezarTrabajoBtn") + '</button>';
-    }
-
-    // registrar pago recibido
-    if (state.showPagoTrabajo) {
-      const f = state.pagoTrabajoForm;
-      const sinPagar = state.turnos.filter((x) => x.estado !== "pagado");
-      html += '<div class="panel"><h2>' + t("agregarPagoTrabajoTitle") + '</h2>';
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("fechaLbl") + '</label><input type="date" id="pt-fecha" value="' + esc(f.fecha) + '" data-scope="pagoTrabajo" data-field="fecha"></div>';
-      html += '<div class="goal-field"><label>' + t("montoNetoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="pt-neto" value="' + esc(f.montoNeto) + '" data-scope="pagoTrabajo" data-field="montoNeto"></div>';
-      html += '</div>';
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("montoBrutoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="pt-bruto" value="' + esc(f.montoBruto) + '" data-scope="pagoTrabajo" data-field="montoBruto"></div>';
-      html += '<div class="goal-field"><label>' + t("metodoLbl") + '</label><input type="text" placeholder="' + t("metodoPh") + '" id="pt-metodo" value="' + esc(f.metodo) + '" data-scope="pagoTrabajo" data-field="metodo"></div>';
-      html += '</div>';
-      if (sinPagar.length > 0) {
-        html += '<p class="opt-row-sub" style="margin:8px 0 6px;">' + t("turnosIncluidosLbl") + '</p>';
-        sinPagar.forEach((tn) => {
-          const r = turnoPagoBruto(tn);
-          const checked = !!f.turnosSel[tn.id];
-          html += '<div class="opt-row" style="padding:6px 0;"><span class="opt-row-label" style="font-weight:500;font-size:12.5px;">' + esc(tn.fecha) + ' \u00b7 ' + fmtHoras(r.horas) + ' \u00b7 ' + sym() + fmt0(r.bruto) + '</span><button class="paid-check' + (checked ? " checked" : "") + '" data-action="toggleTurnoSel" data-id="' + tn.id + '">' + (checked ? icon("check") : "") + '</button></div>';
-        });
-      }
-      html += '<div style="display:flex;gap:8px;margin-top:10px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmPagoTrabajo">' + t("confirmarPago") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelPagoTrabajo">' + t("cancel") + '</button></div>';
-      html += '</div>';
-    } else {
-      html += '<button class="save-month-btn" data-action="startPagoTrabajo">' + t("agregarPagoTrabajoBtn") + '</button>';
-    }
-
-    // lista de turnos
-    html += '<div class="panel"><h2>' + t("turnosTitle") + '</h2><p class="hint">' + t("turnosHint") + '</p>';
-    const turnosRecientes = state.turnos.slice(0, 15);
-    turnosRecientes.forEach((tn) => {
-      const r = turnoPagoBruto(tn);
-      if (state.confirmDeleteTurnoId === tn.id) {
-        html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteTurnoMsg")(tn.fecha)) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeTurno" data-id="' + tn.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteTurno">' + t("cancel") + '</button></div></div>';
-        return;
-      }
-      const expanded = !!state.expandedTurnoIds[tn.id];
-      html += '<div class="card-entry">';
-      html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(tn.fecha) + ' \u00b7 ' + fmtHoras(r.horas) + '</span><span class="status-pill ' + (tn.estado === "pagado" ? "verde" : "amarillo") + '">' + (tn.estado === "pagado" ? t("estadoPagado") : t("estadoTrabajado")) + '</span></div>';
-      html += '<div class="history-meta"><span>' + sym() + fmt0(r.bruto) + ' ' + t("brutoLbl") + '</span><button class="icon-pencil" data-action="toggleExpandTurno" data-id="' + tn.id + '">' + (expanded ? icon("check") : icon("pencil")) + '</button></div>';
-      if (expanded) {
-        html += '<div class="card-fields" style="margin-top:8px;">';
-        html += '<div><span class="field-label">' + t("propinasLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" data-scope="turno" data-id="' + tn.id + '" data-field="propinas" value="' + esc(tn.propinas) + '"></div>';
-        html += '<div><span class="field-label">' + t("bonosLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" data-scope="turno" data-id="' + tn.id + '" data-field="bonos" value="' + esc(tn.bonos) + '"></div>';
-        html += '</div>';
-        html += '<div class="goal-field" style="margin-top:8px;"><label>' + t("notasLbl") + '</label><input type="text" placeholder="' + t("notasPh") + '" data-scope="turno" data-id="' + tn.id + '" data-field="notas" value="' + esc(tn.notas) + '"></div>';
-        html += '<button class="delete-link" data-action="askDeleteTurno" data-id="' + tn.id + '">' + t("eliminarTurnoLink") + '</button>';
-      }
-      html += '</div>';
-    });
-    if (state.turnos.length === 0) html += '<div class="empty-state">' + t("turnosEmpty") + '</div>';
-    html += '</div>';
-
-    // lista de pagos recibidos
-    if (state.pagosTrabajo.length > 0) {
-      html += '<div class="panel"><h2>' + t("pagosRecibidosTitle") + '</h2>';
-      state.pagosTrabajo.slice().reverse().slice(0, 10).forEach((p) => {
-        if (state.confirmDeletePagoTrabajoId === p.id) {
-          html += '<div class="confirm-row"><span>' + esc(t("confirmDeletePagoMsg")(p.fecha)) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removePagoTrabajo" data-id="' + p.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeletePagoTrabajo">' + t("cancel") + '</button></div></div>';
-        } else {
-          html += '<div class="history-row"><div class="history-top"><span class="history-month" style="text-transform:none;">' + esc(p.fecha) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(p.montoNeto)) + '</span></div>';
-          html += '<div class="history-meta"><span>' + esc(p.metodo || "") + '</span><button class="history-del" data-action="askDeletePagoTrabajo" data-id="' + p.id + '">' + t("eliminar") + '</button></div></div>';
-        }
-      });
-      html += '</div>';
-    }
-  }
 
   if (tab === "tarjetas") {
     if (state.payFlash) html += '<div class="flash">' + icon("check") + ' ' + t("pagoRegistrado") + '</div>';
@@ -738,9 +583,10 @@ function renderApp() {
     });
     html += '</div>';
 
-    if (state.cloudTransactions.length > 0) {
-      html += '<div class="panel"><h2>' + t("movimientosBancoTitle") + '</h2><p class="hint">' + t("movimientosBancoHint") + '</p>';
-      state.cloudTransactions.slice(0, 60).forEach((tx) => {
+    const compras = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0);
+    if (compras.length > 0) {
+      html += '<div class="panel"><h2>' + t("comprasTitle") + '</h2><p class="hint">' + t("comprasHint") + '</p>';
+      compras.slice(0, 60).forEach((tx) => {
         html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10));
       });
       html += '</div>';
