@@ -2,19 +2,57 @@
 
 const root = document.getElementById("root");
 
+function renderBancoNubePanel() {
+  let html = '<div class="panel">';
+  html += '<div class="panel-head-row"><div><h2>' + t("bancoNubeTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("bancoNubeHint") + '</p></div></div>';
+  if (state.cloudErrorMsg) html += '<p class="opt-row-sub" style="color:#FF3B30;margin:8px 0;">' + esc(state.cloudErrorMsg) + '</p>';
+  if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
+
+  if (!state.authUser) {
+    html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
+    html += '<button class="delete-link" style="display:block;margin:8px auto 0;" data-action="resetConexionNube">' + t("restablecerConexionBtn") + '</button>';
+    html += '</div>';
+    return html;
+  }
+
+  state.cloudInstitutions.forEach((inst) => {
+    if (state.confirmDisconnectId === inst.id) {
+      html += '<div class="confirm-row"><span>' + esc(t("confirmDesconectarMsg")(inst.institution_name || "")) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="confirmDisconnectBank" data-id="' + inst.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDisconnectBank">' + t("cancel") + '</button></div></div>';
+    } else {
+      html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(inst.institution_name || t("bancoDesconocido")) + '</span><span class="status-pill ' + (inst.status === "active" ? "verde" : "rojo") + '">' + (inst.status === "active" ? t("estadoActivo") : t("estadoDesconectado")) + '</span></div>';
+      if (inst.last_synced_at) html += '<p class="opt-row-sub">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(inst.last_synced_at).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
+      if (inst.status === "active") html += '<button class="delete-link" data-action="askDisconnectBank" data-id="' + inst.id + '">' + t("desconectarBancoBtn") + '</button>';
+      html += '</div>';
+    }
+  });
+
+  html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
+  if (state.cloudInstitutions.length > 0) html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="actualizarDatosNube"' + (state.cloudBusy ? " disabled" : "") + '>' + t("actualizarNubeBtn") + '</button>';
+  if (state.cloudLastSync) html += '<p class="opt-row-sub" style="text-align:center;margin-top:8px;">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(state.cloudLastSync).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
+
+  if (state.cloudAccounts.length > 0) {
+    html += '<div class="mini-total" style="margin-top:10px;"><span>' + t("cuentasConectadasLbl") + '</span></div>';
+    state.cloudAccounts.forEach((acc) => {
+      html += '<div class="sub-row-locked"><span class="locked-name">' + esc(acc.name || "") + (acc.mask ? " ****" + esc(acc.mask) : "") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(acc.balance_current)) + '</span></div>';
+    });
+  }
+  if (state.cloudTransactions.length > 0) {
+    state.cloudTransactions.slice(0, 8).forEach((tx) => {
+      html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10));
+    });
+  }
+  html += '</div>';
+  return html;
+}
+
 function renderSelector() {
   let html = '<div class="page"><div class="selector-wrap">';
   html += '<div class="selector-logo">' + sym() + '</div>';
   html += '<h1 class="selector-title">' + t("selectorTitle") + '</h1>';
   html += '<p class="selector-hint">' + t("selectorHint") + '</p>';
 
-  html += '<div class="panel" style="text-align:left;">';
-  html += '<h2 style="margin-bottom:2px;">' + t("bancoNubeTitle") + '</h2><p class="hint" style="margin-bottom:10px;">' + t("bancoNubeHint") + '</p>';
-  if (state.cloudErrorMsg) html += '<p class="opt-row-sub" style="color:#FF3B30;margin-bottom:8px;">' + esc(state.cloudErrorMsg) + '</p>';
-  if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
-  if (state.cloudBusy) html += '<p class="opt-row-sub" style="margin-bottom:8px;">' + t("esperaServidorMsg") + '</p>';
-  html += '<button class="pay-trigger" style="background:#3D5AFE;margin-top:0;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
-  html += '</div>';
+  if (state.cloudBusy) html += '<p class="opt-row-sub" style="text-align:left;margin:0 0 8px;">' + t("esperaServidorMsg") + '</p>';
+  html += renderBancoNubePanel();
   html += '<p class="opt-row-sub" style="text-align:center;margin:6px 0 -4px;">v' + APP_VERSION.replace("v", "") + ' \u00b7 <button data-action="actualizar" style="background:none;border:none;color:#3D5AFE;font:inherit;padding:0;cursor:pointer;">' + t("update") + '</button></p>';
   state.profiles.forEach((p) => {
     const initial = (p.nombre || "?").trim().charAt(0).toUpperCase();
@@ -281,46 +319,7 @@ function renderApp() {
     }
     html += '</div>';
 
-    {
-      html += '<div class="panel">';
-      html += '<div class="panel-head-row"><div><h2>' + t("bancoNubeTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("bancoNubeHint") + '</p></div></div>';
-      if (state.cloudErrorMsg) html += '<p class="opt-row-sub" style="color:#FF3B30;margin:8px 0;">' + esc(state.cloudErrorMsg) + '</p>';
-      if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
-
-      if (!state.authUser) {
-        html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
-        html += '<button class="delete-link" style="display:block;margin:8px auto 0;" data-action="resetConexionNube">' + t("restablecerConexionBtn") + '</button>';
-      } else {
-
-      state.cloudInstitutions.forEach((inst) => {
-        if (state.confirmDisconnectId === inst.id) {
-          html += '<div class="confirm-row"><span>' + esc(t("confirmDesconectarMsg")(inst.institution_name || "")) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="confirmDisconnectBank" data-id="' + inst.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDisconnectBank">' + t("cancel") + '</button></div></div>';
-        } else {
-          html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(inst.institution_name || t("bancoDesconocido")) + '</span><span class="status-pill ' + (inst.status === "active" ? "verde" : "rojo") + '">' + (inst.status === "active" ? t("estadoActivo") : t("estadoDesconectado")) + '</span></div>';
-          if (inst.last_synced_at) html += '<p class="opt-row-sub">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(inst.last_synced_at).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
-          if (inst.status === "active") html += '<button class="delete-link" data-action="askDisconnectBank" data-id="' + inst.id + '">' + t("desconectarBancoBtn") + '</button>';
-          html += '</div>';
-        }
-      });
-
-      html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
-      if (state.cloudInstitutions.length > 0) html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="actualizarDatosNube"' + (state.cloudBusy ? " disabled" : "") + '>' + t("actualizarNubeBtn") + '</button>';
-      if (state.cloudLastSync) html += '<p class="opt-row-sub" style="text-align:center;margin-top:8px;">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(state.cloudLastSync).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
-
-      if (state.cloudAccounts.length > 0) {
-        html += '<div class="mini-total" style="margin-top:10px;"><span>' + t("cuentasConectadasLbl") + '</span></div>';
-        state.cloudAccounts.forEach((acc) => {
-          html += '<div class="sub-row-locked"><span class="locked-name">' + esc(acc.name || "") + (acc.mask ? " ****" + esc(acc.mask) : "") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(acc.balance_current)) + '</span></div>';
-        });
-      }
-      if (state.cloudTransactions.length > 0) {
-        state.cloudTransactions.slice(0, 8).forEach((tx) => {
-          html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10));
-        });
-      }
-      }
-      html += '</div>';
-    }
+    html += renderBancoNubePanel();
 
     if (t2.cardsConLimite.length > 0) {
       html += '<div class="panel"><h2>' + t("saludCreditoTitle") + '</h2><p class="hint">' + t("saludCreditoHint") + '</p>';
