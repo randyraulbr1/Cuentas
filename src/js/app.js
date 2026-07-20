@@ -309,7 +309,14 @@ root.addEventListener("click", (e) => {
   if (activeId && state.profiles.some((p) => p.id === activeId)) await enterProfile(activeId);
   else render();
   if (state.authToken && state.apiBaseUrl) {
-    refrescarDatosNube().then(() => render());
+    refrescarDatosNube().then(async () => {
+      if (!state.activeProfileId && state.profiles.length === 0 && state.cloudInstitutions.length > 0) {
+        state.newProfileName = state.cloudInstitutions[0].institution_name || t("bancoDesconocido");
+        createProfile();
+      } else {
+        render();
+      }
+    });
   }
 })();
 
