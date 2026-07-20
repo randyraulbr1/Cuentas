@@ -107,6 +107,8 @@ select { background: var(--input-bg); border: 1px solid var(--input-border); bor
 .sub-row-locked:last-of-type { border-bottom: none; }
 .locked-name { color: var(--text); }
 .locked-amount { color: var(--text-muted); font-weight: 600; }
+.paid-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--input-border); background: transparent; color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; padding: 0; }
+.paid-check.checked { background: #34C759; border-color: #34C759; }
 
 .sub-row { display: grid; grid-template-columns: 1fr 84px 30px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .sub-row-cat { display: grid; grid-template-columns: 1fr 84px 30px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
@@ -260,7 +262,7 @@ const I18N = {
     vecesEsteMes: (n) => n + (n === 1 ? " pago este mes" : " pagos este mes"),
     subsTitle: "Suscripciones y pagos fijos", subsHint: "Renta, luz, streaming, cuotas…",
     subNombrePh: "Nombre (ej. Alquiler)", subsEmpty: "Aún no has añadido pagos fijos.",
-    addSub: "+ Añadir pago", totalPagosFijos: "Total pagos fijos",
+    addSub: "+ Añadir pago", totalPagosFijos: "Total pagos fijos", subsPagados: (a, b) => a + " de " + b + " pagados este mes",
     cardsTitle: "Tarjetas de crédito", cardsHint: "Saldo, límite (opcional), interés anual y pago mínimo.",
     cardNombrePh: "Nombre (ej. Visa)", cardsEmpty: "Aún no has añadido tarjetas.",
     addCard: "+ Añadir tarjeta", totalMinimos: "Suma de pagos mínimos",
@@ -268,6 +270,8 @@ const I18N = {
     loanNombrePh: "Nombre (ej. Carro)", loanSaldoLbl: "Debes en total", loanMontoLbl: "Pago por cuota",
     loanTasaLbl: "Interés %", loanFrecLbl: "Frecuencia", loanUltimoPagoLbl: "Fecha del último pago",
     loanQuedan: (n) => "Quedan " + n + (n === 1 ? " pago" : " pagos"), loanPagado: "Pagado",
+    loanMontoOriginalLbl: "Monto original", loanPagadoDe: "pagado de",
+    loanInteresEstimado: (n) => "Interés estimado restante: " + sym() + n,
     addLoan: "+ Añadir préstamo", loanEmpty: "Aún no tienes préstamos o pagos a plazos.",
     confirmDeleteLoanMsg: (n) => '\u00bfEliminar "' + n + '"?',
     totalPrestamos: "Pagos a plazos",
@@ -362,7 +366,7 @@ const I18N = {
     vecesEsteMes: (n) => n + (n === 1 ? " payday this month" : " paydays this month"),
     subsTitle: "Subscriptions & fixed bills", subsHint: "Rent, utilities, streaming, installments…",
     subNombrePh: "Name (e.g. Rent)", subsEmpty: "You haven't added any fixed bills yet.",
-    addSub: "+ Add bill", totalPagosFijos: "Total fixed bills",
+    addSub: "+ Add bill", totalPagosFijos: "Total fixed bills", subsPagados: (a, b) => a + " of " + b + " paid this month",
     cardsTitle: "Credit cards", cardsHint: "Balance, limit (optional), annual rate and minimum payment.",
     cardNombrePh: "Name (e.g. Visa)", cardsEmpty: "You haven't added any cards yet.",
     addCard: "+ Add card", totalMinimos: "Sum of minimum payments",
@@ -370,6 +374,8 @@ const I18N = {
     loanNombrePh: "Name (e.g. Car)", loanSaldoLbl: "Total owed", loanMontoLbl: "Payment per installment",
     loanTasaLbl: "Interest %", loanFrecLbl: "Frequency", loanUltimoPagoLbl: "Date of last payment",
     loanQuedan: (n) => n + (n === 1 ? " payment left" : " payments left"), loanPagado: "Paid off",
+    loanMontoOriginalLbl: "Original amount", loanPagadoDe: "paid of",
+    loanInteresEstimado: (n) => "Estimated remaining interest: " + sym() + n,
     addLoan: "+ Add loan", loanEmpty: "You have no installment loans yet.",
     confirmDeleteLoanMsg: (n) => 'Delete "' + n + '"?',
     totalPrestamos: "Installment loans",
@@ -437,7 +443,7 @@ const toNum = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v18";
+const APP_VERSION = "v19";
 let uidCounter = 1;
 const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
 
@@ -512,7 +518,7 @@ const state = {
   confirmDeleteSubId: null, confirmDeleteCardId: null, confirmDeleteHistoryKey: null, confirmDeleteLoanId: null,
   editingSubs: false,
   editingIngreso: false, editingAhorro: false, editingCards: false, editingLoans: false,
-  payingCardId: null, payFormSource: "ahorro", payFormMonto: "", payFlash: false,
+  payingTarget: null, payFormSource: "ahorro", payFormMonto: "", payFlash: false,
   expandedCardIds: {},
 
   ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", debito: "", history: [],
@@ -559,7 +565,7 @@ function enterProfile(id) {
   state.ingresosLog = d.ingresosLog || [];
   state.loans = d.loans || [];
   state.resultado = null; state.confirmReset = false; state.showOptions = false;
-  state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingCardId = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
+  state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
   undoStack.length = 0;
   state.screen = "app";
   render();
@@ -603,6 +609,13 @@ function goInicio() { goTab("inicio"); }
 /* ---------- acciones de datos ---------- */
 function addSub() { state.subs.push({ id: uid(), nombre: "", monto: "" }); scheduleSave(); rerenderPreservingFocus(); }
 function toggleEditSubs() { state.editingSubs = !state.editingSubs; state.confirmDeleteSubId = null; render(); }
+function toggleSubPagado(id) {
+  const s = state.subs.find((x) => x.id === id);
+  if (!s) return;
+  const mk = monthKey();
+  s.pagadoMes = s.pagadoMes === mk ? null : mk;
+  scheduleSave(); render();
+}
 function toggleEditIngreso() { state.editingIngreso = !state.editingIngreso; render(); }
 function addIngresoEntry() { state.ingresosLog.push({ id: uid(), monto: "", month: monthKey() }); scheduleSave(); rerenderPreservingFocus(); }
 function removeIngresoEntry(id) { pushUndo(); state.ingresosLog = state.ingresosLog.filter((x) => x.id !== id); scheduleSave(); rerenderPreservingFocus(); }
@@ -618,7 +631,7 @@ function addSubPreset(key) {
 
 function toggleEditLoans() { state.editingLoans = !state.editingLoans; state.confirmDeleteLoanId = null; render(); }
 function addLoan() {
-  state.loans.push({ id: uid(), nombre: "", saldoTotal: "", montoPago: "", tasa: "", frecuencia: "quincenal", ultimoPago: "" });
+  state.loans.push({ id: uid(), nombre: "", saldoTotal: "", montoOriginal: "", montoPago: "", tasa: "", frecuencia: "quincenal", ultimoPago: "" });
   state.editingLoans = true;
   scheduleSave(); rerenderPreservingFocus();
 }
@@ -632,32 +645,38 @@ function setLoanFrec(id, freq) {
   scheduleSave(); render();
 }
 
-function startPago(cardId) {
+function startPago(type, targetId) {
   const t2 = computeTotals();
   const resultado = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
   let sugerido = "";
-  if (resultado && !resultado.insuficiente) {
-    const a = resultado.asignaciones.find((x) => x.id === cardId);
+  if (type === "card" && resultado && !resultado.insuficiente) {
+    const a = resultado.asignaciones.find((x) => x.id === targetId);
     if (a && a.pagoTotal > 0) sugerido = String(a.pagoTotal);
+  } else if (type === "loan") {
+    const loan = state.loans.find((l) => l.id === targetId);
+    if (loan && toNum(loan.montoPago) > 0) sugerido = String(toNum(loan.montoPago));
   }
-  state.payingCardId = cardId;
+  state.payingTarget = { type: type, id: targetId };
   state.payFormSource = toNum(state.debito) >= toNum(state.ahorroActual) ? "debito" : "ahorro";
   state.payFormMonto = sugerido;
   render();
 }
-function cancelPago() { state.payingCardId = null; state.payFormMonto = ""; render(); }
+function cancelPago() { state.payingTarget = null; state.payFormMonto = ""; render(); }
 function setPagoSourceAhorro() { state.payFormSource = "ahorro"; render(); }
 function setPagoSourceDebito() { state.payFormSource = "debito"; render(); }
-function confirmPago(cardId) {
+function confirmPago() {
+  if (!state.payingTarget) return;
   const monto = toNum(state.payFormMonto);
   if (monto <= 0) return;
-  const card = state.cards.find((c) => c.id === cardId);
-  if (!card) return;
+  const list = state.payingTarget.type === "card" ? state.cards : state.loans;
+  const field = state.payingTarget.type === "card" ? "saldo" : "saldoTotal";
+  const item = list.find((x) => x.id === state.payingTarget.id);
+  if (!item) return;
   pushUndo();
-  card.saldo = String(Math.max(toNum(card.saldo) - monto, 0));
+  item[field] = String(Math.max(toNum(item[field]) - monto, 0));
   if (state.payFormSource === "debito") state.debito = String(Math.max(toNum(state.debito) - monto, 0));
   else state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
-  state.payingCardId = null;
+  state.payingTarget = null;
   state.payFormMonto = "";
   state.payFlash = true;
   scheduleSave();
@@ -684,7 +703,7 @@ function resetAll() {
   state.ingreso = ""; state.subs = []; state.cards = []; state.savingsRate = 20;
   state.ahorroActual = ""; state.metaAhorro = ""; state.debito = ""; state.resultado = null; state.confirmReset = false;
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.ingresosLog = []; state.loans = [];
-  state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingCardId = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
+  state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
   scheduleSave(); rerenderPreservingFocus();
 }
 function askDeleteHistory(key) { state.confirmDeleteHistoryKey = key; render(); }
@@ -994,10 +1013,11 @@ function utilBarHtml(uso, usoNivel) {
   return '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + blink + '" style="width:' + uso + '%"></div><div class="util-bar-marker"></div></div>';
 }
 
-function renderPagoBlock(c) {
-  if (toNum(c.saldo) <= 0) return "";
-  if (state.payingCardId !== c.id) {
-    return '<button class="pay-trigger" data-action="startPago" data-id="' + c.id + '">' + t("pagarBtn") + '</button>';
+function renderPagoBlock(type, item, saldoActual) {
+  if (toNum(saldoActual) <= 0) return "";
+  const isActive = state.payingTarget && state.payingTarget.type === type && state.payingTarget.id === item.id;
+  if (!isActive) {
+    return '<button class="pay-trigger" data-action="startPago" data-type="' + type + '" data-id="' + item.id + '">' + t("pagarBtn") + '</button>';
   }
   const ahorroDisp = toNum(state.ahorroActual);
   const debitoDisp = toNum(state.debito);
@@ -1007,9 +1027,9 @@ function renderPagoBlock(c) {
   h += '<button style="flex:1;" class="' + (state.payFormSource === "ahorro" ? "active" : "") + '" data-action="setPagoSourceAhorro">' + t("ahorroActualLbl") + ' ' + sym() + fmt0(ahorroDisp) + '</button>';
   h += '<button style="flex:1;" class="' + (state.payFormSource === "debito" ? "active" : "") + '" data-action="setPagoSourceDebito">' + t("debitoLbl") + ' ' + sym() + fmt0(debitoDisp) + '</button>';
   h += '</div>';
-  h += '<input type="text" inputmode="decimal" placeholder="0" id="pago-monto-' + c.id + '" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
+  h += '<input type="text" inputmode="decimal" placeholder="0" id="pago-monto-' + item.id + '" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
   h += '<div style="display:flex;gap:8px;margin-top:8px;">';
-  h += '<button class="pill-btn confirm" style="flex:1;" data-action="confirmPago" data-id="' + c.id + '">' + t("confirmarPago") + '</button>';
+  h += '<button class="pill-btn confirm" style="flex:1;" data-action="confirmPago">' + t("confirmarPago") + '</button>';
   h += '<button class="pill-btn" style="flex:1;" data-action="cancelPago">' + t("cancel") + '</button>';
   h += '</div></div>';
   return h;
@@ -1162,20 +1182,28 @@ function renderApp() {
         html += '</select>';
         html += '</div>';
       } else {
-        html += '<div class="sub-row-locked"><span class="locked-name">' + (CATEGORY_ICON[s.categoria] || CATEGORY_ICON.otro) + ' ' + esc(s.nombre || t("subNombrePh")) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(s.monto)) + '</span></div>';
+        const pagado = s.pagadoMes === monthKey();
+        html += '<div class="sub-row-locked"><span class="locked-name" style="display:flex;align-items:center;gap:8px;"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + s.id + '">' + (pagado ? "\\u2713" : "") + '</button>' + (CATEGORY_ICON[s.categoria] || CATEGORY_ICON.otro) + ' ' + esc(s.nombre || t("subNombrePh")) + '</span><span class="locked-amount"' + (pagado ? ' style="text-decoration:line-through;opacity:0.5;"' : '') + '>' + sym() + fmt0(toNum(s.monto)) + '</span></div>';
       }
     });
     if (state.subs.length === 0 && !state.editingSubs) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
     if (state.editingSubs) html += '<button class="add-btn" data-action="addSub">' + t("addSub") + '</button>';
+    if (state.subs.length > 0) {
+      const pagadosCount = state.subs.filter((s) => s.pagadoMes === monthKey()).length;
+      html += '<div class="mini-total"><span>' + t("subsPagados")(pagadosCount, state.subs.length) + '</span></div>';
+    }
     html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(t2.totalSubs) + '</b></div></div>';
 
     html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("loansTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("loansHint") + '</p></div><button class="icon-pencil' + (state.editingLoans ? " done" : "") + '" data-action="toggleEditLoans">' + (state.editingLoans ? "\u2713" : "\u270e") + '</button></div>';
     state.loans.forEach((l) => {
       const saldo = toNum(l.saldoTotal);
+      const original = toNum(l.montoOriginal);
       const pago = toNum(l.montoPago);
       const pagado = saldo <= 0;
       const pagosRestantes = pago > 0 ? Math.ceil(saldo / pago) : 0;
+      const interesEstimado = pago > 0 ? Math.max(pagosRestantes * pago - saldo, 0) : 0;
       const np = pago > 0 && !pagado ? nextGenericPayInfo(l.ultimoPago, l.frecuencia) : null;
+      const progreso = original > 0 ? Math.min(((original - saldo) / original) * 100, 100) : null;
 
       if (state.confirmDeleteLoanId === l.id) {
         html += '<div class="card-entry"><div class="confirm-row"><span>' + esc(t("confirmDeleteLoanMsg")(l.nombre || t("loanNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeLoan" data-id="' + l.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteLoan">' + t("cancel") + '</button></div></div></div>';
@@ -1185,13 +1213,20 @@ function renderApp() {
       if (!state.editingLoans) {
         html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(l.nombre || t("loanNombrePh")) + '</span>' + (pagado ? '<span class="status-pill verde">' + t("loanPagado") + '</span>' : '<span class="status-pill amarillo">' + t("loanQuedan")(pagosRestantes) + '</span>') + '</div>';
         html += '<div class="card-collapsed-balance"><span class="field-label">' + t("loanSaldoLbl") + ' ' + sym() + '</span><span class="locked-amount" style="font-size:19px;">' + sym() + fmt0(saldo) + '</span></div>';
-        if (np) html += '<div class="opt-row-sub" style="margin-top:6px;">' + t("proximoPago") + ': ' + esc(diasLabel(np.diffDays)) + ' \u00b7 ' + esc(formatDate(np.date)) + '</div>';
+        if (progreso !== null) {
+          html += '<div class="progress-track"><div class="progress-fill" style="width:' + progreso + '%"></div></div>';
+          html += '<div class="goal-caption"><span>' + sym() + fmt0(original - saldo) + ' ' + t("loanPagadoDe") + ' ' + sym() + fmt0(original) + '</span><span>' + Math.round(progreso) + '%</span></div>';
+        }
+        if (!pagado && interesEstimado > 0) html += '<div class="opt-row-sub" style="margin-top:6px;">' + t("loanInteresEstimado")(fmt0(interesEstimado)) + '</div>';
+        if (np) html += '<div class="opt-row-sub" style="margin-top:4px;">' + t("proximoPago") + ': ' + esc(diasLabel(np.diffDays)) + ' \u00b7 ' + esc(formatDate(np.date)) + '</div>';
+        html += renderPagoBlock("loan", l, saldo);
         html += '</div>';
       } else {
         html += '<div class="card-entry">';
         html += '<div class="card-entry-top"><input type="text" placeholder="' + t("loanNombrePh") + '" id="loan-nombre-' + l.id + '" data-scope="loan" data-id="' + l.id + '" data-field="nombre" value="' + esc(l.nombre) + '">';
         html += '<button class="icon-del" data-action="askDeleteLoan" data-id="' + l.id + '">\u00d7</button></div>';
         html += '<div class="card-fields">';
+        html += '<div><span class="field-label">' + t("loanMontoOriginalLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="loan-original-' + l.id + '" data-scope="loan" data-id="' + l.id + '" data-field="montoOriginal" value="' + esc(l.montoOriginal) + '"></div>';
         html += '<div><span class="field-label">' + t("loanSaldoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="loan-saldo-' + l.id + '" data-scope="loan" data-id="' + l.id + '" data-field="saldoTotal" value="' + esc(l.saldoTotal) + '"></div>';
         html += '<div><span class="field-label">' + t("loanMontoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="loan-monto-' + l.id + '" data-scope="loan" data-id="' + l.id + '" data-field="montoPago" value="' + esc(l.montoPago) + '"></div>';
         html += '<div><span class="field-label">' + t("loanTasaLbl") + '</span><input type="text" inputmode="decimal" placeholder="0" id="loan-tasa-' + l.id + '" data-scope="loan" data-id="' + l.id + '" data-field="tasa" value="' + esc(l.tasa) + '"></div>';
@@ -1200,7 +1235,10 @@ function renderApp() {
         [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["mensual", "payMensual"]].forEach((f) => { html += '<button style="flex:1;" class="' + (l.frecuencia === f[0] ? "active" : "") + '" data-action="setLoanFrec" data-id="' + l.id + '" data-freq="' + f[0] + '">' + t(f[1]) + '</button>'; });
         html += '</div></div>';
         html += '<div class="pay-config"><label>' + t("loanUltimoPagoLbl") + '</label><input type="date" id="loan-ultimo-' + l.id + '" data-scope="loan" data-id="' + l.id + '" data-field="ultimoPago" value="' + esc(l.ultimoPago) + '"></div>';
-        if (pago > 0 && saldo > 0) html += '<p class="opt-row-sub" style="margin-top:8px;">' + t("loanQuedan")(pagosRestantes) + '</p>';
+        if (pago > 0 && saldo > 0) {
+          html += '<p class="opt-row-sub" style="margin-top:8px;">' + t("loanQuedan")(pagosRestantes) + '</p>';
+          if (interesEstimado > 0) html += '<p class="opt-row-sub">' + t("loanInteresEstimado")(fmt0(interesEstimado)) + '</p>';
+        }
         html += '</div>';
       }
     });
@@ -1245,7 +1283,7 @@ function renderApp() {
           html += utilBarHtml(uso, usoNivel);
           html += '<div class="util-label">' + t("usoLimite") + Math.round(uso) + '%</div>';
         }
-        html += renderPagoBlock(c);
+        html += renderPagoBlock('card', c, c.saldo);
         html += '<button class="delete-link" data-action="askDeleteCard" data-id="' + c.id + '">' + t("deleteCardLink") + '</button>';
         html += '</div>';
       } else {
@@ -1256,7 +1294,7 @@ function renderApp() {
           html += utilBarHtml(uso, usoNivel);
           html += '<div class="util-label">' + t("usoLimite") + Math.round(uso) + '%</div>';
         }
-        html += renderPagoBlock(c);
+        html += renderPagoBlock('card', c, c.saldo);
         html += '</div>';
       }
     });
@@ -1370,12 +1408,14 @@ root.addEventListener("click", (e) => {
   const action = btn.dataset.action;
   const id = btn.dataset.id;
   const freq = btn.dataset.freq;
+  const payType = btn.dataset.type;
   const map = {
     actualizar: actualizarApp, undo: undo,
     confirmReset: () => { state.confirmReset = true; render(); },
     cancelReset: () => { state.confirmReset = false; render(); },
     resetAll: resetAll,
     addSub: addSub, removeSub: () => removeSub(id), askDeleteSub: () => askDeleteSub(id), cancelDeleteSub: cancelDeleteSub, toggleEditSubs: toggleEditSubs,
+    toggleSubPagado: () => toggleSubPagado(id),
     addSubPreset: () => addSubPreset(id),
     toggleEditIngreso: toggleEditIngreso, toggleEditAhorro: toggleEditAhorro, toggleEditCards: toggleEditCards,
     addIngresoEntry: addIngresoEntry, removeIngresoEntry: () => removeIngresoEntry(id),
@@ -1383,7 +1423,7 @@ root.addEventListener("click", (e) => {
     toggleCardExpand: () => toggleCardExpand(id),
     addLoan: addLoan, removeLoan: () => removeLoan(id), askDeleteLoan: () => askDeleteLoan(id), cancelDeleteLoan: cancelDeleteLoan,
     toggleEditLoans: toggleEditLoans, setLoanFrec: () => setLoanFrec(id, freq),
-    startPago: () => startPago(id), cancelPago: cancelPago, confirmPago: () => confirmPago(id),
+    startPago: () => startPago(payType, id), cancelPago: cancelPago, confirmPago: confirmPago,
     setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito,
     guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
     switchUser: switchUser,
