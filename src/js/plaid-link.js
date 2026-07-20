@@ -14,10 +14,33 @@ function loadPlaidScript() {
   return plaidScriptPromise;
 }
 
+const DEVICE_CREDS_KEY = "auth:device-credentials";
+
+async function ensureCloudSession() {
+  if (state.authUser) return { ok: true };
+  let creds;
+  try { creds = await idbGet(DEVICE_CREDS_KEY); } catch (e) {}
+  if (!creds) {
+    creds = { email: "device-" + uid() + "@local.cuentasclaras.app", password: uid() + uid() };
+    try { await idbSet(DEVICE_CREDS_KEY, creds); } catch (e) {}
+  }
+  let r = await apiRegister(creds.email, creds.password);
+  if (!r.ok && r.status === 409) r = await apiLogin(creds.email, creds.password);
+  return r;
+}
+
 async function iniciarConectarBanco() {
   state.cloudErrorMsg = "";
   state.cloudBusy = true;
   render();
+
+  const sessionRes = await ensureCloudSession();
+  if (!sessionRes.ok) {
+    state.cloudBusy = false;
+    state.cloudErrorMsg = sessionRes.error;
+    render();
+    return;
+  }
 
   const linkRes = await apiCreateLinkToken();
   if (!linkRes.ok) {

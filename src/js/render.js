@@ -279,12 +279,7 @@ function renderApp() {
       if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
 
       if (!state.authUser) {
-        html += '<div class="seg" style="width:100%;margin-bottom:8px;"><button style="flex:1;" class="' + (state.authMode === "login" ? "active" : "") + '" data-action="setAuthLogin">' + t("iniciarSesion") + '</button><button style="flex:1;" class="' + (state.authMode === "register" ? "active" : "") + '" data-action="setAuthRegister">' + t("crearCuenta") + '</button></div>';
-        html += '<input type="text" placeholder="' + t("correoPh") + '" id="auth-email" data-scope="authEmail" value="' + esc(state.authEmail) + '" style="width:100%;margin-bottom:8px;">';
-        html += '<input type="password" placeholder="' + t("contrasenaPh") + '" id="auth-password" data-scope="authPassword" value="' + esc(state.authPassword) + '" style="width:100%;margin-bottom:8px;">';
-        if (state.authFormError) html += '<p class="opt-row-sub" style="color:#FF3B30;margin-bottom:8px;">' + esc(state.authFormError) + '</p>';
-        html += '<button class="pill-btn wide confirm" data-action="submitAuthForm"' + (state.cloudBusy ? " disabled" : "") + '>' + (state.authMode === "login" ? t("iniciarSesion") : t("crearCuenta")) + '</button>';
-        html += '<p class="opt-row-sub" style="margin-top:8px;">' + t("apiBaseUrlLbl") + ': ' + esc(state.apiBaseUrl || t("apiSinConfigurarCorto")) + '</p>';
+        html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + t("conectarBancoPlaidBtn") + '</button>';
       } else {
 
       state.cloudInstitutions.forEach((inst) => {
