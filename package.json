@@ -1,0 +1,9 @@
+{
+  "name": "cuentas-claras",
+  "private": true,
+  "description": "App web/PWA de finanzas personales. Sin backend activo por ahora: todo corre en el navegador (localStorage/IndexedDB) y se sirve como sitio estatico por GitHub Pages.",
+  "scripts": {
+    "dev": "echo 'No hay backend activo todavia. Fase 2 documentada en README.md y .env.example.' && exit 1",
+    "start": "echo 'No hay backend activo todavia. Fase 2 documentada en README.md y .env.example.' && exit 1"
+  }
+}

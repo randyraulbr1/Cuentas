@@ -1,0 +1,16 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; -moz-user-select: none; }
+html, body { margin:0; padding:0; }
+:root {
+  --bg: #F2F2F7; --card-bg: #FFFFFF; --card-bg-2: #FAFAFB; --text: #1C1C1E; --text-muted: #8E8E93;
+  --border: #F0F0F2; --input-bg: #F7F7F9; --input-border: #E5E5EA; --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04); --pill-bg: #E9E9EB;
+}
+:root { --tabbar-h: 62px; }
+.tab-bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card-bg); border-top: 1px solid var(--border); display: flex; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); z-index: 30; box-shadow: 0 -1px 6px rgba(0,0,0,0.06); }
+.tab-btn { flex: 1; min-width: 0; background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 1px; border-radius: 10px; cursor: pointer; font-family: inherit; }
+.tab-btn.active { color: #007AFF; }
+[data-theme="dark"] .tab-btn.active { color: #6DB4FF; }
+.tab-icon { font-size: 17px; line-height: 1; }
+.tab-label { font-size: 9.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.app-header { margin-bottom: 16px; }
+.profile-line { color: var(--text-muted); font-size: 12.5px; margin: 0; font-weight: 600; letter-spacing: 0.01em; }
+@keyframes blinkBar { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }

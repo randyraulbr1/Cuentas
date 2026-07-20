@@ -1,10 +1,24 @@
-const CACHE = "cuentas-claras-v24";
+const CACHE = "cuentas-claras-v25";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
+  "./src/css/base.css",
+  "./src/css/components.css",
+  "./src/css/pages.css",
+  "./src/js/i18n.js",
+  "./src/js/storage.js",
+  "./src/js/migrations.js",
+  "./src/js/state.js",
+  "./src/js/calculations.js",
+  "./src/js/work.js",
+  "./src/js/payments.js",
+  "./src/js/history.js",
+  "./src/js/recommendations.js",
+  "./src/js/render.js",
+  "./src/js/app.js",
 ];
 
 self.addEventListener("message", (event) => {
