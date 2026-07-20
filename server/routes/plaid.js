@@ -144,6 +144,38 @@ router.post("/get-liabilities", requireAuth, async (req, res) => {
   }
 });
 
+router.get("/liabilities-all", requireAuth, async (req, res) => {
+  try {
+    const itemsResult = await query("SELECT * FROM plaid_items WHERE user_id = $1 AND status = 'active'", [req.userId]);
+    const porCuenta = {};
+    for (const item of itemsResult.rows) {
+      try {
+        const accessToken = await getDecryptedAccessToken(item);
+        const resp = await plaidClient.liabilitiesGet({ access_token: accessToken });
+        const liab = resp.data.liabilities || {};
+        (liab.credit || []).forEach((c) => {
+          porCuenta[c.account_id] = {
+            tipo: "credito",
+            apr: (c.aprs && c.aprs.find((a) => a.apr_percentage) || {}).apr_percentage || null,
+            pago_minimo: c.minimum_payment_amount,
+            fecha_limite: c.next_payment_due_date,
+            ultimo_saldo: c.last_statement_balance,
+          };
+        });
+        (liab.mortgage || []).forEach((m) => {
+          porCuenta[m.account_id] = { tipo: "hipoteca", apr: m.interest_rate ? m.interest_rate.percentage : null, pago_minimo: m.next_monthly_payment, fecha_limite: m.next_payment_due_date };
+        });
+        (liab.student || []).forEach((s) => {
+          porCuenta[s.account_id] = { tipo: "estudiantil", apr: s.interest_rate_percentage, pago_minimo: s.minimum_payment_amount, fecha_limite: s.next_payment_due_date };
+        });
+      } catch (e) { /* si un banco no soporta liabilities, seguimos con los demas */ }
+    }
+    res.json({ liabilities: porCuenta });
+  } catch (e) {
+    res.status(502).json({ error: "No se pudieron obtener los datos de intereses", detail: e.message });
+  }
+});
+
 router.post("/disconnect", requireAuth, async (req, res) => {
   const { plaid_item_id, keep_transactions } = req.body || {};
   try {
@@ -174,7 +206,7 @@ router.get("/institutions-status", requireAuth, async (req, res) => {
 
 router.get("/accounts", requireAuth, async (req, res) => {
   const result = await query(
-    `SELECT a.id, a.name, a.official_name, a.mask, a.type, a.subtype,
+    `SELECT a.id, a.account_id, a.name, a.official_name, a.mask, a.type, a.subtype,
             a.balance_available, a.balance_current, a.balance_limit, a.currency,
             pi.institution_name
      FROM accounts a JOIN plaid_items pi ON pi.id = a.plaid_item_id

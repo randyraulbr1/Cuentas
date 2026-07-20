@@ -128,11 +128,16 @@ async function submitAuthForm() {
   render();
 }
 
+async function apiGetLiabilitiesAll() {
+  return apiFetch("/api/plaid/liabilities-all");
+}
+
 async function refrescarDatosNube() {
-  const [accRes, txRes, instRes] = await Promise.all([apiGetAccounts(), apiGetTransactions(), apiGetInstitutionsStatus()]);
+  const [accRes, txRes, instRes, liabRes] = await Promise.all([apiGetAccounts(), apiGetTransactions(), apiGetInstitutionsStatus(), apiGetLiabilitiesAll()]);
   if (accRes.ok) state.cloudAccounts = accRes.data.accounts;
   if (txRes.ok) state.cloudTransactions = txRes.data.transactions;
   if (instRes.ok) state.cloudInstitutions = instRes.data.items;
+  if (liabRes.ok) state.cloudLiabilities = liabRes.data.liabilities;
   state.cloudLastSync = new Date().toISOString();
   if (!accRes.ok) return accRes;
   if (!txRes.ok) return txRes;

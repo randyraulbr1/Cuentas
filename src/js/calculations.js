@@ -61,19 +61,28 @@ function formatDate(d) { return d.toLocaleDateString(LANG === "es" ? "es-ES" : "
 
 function diasLabel(n) { if (n === 0) return t("hoy"); if (n === 1) return t("manana"); return t("enDias")(n); }
 
+function cloudCreditCards() {
+  return state.cloudAccounts.filter((a) => a.type === "credit");
+}
+
 function computeTotals() {
   const ingresoEfectivo = ingresoActivo();
   const totalSubs = state.subs.reduce((a, s) => a + toNum(s.monto), 0);
-  const totalMinimos = state.cards.reduce((a, c) => a + toNum(c.minimo), 0);
+  const cloudCards = cloudCreditCards();
+  const totalMinimosCloud = cloudCards.reduce((a, c) => { const liab = state.cloudLiabilities[c.account_id]; return a + (liab && liab.pago_minimo ? toNum(liab.pago_minimo) : 0); }, 0);
+  const totalMinimos = state.cards.reduce((a, c) => a + toNum(c.minimo), 0) + totalMinimosCloud;
   const totalPrestamos = state.loans.reduce((a, l) => a + (toNum(l.saldoTotal) > 0 ? toNum(l.montoPago) : 0), 0);
-  const totalDeuda = state.cards.reduce((a, c) => a + toNum(c.saldo), 0);
+  const totalDeudaCloud = cloudCards.reduce((a, c) => a + toNum(c.balance_current), 0);
+  const totalDeuda = state.cards.reduce((a, c) => a + toNum(c.saldo), 0) + totalDeudaCloud;
   const cardsConLimite = state.cards.filter((c) => toNum(c.limite) > 0);
-  const creditoDisponible = cardsConLimite.reduce((a, c) => a + Math.max(toNum(c.limite) - toNum(c.saldo), 0), 0);
+  const cloudCardsConLimite = cloudCards.filter((c) => toNum(c.balance_limit) > 0);
+  const creditoDisponible = cardsConLimite.reduce((a, c) => a + Math.max(toNum(c.limite) - toNum(c.saldo), 0), 0)
+    + cloudCardsConLimite.reduce((a, c) => a + Math.max(toNum(c.balance_limit) - toNum(c.balance_current), 0), 0);
   const disponibleBruto = ingresoEfectivo - totalSubs - totalPrestamos;
   const ratioComprometido = ingresoEfectivo > 0 ? (totalSubs + totalPrestamos + totalMinimos) / ingresoEfectivo : (totalSubs + totalPrestamos + totalMinimos > 0 ? 1.5 : 0);
   const insuficienteLive = disponibleBruto - totalMinimos < 0;
   const liveStatus = statusFromRatio(ratioComprometido, insuficienteLive);
-  return { ingresoEfectivo, totalSubs, totalMinimos, totalPrestamos, totalDeuda, cardsConLimite, creditoDisponible, disponibleBruto, ratioComprometido, liveStatus };
+  return { ingresoEfectivo, totalSubs, totalMinimos, totalPrestamos, totalDeuda, cardsConLimite, cloudCardsConLimite, creditoDisponible, disponibleBruto, ratioComprometido, liveStatus };
 }
 
 function computeResultado(t2) {

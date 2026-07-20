@@ -643,6 +643,31 @@ function renderApp() {
 
   if (tab === "tarjetas") {
     if (state.payFlash) html += '<div class="flash">' + icon("check") + ' ' + t("pagoRegistrado") + '</div>';
+
+    const cloudCards = cloudCreditCards();
+    if (cloudCards.length > 0) {
+      html += '<div class="panel"><h2>' + t("tarjetasNubeTitle") + '</h2><p class="hint">' + t("tarjetasNubeHint") + '</p>';
+      cloudCards.forEach((c) => {
+        const saldo = toNum(c.balance_current);
+        const limite = toNum(c.balance_limit);
+        const uso = limite > 0 ? Math.min((saldo / limite) * 100, 100) : null;
+        const usoNivel = uso === null ? "verde" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
+        const liab = state.cloudLiabilities[c.account_id];
+        html += '<div class="card-entry">';
+        html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(c.name || t("cardNombrePh")) + (c.mask ? " ****" + esc(c.mask) : "") + '</span>' + (uso !== null ? '<span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span>' : "") + '</div>';
+        html += '<div class="card-collapsed-balance"><span class="field-label">' + t("debesAhoraLbl") + ' ' + sym() + '</span><span class="locked-amount" style="font-size:19px;">' + sym() + fmt0(saldo) + '</span></div>';
+        if (limite > 0) html += utilBarHtml(uso, usoNivel);
+        if (liab) {
+          html += '<div class="opt-row-sub" style="margin-top:6px;">';
+          if (liab.apr) html += t("cardAprLbl") + ': ' + liab.apr + '% \u00b7 ';
+          if (liab.pago_minimo != null) html += t("cardMinimoLbl") + ': ' + sym() + fmt0(toNum(liab.pago_minimo));
+          html += '</div>';
+          if (liab.fecha_limite) html += '<div class="opt-row-sub">' + t("proximoPago") + ': ' + esc(liab.fecha_limite) + '</div>';
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+    }
     html += '<div class="panel"><div class="panel-head-row"><p class="hint" style="margin-bottom:0;">' + t("cardsHint") + '</p><button class="icon-pencil' + (state.editingCards ? " done" : "") + '" data-action="toggleEditCards">' + (state.editingCards ? icon("check") : icon("pencil")) + '</button></div>';
     if (!state.editingCards) {
       state.cards.forEach((c) => {
@@ -712,6 +737,14 @@ function renderApp() {
       }
     });
     html += '</div>';
+
+    if (state.cloudTransactions.length > 0) {
+      html += '<div class="panel"><h2>' + t("movimientosBancoTitle") + '</h2><p class="hint">' + t("movimientosBancoHint") + '</p>';
+      state.cloudTransactions.slice(0, 60).forEach((tx) => {
+        html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10));
+      });
+      html += '</div>';
+    }
   }
 
   html += '</div>';
