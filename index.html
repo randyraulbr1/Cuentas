@@ -13,8 +13,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="Cuentas Claras" />
 <style>
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; -moz-user-select: none; }
 html, body { margin:0; padding:0; }
+input, textarea { user-select: text; -webkit-user-select: text; -moz-user-select: text; }
 
 :root {
   --bg: #F2F2F7; --card-bg: #FFFFFF; --card-bg-2: #FAFAFB; --text: #1C1C1E; --text-muted: #8E8E93;
@@ -29,6 +30,11 @@ body { min-height: 100vh; background: var(--bg); color: var(--text); font-family
 .page { padding: 18px 14px 60px; padding-top: max(18px, env(safe-area-inset-top)); }
 .wrap { max-width: 760px; margin: 0 auto; }
 
+.top-action { border-radius: 12px; padding: 10px 14px; font-size: 13.5px; font-weight: 700; text-align: center; margin-bottom: 12px; }
+.top-action.rojo { background: #FFE5E3; color: #D70015; }
+.top-action.amarillo { background: #FFF3DE; color: #B25E00; }
+[data-theme="dark"] .top-action.rojo { background: #3A1210; color: #FF6B60; }
+[data-theme="dark"] .top-action.amarillo { background: #3A2A0A; color: #FFB84D; }
 .app-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .app-header-text { min-width: 0; }
 h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin: 2px 0 2px; }
@@ -88,6 +94,13 @@ select { background: var(--input-bg); border: 1px solid var(--input-border); bor
 .panel { background: var(--card-bg); border-radius: 16px; padding: 16px 16px 14px; margin-bottom: 12px; box-shadow: var(--shadow); }
 .panel h2 { font-size: 16.5px; font-weight: 700; margin: 0 0 2px; }
 .panel .hint { color: var(--text-muted); font-size: 12.5px; margin: 0 0 12px; }
+.panel-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.panel-head-row h2 { margin-bottom: 2px; }
+.panel-head-row .icon-pencil { flex-shrink: 0; margin-top: 2px; }
+.sub-row-locked { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.sub-row-locked:last-of-type { border-bottom: none; }
+.locked-name { color: var(--text); }
+.locked-amount { color: var(--text-muted); font-weight: 600; }
 
 .sub-row { display: grid; grid-template-columns: 1fr 84px 30px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .sub-row:last-of-type { border-bottom: none; }
@@ -211,6 +224,7 @@ const I18N = {
     update: "Actualizar app", undo: "Deshacer", resetAll: "Restablecer todo",
     confirmResetMsg: "¿Borrar todos los datos de este usuario?", yesDelete: "Sí, borrar", cancel: "Cancelar",
     debesTotal: "Debes en total", disponibleMes: "Disponible este mes", ahorradoActual: "Ahorrado actual",
+    debitoLbl: "Dinero en débito",
     creditoDisponible: "Crédito disponible",
     proximoPago: "Próximo pago",
     statusVerde: "Correcto", statusAmarillo: "Apretado", statusRojo: "Peligroso",
@@ -253,7 +267,14 @@ const I18N = {
     newProfilePh: "Nombre del nuevo usuario", enter: "Entrar", noProfiles: "Aún no hay usuarios en este dispositivo.",
     hoy: "Hoy", manana: "Mañana",
     enDias: (n) => "En " + n + " días",
+    topFaltante: (n) => "Te faltan " + sym() + n + " este mes.",
+    topUsaDebito: (n) => "Cubre " + sym() + n + " con tu débito.",
+    topPrioriza: (n) => "Prioriza pagar \"" + n + "\".",
     faltanTuFalta: (n) => "Te faltan " + sym() + n + ".",
+    usaDebito: (n) => "Cubre " + sym() + n + " con tu débito.",
+    usaDebitoYAhorro: (d, a) => "Usa " + sym() + d + " de tu débito y " + sym() + a + " de tu ahorro.",
+    fuenteDebito: "Págalo desde tu débito.",
+    fuenteIngreso: "Págalo desde tu ingreso de este mes.",
     usaAhorro: (n) => "Es un momento razonable para usar parte de tu ahorro (tienes " + sym() + n + ") y cubrir el faltante sin dejar de pagar tus tarjetas.",
     sinAhorroRecorta: "Antes de que la deuda crezca, revisa si puedes recortar algún pago fijo este mes.",
     pagaPrimeroExtra: (n, apr, pago) => 'Destina ' + sym() + pago + ' a "' + n + '" (tasa más alta, ' + apr + '%). Es para mantener el equilibrio: no hace falta pagarla completa, solo lo necesario para seguir un buen ritmo.',
@@ -282,6 +303,7 @@ const I18N = {
     update: "Update app", undo: "Undo", resetAll: "Reset everything",
     confirmResetMsg: "Delete all data for this user?", yesDelete: "Yes, delete", cancel: "Cancel",
     debesTotal: "Total debt", disponibleMes: "Available this month", ahorradoActual: "Current savings",
+    debitoLbl: "Money in checking/debit",
     creditoDisponible: "Available credit",
     proximoPago: "Next payday",
     statusVerde: "On track", statusAmarillo: "Tight", statusRojo: "Risky",
@@ -324,7 +346,14 @@ const I18N = {
     newProfilePh: "New user's name", enter: "Enter", noProfiles: "No users on this device yet.",
     hoy: "Today", manana: "Tomorrow",
     enDias: (n) => "In " + n + " days",
+    topFaltante: (n) => "You're short " + sym() + n + " this month.",
+    topUsaDebito: (n) => "Cover " + sym() + n + " with your debit.",
+    topPrioriza: (n) => 'Prioritize paying "' + n + '".',
     faltanTuFalta: (n) => "You're short " + sym() + n + ".",
+    usaDebito: (n) => "Cover " + sym() + n + " with your debit.",
+    usaDebitoYAhorro: (d, a) => "Use " + sym() + d + " from debit and " + sym() + a + " from savings.",
+    fuenteDebito: "Pay it from your debit.",
+    fuenteIngreso: "Pay it from this month's income.",
     usaAhorro: (n) => "It's a reasonable time to use part of your savings (you have " + sym() + n + ") to cover the gap without missing card payments.",
     sinAhorroRecorta: "Before debt grows, check if you can cut a fixed bill this month.",
     pagaPrimeroExtra: (n, apr, pago) => "Put " + sym() + pago + ' toward "' + n + '" (highest rate, ' + apr + "%). This is to keep things balanced: you don't need to pay it off in full, just enough to stay on a good pace.",
@@ -390,7 +419,7 @@ function saveUserDataNow() {
   try {
     localStorage.setItem(dataKeyV3(state.activeProfileId), JSON.stringify({
       ingreso: state.ingreso, subs: state.subs, cards: state.cards,
-      savingsRate: state.savingsRate, ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, history: state.history,
+      savingsRate: state.savingsRate, ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, debito: state.debito, history: state.history,
       payFrequency: state.payFrequency, ultimoPago: state.ultimoPago, proximoPagoAjuste: state.proximoPagoAjuste,
       quincena1Monto: state.quincena1Monto, quincena2Monto: state.quincena2Monto, semanaMonto: state.semanaMonto,
     }));
@@ -411,9 +440,10 @@ const state = {
   newProfileName: "",
   showOptions: false,
   confirmDeleteSubId: null, confirmDeleteCardId: null, confirmDeleteHistoryKey: null,
+  editingSubs: false,
   expandedCardIds: {},
 
-  ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", history: [],
+  ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", debito: "", history: [],
   payFrequency: "mensual", ultimoPago: "", proximoPagoAjuste: "", quincena1Monto: "", quincena2Monto: "", semanaMonto: "",
   resultado: null, confirmReset: false, savedFlash: false, storageError: false,
 };
@@ -427,7 +457,7 @@ function scheduleSave() { if (saveTimeout) clearTimeout(saveTimeout); saveTimeou
 function pushUndo() {
   undoStack.push(JSON.parse(JSON.stringify({
     subs: state.subs, cards: state.cards, ingreso: state.ingreso, savingsRate: state.savingsRate,
-    ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, history: state.history,
+    ahorroActual: state.ahorroActual, metaAhorro: state.metaAhorro, debito: state.debito, history: state.history,
     payFrequency: state.payFrequency, ultimoPago: state.ultimoPago, proximoPagoAjuste: state.proximoPagoAjuste,
     quincena1Monto: state.quincena1Monto, quincena2Monto: state.quincena2Monto, semanaMonto: state.semanaMonto,
   })));
@@ -448,6 +478,7 @@ function enterProfile(id) {
   state.cards = d.cards || [];
   state.savingsRate = d.savingsRate != null ? d.savingsRate : 20;
   state.ahorroActual = d.ahorroActual != null ? d.ahorroActual : "";
+  state.debito = d.debito != null ? d.debito : "";
   state.metaAhorro = d.metaAhorro != null ? d.metaAhorro : "";
   state.history = d.history || [];
   state.payFrequency = d.payFrequency || "mensual";
@@ -497,6 +528,7 @@ function toggleOptions() { state.showOptions = !state.showOptions; render(); }
 
 /* ---------- acciones de datos ---------- */
 function addSub() { state.subs.push({ id: uid(), nombre: "", monto: "" }); scheduleSave(); rerenderPreservingFocus(); }
+function toggleEditSubs() { state.editingSubs = !state.editingSubs; state.confirmDeleteSubId = null; render(); }
 function askDeleteSub(id) { state.confirmDeleteSubId = id; render(); }
 function cancelDeleteSub() { state.confirmDeleteSubId = null; render(); }
 function removeSub(id) { pushUndo(); state.subs = state.subs.filter((x) => x.id !== id); state.confirmDeleteSubId = null; scheduleSave(); rerenderPreservingFocus(); }
@@ -515,7 +547,7 @@ function removeCard(id) { pushUndo(); state.cards = state.cards.filter((x) => x.
 function resetAll() {
   pushUndo();
   state.ingreso = ""; state.subs = []; state.cards = []; state.savingsRate = 20;
-  state.ahorroActual = ""; state.metaAhorro = ""; state.resultado = null; state.confirmReset = false;
+  state.ahorroActual = ""; state.metaAhorro = ""; state.debito = ""; state.resultado = null; state.confirmReset = false;
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.quincena1Monto = ""; state.quincena2Monto = ""; state.semanaMonto = "";
   state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null;
   scheduleSave(); rerenderPreservingFocus();
@@ -646,14 +678,20 @@ function buildSugerencias(t2) {
   if (!r) return s;
   if (r.insuficiente) {
     s.push(t("faltan") + " " + sym() + fmt0(r.faltante) + ".");
-    if (toNum(state.ahorroActual) > 0) s.push(t("usaAhorro")(fmt0(toNum(state.ahorroActual))));
+    const debito = toNum(state.debito);
+    const ahorro = toNum(state.ahorroActual);
+    if (debito >= r.faltante) s.push(t("usaDebito")(fmt0(r.faltante)));
+    else if (debito > 0 && debito + ahorro >= r.faltante) s.push(t("usaDebitoYAhorro")(fmt0(debito), fmt0(r.faltante - debito)));
+    else if (ahorro > 0) s.push(t("usaAhorro")(fmt0(ahorro)));
     else s.push(t("sinAhorroRecorta"));
   } else {
     const conExtra = r.asignaciones.filter((c) => c.pagoExtra > 0);
     const prioridad = conExtra[0] || r.asignaciones[0];
     if (prioridad) {
-      if (prioridad.pagoExtra > 0) s.push(t("pagaPrimeroExtra")(prioridad.nombre || t("tarjetaFallback"), fmt0(prioridad.apr), fmt0(prioridad.pagoTotal)));
-      else s.push(t("pagaPrimeroSinExtra")(prioridad.nombre || t("tarjetaFallback"), fmt0(prioridad.apr)));
+      if (prioridad.pagoExtra > 0) {
+        const fuente = toNum(state.debito) >= prioridad.pagoTotal ? t("fuenteDebito") : t("fuenteIngreso");
+        s.push(t("pagaPrimeroExtra")(prioridad.nombre || t("tarjetaFallback"), fmt0(prioridad.apr), fmt0(prioridad.pagoTotal)) + " " + fuente);
+      } else s.push(t("pagaPrimeroSinExtra")(prioridad.nombre || t("tarjetaFallback"), fmt0(prioridad.apr)));
     }
     if (t2.liveStatus.key === "verde") s.push(t("vaBien"));
     else if (t2.liveStatus.key === "amarillo") s.push(t("vasAjustado"));
@@ -668,6 +706,24 @@ function buildSugerencias(t2) {
   const np = nextPayInfo();
   if (np && np.diffDays > 0 && np.diffDays <= 14) s.push(t("proximoPagoSug")(np.diffDays));
   return s;
+}
+
+function computeTopAction(t2) {
+  if (t2.ingresoEfectivo <= 0) return null;
+  const faltante = t2.totalMinimos - t2.disponibleBruto;
+  if (faltante > 0) {
+    const debito = toNum(state.debito);
+    if (debito >= faltante) return { level: "amarillo", text: t("topUsaDebito")(fmt0(faltante)) };
+    return { level: "rojo", text: t("topFaltante")(fmt0(faltante)) };
+  }
+  if (t2.liveStatus.key !== "verde") {
+    const top = [...state.cards]
+      .map((c) => ({ nombre: c.nombre, saldo: toNum(c.saldo), apr: toNum(c.apr) }))
+      .filter((c) => c.saldo > 0)
+      .sort((a, b) => b.apr - a.apr)[0];
+    if (top) return { level: t2.liveStatus.key, text: t("topPrioriza")(top.nombre || t("tarjetaFallback")) };
+  }
+  return null;
 }
 
 /* ---------- render ---------- */
@@ -755,6 +811,8 @@ function renderApp() {
   const np = nextPayInfo();
 
   let html = '<div class="page"><div class="wrap">';
+  const topAction = computeTopAction(t2);
+  if (topAction) html += '<div class="top-action ' + topAction.level + '">' + esc(topAction.text) + '</div>';
   html += '<div class="app-header"><div class="app-header-text"><h1>' + t("brand") + '</h1><p class="subtitle">' + t("subtitle") + '</p>';
   if (activeProfile) html += '<p class="profile-line">' + esc(t("helloProfile")(activeProfile.nombre)) + '</p>';
   html += '</div><button class="options-btn" data-action="toggleOptions">⚙️' + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button></div>';
@@ -794,19 +852,21 @@ function renderApp() {
   }
   html += '</div>';
 
-  html += '<div class="panel"><h2>' + t("subsTitle") + '</h2><p class="hint">' + t("subsHint") + '</p>';
+  html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("subsTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("subsHint") + '</p></div><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? "✓" : "✎") + '</button></div>';
   state.subs.forEach((s) => {
     if (state.confirmDeleteSubId === s.id) {
       html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteSubMsg")(s.nombre || t("subNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeSub" data-id="' + s.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteSub">' + t("cancel") + '</button></div></div>';
-    } else {
+    } else if (state.editingSubs) {
       html += '<div class="sub-row">';
       html += '<input type="text" placeholder="' + t("subNombrePh") + '" id="sub-nombre-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="nombre" value="' + esc(s.nombre) + '">';
       html += '<input type="text" inputmode="decimal" placeholder="' + sym() + '" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '">';
-      html += '<button class="icon-pencil" data-action="askDeleteSub" data-id="' + s.id + '">✎</button></div>';
+      html += '<button class="icon-del" data-action="askDeleteSub" data-id="' + s.id + '">×</button></div>';
+    } else {
+      html += '<div class="sub-row-locked"><span class="locked-name">' + esc(s.nombre || t("subNombrePh")) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(s.monto)) + '</span></div>';
     }
   });
-  if (state.subs.length === 0) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
-  html += '<button class="add-btn" data-action="addSub">' + t("addSub") + '</button>';
+  if (state.subs.length === 0 && !state.editingSubs) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
+  if (state.editingSubs) html += '<button class="add-btn" data-action="addSub">' + t("addSub") + '</button>';
   html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(t2.totalSubs) + '</b></div></div>';
 
   html += '<div class="panel"><h2>' + t("cardsTitle") + '</h2><p class="hint">' + t("cardsHint") + '</p>';
@@ -853,6 +913,7 @@ function renderApp() {
   html += '<div class="mini-total"><span>' + t("totalMinimos") + '</span><b>' + sym() + fmt0(t2.totalMinimos) + '</b></div></div>';
 
   html += '<div class="panel"><h2>' + t("tuAhorroTitle") + '</h2><p class="hint">' + t("tuAhorroHint") + '</p>';
+  html += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '" style="width:100%;"></div>';
   html += '<div class="goal-grid">';
   html += '<div class="goal-field"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '"></div>';
   html += '<div class="goal-field"><label>' + t("metaAhorroLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="meta-ahorro-input" data-scope="metaAhorro" value="' + esc(state.metaAhorro) + '"></div>';
@@ -949,6 +1010,7 @@ root.addEventListener("input", (e) => {
   if (!scope) return;
   if (scope === "ingreso") { state.ingreso = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "debito") { state.debito = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "metaAhorro") { state.metaAhorro = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "savingsRate") { state.savingsRate = Number(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "quincena1Monto") { state.quincena1Monto = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
@@ -985,7 +1047,7 @@ root.addEventListener("click", (e) => {
     confirmReset: () => { state.confirmReset = true; render(); },
     cancelReset: () => { state.confirmReset = false; render(); },
     resetAll: resetAll,
-    addSub: addSub, removeSub: () => removeSub(id), askDeleteSub: () => askDeleteSub(id), cancelDeleteSub: cancelDeleteSub,
+    addSub: addSub, removeSub: () => removeSub(id), askDeleteSub: () => askDeleteSub(id), cancelDeleteSub: cancelDeleteSub, toggleEditSubs: toggleEditSubs,
     addCard: addCard, removeCard: () => removeCard(id), askDeleteCard: () => askDeleteCard(id), cancelDeleteCard: cancelDeleteCard,
     toggleCardExpand: () => toggleCardExpand(id),
     calcular: calcular, guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
