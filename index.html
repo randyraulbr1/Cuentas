@@ -201,6 +201,8 @@ const I18N = {
     helloProfile: (n) => "Hola, " + n,
     optionsTitle: "Opciones", close: "Cerrar",
     secPerfil: "Perfil", secIdioma: "Idioma", secMoneda: "Moneda", secTema: "Tema", secPago: "Frecuencia de pago", secAhorroPct: "% a ahorrar", secDatos: "Datos",
+    saludCreditoTitle: "Salud de tu crédito", saludCreditoHint: "Mantener bajo el uso de cada tarjeta (idealmente menos del 30%) ayuda a fortalecer tu historial crediticio.",
+    ahorroNormal: "Normal", ahorroMedio: "Medio", ahorroAgresivo: "Agresivo",
     switchUser: "Cambiar de usuario",
     payMensual: "Mensual", payQuincenal: "Quincenal", paySemanal: "Semanal",
     ultimoPagoLbl: "Fecha de tu último pago",
@@ -209,6 +211,7 @@ const I18N = {
     update: "Actualizar app", undo: "Deshacer", resetAll: "Restablecer todo",
     confirmResetMsg: "¿Borrar todos los datos de este usuario?", yesDelete: "Sí, borrar", cancel: "Cancelar",
     debesTotal: "Debes en total", disponibleMes: "Disponible este mes", ahorradoActual: "Ahorrado actual",
+    creditoDisponible: "Crédito disponible",
     proximoPago: "Próximo pago",
     statusVerde: "Correcto", statusAmarillo: "Apretado", statusRojo: "Peligroso",
     ingresoTitle: "Ingreso", ingresoHint: "Lo que ganas, según cómo te pagan.",
@@ -269,6 +272,8 @@ const I18N = {
     helloProfile: (n) => "Hi, " + n,
     optionsTitle: "Options", close: "Close",
     secPerfil: "Profile", secIdioma: "Language", secMoneda: "Currency", secTema: "Theme", secPago: "Pay frequency", secAhorroPct: "% to save", secDatos: "Data",
+    saludCreditoTitle: "Your credit health", saludCreditoHint: "Keeping each card's usage low (ideally under 30%) helps strengthen your credit history.",
+    ahorroNormal: "Normal", ahorroMedio: "Medium", ahorroAgresivo: "Aggressive",
     switchUser: "Switch user",
     payMensual: "Monthly", payQuincenal: "Biweekly", paySemanal: "Weekly",
     ultimoPagoLbl: "Date of your last payday",
@@ -277,6 +282,7 @@ const I18N = {
     update: "Update app", undo: "Undo", resetAll: "Reset everything",
     confirmResetMsg: "Delete all data for this user?", yesDelete: "Yes, delete", cancel: "Cancel",
     debesTotal: "Total debt", disponibleMes: "Available this month", ahorradoActual: "Current savings",
+    creditoDisponible: "Available credit",
     proximoPago: "Next payday",
     statusVerde: "On track", statusAmarillo: "Tight", statusRojo: "Risky",
     ingresoTitle: "Income", ingresoHint: "What you earn, based on how you're paid.",
@@ -486,6 +492,7 @@ function toggleTheme() { state.theme = state.theme === "dark" ? "light" : "dark"
 function toggleLang() { state.lang = state.lang === "es" ? "en" : "es"; LANG = state.lang; saveSettings(); render(); }
 function toggleCurrency() { state.currency = state.currency === "usd" ? "eur" : "usd"; saveSettings(); render(); }
 function setPayFrequency(f) { state.payFrequency = f; scheduleSave(); render(); }
+function setSavingsRate(n) { state.savingsRate = n; scheduleSave(); render(); }
 function toggleOptions() { state.showOptions = !state.showOptions; render(); }
 
 /* ---------- acciones de datos ---------- */
@@ -563,11 +570,13 @@ function computeTotals() {
   const totalSubs = state.subs.reduce((a, s) => a + toNum(s.monto), 0);
   const totalMinimos = state.cards.reduce((a, c) => a + toNum(c.minimo), 0);
   const totalDeuda = state.cards.reduce((a, c) => a + toNum(c.saldo), 0);
+  const cardsConLimite = state.cards.filter((c) => toNum(c.limite) > 0);
+  const creditoDisponible = cardsConLimite.reduce((a, c) => a + Math.max(toNum(c.limite) - toNum(c.saldo), 0), 0);
   const disponibleBruto = ingresoEfectivo - totalSubs;
   const ratioComprometido = ingresoEfectivo > 0 ? (totalSubs + totalMinimos) / ingresoEfectivo : (totalSubs + totalMinimos > 0 ? 1.5 : 0);
   const insuficienteLive = disponibleBruto - totalMinimos < 0;
   const liveStatus = statusFromRatio(ratioComprometido, insuficienteLive);
-  return { ingresoEfectivo, totalSubs, totalMinimos, totalDeuda, disponibleBruto, ratioComprometido, liveStatus };
+  return { ingresoEfectivo, totalSubs, totalMinimos, totalDeuda, cardsConLimite, creditoDisponible, disponibleBruto, ratioComprometido, liveStatus };
 }
 
 function calcular() {
@@ -716,6 +725,11 @@ function renderOptionsSheet() {
   h += '</div>';
 
   h += '<div class="opt-section"><p class="opt-section-title">' + t("secAhorroPct") + '</p>';
+  h += '<div class="seg" style="width:100%;margin-bottom:8px;">';
+  h += '<button style="flex:1;" class="' + (state.savingsRate === 10 ? "active" : "") + '" data-action="setAhorroNormal">' + t("ahorroNormal") + '</button>';
+  h += '<button style="flex:1;" class="' + (state.savingsRate === 20 ? "active" : "") + '" data-action="setAhorroMedio">' + t("ahorroMedio") + '</button>';
+  h += '<button style="flex:1;" class="' + (state.savingsRate === 35 ? "active" : "") + '" data-action="setAhorroAgresivo">' + t("ahorroAgresivo") + '</button>';
+  h += '</div>';
   h += '<div class="opt-slider-row"><input type="range" min="0" max="100" id="savings-rate-input" data-scope="savingsRate" value="' + state.savingsRate + '"><div class="opt-slider-val">' + state.savingsRate + '%</div></div></div>';
 
   h += '<div class="opt-section"><p class="opt-section-title">' + t("secDatos") + '</p><div class="opt-btn-stack">';
@@ -749,8 +763,20 @@ function renderApp() {
   html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
   html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
   html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></div>';
+  if (t2.cardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
   if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + (np.ajustado ? " ✎" : "") + '</div></div>';
   html += '</div>';
+
+  if (t2.cardsConLimite.length > 0) {
+    html += '<div class="panel"><h2>' + t("saludCreditoTitle") + '</h2><p class="hint">' + t("saludCreditoHint") + '</p>';
+    t2.cardsConLimite.forEach((c) => {
+      const uso = Math.min((toNum(c.saldo) / toNum(c.limite)) * 100, 100);
+      const usoNivel = uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
+      html += '<div style="margin-bottom:10px;"><div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(c.nombre || t("cardNombrePh")) + '</span><span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span></div>';
+      html += '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div></div></div>';
+    });
+    html += '</div>';
+  }
 
   html += '<div class="panel"><h2>' + t("ingresoTitle") + '</h2><p class="hint">' + (state.payFrequency === "mensual" ? t("ingresoMensualHint") : t("ingresoHint")) + '</p>';
   if (state.payFrequency === "mensual") {
@@ -974,6 +1000,9 @@ root.addEventListener("click", (e) => {
     setPayMensual: () => setPayFrequency("mensual"),
     setPayQuincenal: () => setPayFrequency("quincenal"),
     setPaySemanal: () => setPayFrequency("semanal"),
+    setAhorroNormal: () => setSavingsRate(10),
+    setAhorroMedio: () => setSavingsRate(20),
+    setAhorroAgresivo: () => setSavingsRate(35),
     toggleOptions: toggleOptions,
     enterProfile: () => enterProfile(id),
     askDeleteProfile: () => askDeleteProfile(id),
