@@ -29,8 +29,12 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
-  ensureExtensions().finally(() => {
-    app.listen(PORT, () => console.log("Cuentas Claras backend escuchando en puerto " + PORT));
+  app.listen(PORT, () => {
+    console.log("Cuentas Claras backend escuchando en puerto " + PORT);
+    ensureExtensions().then((ok) => {
+      if (ok) console.log("Base de datos lista.");
+      else console.error("La base de datos no quedo lista; revisa DATABASE_URL.");
+    });
   });
 }
 
