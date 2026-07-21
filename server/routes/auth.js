@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { query } = require("../db");
 const { requireAuth } = require("../middleware/auth");
+const { rateLimit } = require("../middleware/rateLimit");
 
 const router = express.Router();
 
@@ -13,7 +14,7 @@ function signToken(userId) {
   return jwt.sign({ sub: userId }, process.env.JWT_SECRET, { expiresIn: "30d" });
 }
 
-router.post("/register", async (req, res) => {
+router.post("/register", rateLimit(20, 60 * 60 * 1000), async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: "Correo inválido" });
   if (!password || password.length < 8) return res.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres" });
@@ -31,7 +32,7 @@ router.post("/register", async (req, res) => {
   res.status(201).json({ token, user: { id: user.id, email: user.email } });
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", rateLimit(20, 15 * 60 * 1000), async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: "Correo y contraseña requeridos" });
 

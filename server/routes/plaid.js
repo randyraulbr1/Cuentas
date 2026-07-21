@@ -3,13 +3,14 @@ const express = require("express");
 const { plaidClient, envName } = require("../plaidClient");
 const { query } = require("../db");
 const { requireAuth } = require("../middleware/auth");
+const { rateLimit } = require("../middleware/rateLimit");
 const { encrypt, decrypt } = require("../crypto");
 const { guessCategory, merchantKey } = require("../categories");
 const { Products, CountryCode } = require("plaid");
 
 const router = express.Router();
 
-router.post("/create-link-token", requireAuth, async (req, res) => {
+router.post("/create-link-token", requireAuth, rateLimit(20, 60 * 60 * 1000), async (req, res) => {
   try {
     const response = await plaidClient.linkTokenCreate({
       user: { client_user_id: req.userId },
@@ -60,7 +61,7 @@ async function getDecryptedAccessToken(plaidItemRow) {
   return decrypt(plaidItemRow.access_token_enc, plaidItemRow.access_token_iv, plaidItemRow.access_token_tag);
 }
 
-router.post("/sync-transactions", requireAuth, async (req, res) => {
+router.post("/sync-transactions", requireAuth, rateLimit(30, 60 * 60 * 1000), async (req, res) => {
   const { plaid_item_id } = req.body || {};
   try {
     const itemsResult = plaid_item_id
