@@ -3,13 +3,13 @@
 .top-action.amarillo { background: #FFF3DE; color: #B25E00; }
 [data-theme="dark"] .top-action.rojo { background: #3A1210; color: #FF6B60; }
 [data-theme="dark"] .top-action.amarillo { background: #3A2A0A; color: #FFB84D; }
-.options-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: var(--tabbar-h); background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; justify-content: center; z-index: 50; animation: ccFadeIn 0.16s ease; }
-.options-sheet { background: var(--card-bg); width: 100%; max-width: 480px; border-radius: 18px 18px 0 0; margin-bottom: 8px; padding: 14px 16px 18px; max-height: 78vh; overflow-y: auto; animation: ccSlideUp 0.24s cubic-bezier(0.22, 0.9, 0.3, 1); }
+.options-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: var(--tabbar-h); background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50; animation: ccFadeIn 0.16s ease; }
+.options-sheet { background: var(--card-bg); width: 100%; max-width: 420px; border-radius: 20px; margin: 0; padding: 20px 20px 22px; max-height: 82vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.35); animation: ccPopIn 0.2s cubic-bezier(0.22, 0.9, 0.3, 1); }
 @keyframes ccFadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes ccSlideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-.options-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+@keyframes ccPopIn { from { opacity: 0; transform: scale(0.94) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.options-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
 .options-head h2 { font-size: 17px; font-weight: 800; margin: 0; }
-.options-close { background: var(--pill-bg); border: none; color: var(--text); width: 28px; height: 28px; border-radius: 50%; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.options-close { background: var(--pill-bg); border: none; color: var(--text); width: 30px; height: 30px; border-radius: 50%; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .opt-section { padding: 10px 0; border-bottom: 1px solid var(--border); }
 .opt-section:last-child { border-bottom: none; }
 .opt-section-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 0 0 10px; }
