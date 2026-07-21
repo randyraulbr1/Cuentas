@@ -33,7 +33,7 @@ async function enterProfile(id) {
   state.turnos = d.turnos || [];
   state.turnoActivo = d.turnoActivo || null;
   state.pagosTrabajo = d.pagosTrabajo || [];
-  state.resultado = null; state.confirmReset = false; state.showOptions = false;
+  state.resultado = null; state.confirmReset = false;
   state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payingSubId = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
   state.autoPagoNotif = null;
   state.editingJob = false; state.confirmTerminarTrabajo = false; state.confirmDeleteTurnoId = null; state.expandedTurnoIds = {};
@@ -59,7 +59,7 @@ function switchUser() {
   if (saveTimeout) { clearTimeout(saveTimeout); saveUserDataNow(); }
   state.activeProfileId = null;
   try { localStorage.removeItem(ACTIVE_KEY); } catch (e) {}
-  state.screen = "selector"; state.showOptions = false;
+  state.screen = "selector";
   render();
 }
 
@@ -88,7 +88,6 @@ function setPayFrequency(f) { state.payFrequency = f; scheduleSave(); render(); 
 
 function setSavingsRate(n) { state.savingsRate = n; scheduleSave(); render(); }
 
-function toggleOptions() { state.showOptions = !state.showOptions; render(); }
 
 function buildExportData() {
   const profile = state.profiles.find((p) => p.id === state.activeProfileId);
@@ -223,7 +222,7 @@ root.addEventListener("click", (e) => {
   if (e.target.classList && e.target.classList.contains("options-overlay")) {
     if (state.showConsentimiento) { state.showConsentimiento = false; render(); return; }
     if (state.showExport) { state.showExport = false; state.exportCopied = false; render(); return; }
-    state.showOptions = false; render(); return;
+    return;
   }
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
@@ -285,7 +284,6 @@ root.addEventListener("click", (e) => {
     setAhorroNormal: () => setSavingsRate(10),
     setAhorroMedio: () => setSavingsRate(20),
     setAhorroAgresivo: () => setSavingsRate(35),
-    toggleOptions: toggleOptions,
     showExport: showExport, closeExport: closeExport, copyExport: copyExport,
     goTab: () => goTab(id), goInicio: goInicio,
     enterProfile: () => enterProfile(id),

@@ -122,13 +122,11 @@ function renderExportSheet() {
   return h;
 }
 
-function renderOptionsSheet() {
-  let h = '<div class="options-overlay">';
-  h += '<div class="options-sheet">';
-  h += '<div class="options-head"><h2>' + t("optionsTitle") + ' <span style="font-size:11px;color:var(--text-muted);font-weight:600;">' + APP_VERSION + '</span></h2><button class="options-close" data-action="toggleOptions">' + icon("close") + '</button></div>';
+function renderOpcionesTab() {
+  let h = '<p class="opt-row-sub" style="text-align:center;margin:-4px 0 12px;">' + t("optionsTitle") + ' \u00b7 v' + APP_VERSION.replace("v", "") + '</p>';
 
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
-  h += '<div class="opt-section"><p class="opt-section-title">' + t("secPerfil") + '</p>';
+  h += '<div class="panel"><p class="opt-section-title">' + t("secPerfil") + '</p>';
   h += '<div class="opt-row"><span class="opt-row-label">' + esc(activeProfile ? activeProfile.nombre : "") + '</span><button class="pill-btn" data-action="switchUser">' + t("switchUser") + '</button></div>';
   if (state.confirmDeleteProfileId === state.activeProfileId) {
     h += '<div class="confirm-row" style="margin-top:8px;"><span>' + t("confirmEliminarCuentaMsg") + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="deleteProfile" data-id="' + state.activeProfileId + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteProfile">' + t("cancel") + '</button></div></div>';
@@ -137,11 +135,11 @@ function renderOptionsSheet() {
   }
   h += '</div>';
 
-  h += '<div class="opt-section"><div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div>';
+  h += '<div class="panel"><div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div>';
   h += '<div class="opt-row"><span class="opt-row-label">' + t("secMoneda") + '</span><div class="seg"><button class="' + (state.currency === "usd" ? "active" : "") + '" data-action="setCurUsd">$</button><button class="' + (state.currency === "eur" ? "active" : "") + '" data-action="setCurEur">€</button></div></div>';
   h += '<div class="opt-row"><span class="opt-row-label">' + t("secTema") + '</span><div class="seg"><button class="' + (state.theme === "light" ? "active" : "") + '" data-action="setThemeLight">' + icon("sun") + '</button><button class="' + (state.theme === "dark" ? "active" : "") + '" data-action="setThemeDark">' + icon("moon") + '</button></div></div></div>';
 
-  h += '<div class="opt-section"><p class="opt-section-title">' + t("secCredito") + '</p>';
+  h += '<div class="panel"><p class="opt-section-title">' + t("secCredito") + '</p>';
   h += '<p class="opt-row-sub" style="margin-bottom:6px;">' + t("objetivoHint") + '</p>';
   h += '<div class="seg" style="width:100%;margin-top:6px;">';
   h += '<button style="flex:1;" class="' + (state.objetivo === "equilibrado" ? "active" : "") + '" data-action="setObjEquilibrado">' + t("objEquilibrado") + '</button>';
@@ -149,7 +147,7 @@ function renderOptionsSheet() {
   h += '<button style="flex:1;" class="' + (state.objetivo === "ahorro" ? "active" : "") + '" data-action="setObjAhorro">' + t("objAhorro") + '</button>';
   h += '</div></div>';
 
-  h += '<div class="opt-section"><p class="opt-section-title">' + t("secPago") + '</p>';
+  h += '<div class="panel"><p class="opt-section-title">' + t("secPago") + '</p>';
   h += '<div class="seg" style="width:100%;">';
   h += '<button style="flex:1;" class="' + (state.payFrequency === "mensual" ? "active" : "") + '" data-action="setPayMensual">' + t("payMensual") + '</button>';
   h += '<button style="flex:1;" class="' + (state.payFrequency === "quincenal" ? "active" : "") + '" data-action="setPayQuincenal">' + t("payQuincenal") + '</button>';
@@ -159,7 +157,7 @@ function renderOptionsSheet() {
   h += '<div class="pay-config"><label>' + t("ajustePagoLbl") + '</label><input type="date" id="ajuste-pago" data-scope="proximoPagoAjuste" value="' + esc(state.proximoPagoAjuste) + '"><p class="opt-row-sub" style="margin-top:4px;">' + t("ajustePagoHint") + '</p></div>';
   h += '</div>';
 
-  h += '<div class="opt-section"><p class="opt-section-title">' + t("secAhorroPct") + '</p>';
+  h += '<div class="panel"><p class="opt-section-title">' + t("secAhorroPct") + '</p>';
   h += '<div class="seg" style="width:100%;margin-bottom:8px;">';
   h += '<button style="flex:1;" class="' + (state.savingsRate === 10 ? "active" : "") + '" data-action="setAhorroNormal">' + t("ahorroNormal") + '</button>';
   h += '<button style="flex:1;" class="' + (state.savingsRate === 20 ? "active" : "") + '" data-action="setAhorroMedio">' + t("ahorroMedio") + '</button>';
@@ -167,7 +165,7 @@ function renderOptionsSheet() {
   h += '</div>';
   h += '<div class="opt-slider-row"><input type="range" min="0" max="100" id="savings-rate-input" data-scope="savingsRate" value="' + state.savingsRate + '"><div class="opt-slider-val">' + state.savingsRate + '%</div></div></div>';
 
-  h += '<div class="opt-section"><p class="opt-section-title">' + t("secDatos") + '</p><div class="opt-btn-stack">';
+  h += '<div class="panel"><p class="opt-section-title">' + t("secDatos") + '</p><div class="opt-btn-stack">';
   h += '<button class="pill-btn wide" data-action="showExport">' + t("exportarDatos") + '</button>';
   h += '<button class="pill-btn wide update" data-action="actualizar">' + t("update") + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button>';
   h += '<button class="pill-btn wide" data-action="undo"' + (undoStack.length === 0 ? " disabled" : "") + '>' + t("undo") + '</button>';
@@ -180,19 +178,18 @@ function renderOptionsSheet() {
   h += '</div></div>';
 
   if (state.authUser) {
-    h += '<div class="opt-section"><p class="opt-section-title">' + t("secNube") + '</p>';
+    h += '<div class="panel"><p class="opt-section-title">' + t("secNube") + '</p>';
     h += '<button class="pill-btn wide danger" data-action="apiDeleteCloudAccount">' + t("eliminarCuentaNubeBtn") + '</button>';
     h += '</div>';
   }
 
-  h += '<div class="opt-section"><p class="opt-section-title">' + t("secLegal") + '</p><div class="opt-btn-stack">';
+  h += '<div class="panel"><p class="opt-section-title">' + t("secLegal") + '</p><div class="opt-btn-stack">';
   h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="privacy.html" target="_blank" rel="noopener">' + t("verPrivacidad") + '</a>';
   h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="data-policy.html" target="_blank" rel="noopener">' + t("verDatosPolitica") + '</a>';
   h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="terms.html" target="_blank" rel="noopener">' + t("verTerminos") + '</a>';
   h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="contact.html" target="_blank" rel="noopener">' + t("verContacto") + '</a>';
   h += '</div></div>';
 
-  h += '</div></div>';
   return h;
 }
 
@@ -232,12 +229,12 @@ function renderTabBar() {
     { id: "tarjetas", icon: "card", label: t("tabTarjetas") },
     { id: "pagos", icon: "receipt", label: t("tabPagos") },
     { id: "historial", icon: "chart", label: t("tabHistorial") },
+    { id: "opciones", icon: "gear", label: t("optionsTitle") },
   ];
   let h = '<div class="tab-bar">';
   tabs.forEach((tb) => {
-    h += '<button class="tab-btn' + (state.activeTab === tb.id && !state.showOptions ? " active" : "") + '" data-action="goTab" data-id="' + tb.id + '"><span class="tab-icon">' + icon(tb.icon) + '</span><span class="tab-label">' + esc(tb.label) + '</span></button>';
+    h += '<button class="tab-btn' + (state.activeTab === tb.id ? " active" : "") + '" data-action="goTab" data-id="' + tb.id + '"><span class="tab-icon">' + icon(tb.icon) + (tb.id === "opciones" && UPDATE_AVAILABLE ? '<span class="dot" style="top:2px;right:14px;"></span>' : '') + '</span><span class="tab-label">' + esc(tb.label) + '</span></button>';
   });
-  h += '<button class="tab-btn' + (state.showOptions ? " active" : "") + '" data-action="toggleOptions"><span class="tab-icon">' + icon("gear") + (UPDATE_AVAILABLE ? '<span class="dot" style="top:2px;right:14px;"></span>' : '') + '</span><span class="tab-label">' + esc(t("optionsTitle")) + '</span></button>';
   h += '</div>';
   return h;
 }
@@ -258,7 +255,7 @@ function renderApp() {
   html += '</div>';
 
   if (tab !== "inicio") {
-    html += '<div class="tab-subheader"><h2>' + t(tab === "tarjetas" ? "tabTarjetas" : tab === "pagos" ? "tabPagos" : "tabHistorial") + '</h2></div>';
+    html += '<div class="tab-subheader"><h2>' + t(tab === "tarjetas" ? "tabTarjetas" : tab === "pagos" ? "tabPagos" : tab === "opciones" ? "optionsTitle" : "tabHistorial") + '</h2></div>';
   }
 
   if (tab === "inicio") {
@@ -593,9 +590,12 @@ function renderApp() {
     }
   }
 
+  if (tab === "opciones") {
+    html += renderOpcionesTab();
+  }
+
   html += '</div>';
   html += renderTabBar();
-  if (state.showOptions) html += renderOptionsSheet();
   if (state.showExport) html += renderExportSheet();
   if (state.showConsentimiento) html += renderConsentimientoSheet();
   html += '</div>';

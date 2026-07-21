@@ -6,7 +6,7 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v42";
+const APP_VERSION = "v43";
 
 let uidCounter = 1;
 
@@ -62,7 +62,7 @@ const state = {
   currency: settingsInit.currency || "usd",
   objetivo: settingsInit.objetivo || "equilibrado",
   newProfileName: "",
-  showOptions: false, showExport: false, exportCopied: false,
+  showExport: false, exportCopied: false,
   activeTab: "inicio",
   confirmDeleteSubId: null, confirmDeleteCardId: null, confirmDeleteHistoryKey: null, confirmDeleteLoanId: null,
   editingSubs: false,
