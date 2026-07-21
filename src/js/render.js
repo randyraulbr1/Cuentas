@@ -2,7 +2,7 @@
 
 const root = document.getElementById("root");
 
-function renderBancoNubePanel() {
+function renderBancoNubePanel(compact) {
   let html = '<div class="panel">';
   html += '<div class="panel-head-row"><div><h2>' + t("bancoNubeTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("bancoNubeHint") + '</p></div></div>';
   if (state.cloudErrorMsg) html += '<p class="opt-row-sub" style="color:#FF3B30;margin:8px 0;">' + esc(state.cloudErrorMsg) + '</p>';
@@ -30,13 +30,13 @@ function renderBancoNubePanel() {
   if (state.cloudInstitutions.length > 0) html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="actualizarDatosNube"' + (state.cloudBusy ? " disabled" : "") + '>' + t("actualizarNubeBtn") + '</button>';
   if (state.cloudLastSync) html += '<p class="opt-row-sub" style="text-align:center;margin-top:8px;">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(state.cloudLastSync).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
 
-  if (state.cloudAccounts.length > 0) {
+  if (state.cloudAccounts.length > 0 && !compact) {
     html += '<div class="mini-total" style="margin-top:10px;"><span>' + t("cuentasConectadasLbl") + '</span></div>';
     state.cloudAccounts.forEach((acc) => {
       html += '<div class="sub-row-locked"><span class="locked-name">' + esc(acc.name || "") + (acc.mask ? " ****" + esc(acc.mask) : "") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(acc.balance_current)) + '</span></div>';
     });
   }
-  if (state.cloudTransactions.length > 0) {
+  if (state.cloudTransactions.length > 0 && !compact) {
     state.cloudTransactions.slice(0, 8).forEach((tx) => {
       html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
     });
@@ -235,6 +235,33 @@ function renderOpcionesTab() {
   return h;
 }
 
+function renderDonutChart(items) {
+  const total = items.reduce((a, it) => a + it.valor, 0);
+  if (total <= 0) return "";
+  let acc = 0;
+  const stops = items.map((it) => {
+    const color = categoriaIconoColor(it.categoria).color;
+    const start = (acc / total) * 100;
+    acc += it.valor;
+    const end = (acc / total) * 100;
+    return color + " " + start.toFixed(2) + "% " + end.toFixed(2) + "%";
+  }).join(", ");
+  let h = '<div style="display:flex;align-items:center;gap:16px;margin-top:8px;">';
+  h += '<div style="width:120px;height:120px;border-radius:50%;flex-shrink:0;background:conic-gradient(' + stops + ');"></div>';
+  h += '<div style="flex:1;min-width:0;">';
+  items.forEach((it) => {
+    const pct = Math.round((it.valor / total) * 100);
+    const color = categoriaIconoColor(it.categoria).color;
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11.5px;">';
+    h += '<span style="width:9px;height:9px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>';
+    h += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(it.etiqueta) + '</span>';
+    h += '<b>' + pct + '%</b>';
+    h += '</div>';
+  });
+  h += '</div></div>';
+  return h;
+}
+
 function renderBarChart(items, height) {
   height = height || 90;
   const max = Math.max(...items.map((i) => i.valor), 1);
@@ -398,78 +425,21 @@ function renderApp() {
   }
 
   if (tab === "cuentas") {
-    html += renderBancoNubePanel();
-    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("ingresoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + (state.payFrequency === "mensual" ? t("ingresoMensualHint") : t("ingresoHint")) + '</p></div><button class="icon-pencil' + (state.editingIngreso ? " done" : "") + '" data-action="toggleEditIngreso">' + (state.editingIngreso ? icon("check") : icon("pencil")) + '</button></div>';
-    if (!state.editingIngreso) {
-      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + t("totalCalculado") + '</span><span class="locked-amount" style="font-size:19px;">' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
-    } else if (state.payFrequency === "mensual") {
-      html += '<input type="text" inputmode="decimal" placeholder="0" id="ingreso-input" data-scope="ingreso" value="' + esc(state.ingreso) + '" style="width:100%;font-size:20px;font-weight:700;">';
-    } else {
-      const entradas = ingresosEsteMes();
-      const esperados = expectedPagosEsteMes();
-      entradas.forEach((en) => {
-        html += '<div class="sub-row" style="grid-template-columns:1fr 30px;">';
-        html += '<input type="text" inputmode="decimal" placeholder="0" id="ing-' + en.id + '" data-scope="ingresoLog" data-id="' + en.id + '" value="' + esc(en.monto) + '" style="font-size:16px;font-weight:700;">';
-        html += '<button class="icon-del" data-action="removeIngresoEntry" data-id="' + en.id + '">' + icon("close") + '</button></div>';
-      });
-      if (entradas.length === 0) html += '<div class="empty-state">' + t("ingresoLogEmpty") + '</div>';
-      html += '<button class="pay-trigger" data-action="addIngresoEntry" style="background:#3D5AFE;">' + t("addIngreso") + '</button>';
-      html += '<div class="mini-total"><span>' + t("pagosEsperados")(entradas.length, esperados) + '</span><b>' + sym() + fmt0(t2.ingresoEfectivo) + '</b></div>';
-      if (entradas.length < esperados) html += '<p class="opt-row-sub" style="margin-top:8px;color:#B25E00;">' + t("pagosIncompletos") + '</p>';
-    }
-    html += '</div>';
+    html += renderBancoNubePanel(true);
 
-    if (resultado && resultado.insuficiente) {
-      html += '<div class="warn-box"><b>' + t("noAlcanza") + '</b><br>' + t("faltan") + ' <b>' + sym() + fmt0(resultado.faltante) + '</b>.</div>';
-    }
-    if (resultado && !resultado.insuficiente) {
-      html += '<div class="result-card">';
-      html += '<div class="result-line"><span>' + t("ingresoLbl") + '</span><span>' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
-      html += '<div class="result-line"><span>' + t("pagosFijosLbl") + '</span><span>\u2212' + sym() + fmt0(t2.totalSubs) + '</span></div>';
-      if (t2.totalPrestamos > 0) html += '<div class="result-line"><span>' + t("totalPrestamos") + '</span><span>\u2212' + sym() + fmt0(t2.totalPrestamos) + '</span></div>';
-      resultado.asignaciones.forEach((c) => {
-        html += '<div class="result-line"><span class="name">' + esc(c.nombre || t("tarjetaFallback")) + (c.pagoExtra > 0 ? '<span class="badge">' + t("extraBadge") + '</span>' : '') + '</span><span>\u2212' + sym() + fmt0(c.pagoTotal) + '</span></div>';
-      });
-      if (state.cards.length === 0) html += '<div class="result-line"><span>' + t("sinTarjetas") + '</span><span>\u2014</span></div>';
-      html += '<div class="result-line"><span>' + t("ahorroSugerido") + '</span><span>' + sym() + fmt10(resultado.ahorro) + '</span></div>';
-      html += '<div class="result-total"><span>' + t("totalRepartido") + '</span><span>' + sym() + fmt0(t2.ingresoEfectivo) + '</span></div>';
-      html += '</div>';
-    }
-
-    if (sugerencias.length > 0) {
-      html += '<div class="sugerencias"><h2>' + t("sugerenciasTitle") + '</h2><ul>';
-      sugerencias.forEach((s) => { html += '<li>' + esc(s) + '</li>'; });
-      html += '</ul></div>';
-    }
-
-    if (resultado) html += '<button class="save-month-btn" data-action="guardarMes">' + t("guardarMes") + '</button>';
-    if (state.savedFlash) html += '<div class="flash">' + icon("check") + ' ' + t("mesGuardado") + '</div>';
-    html += '<p class="save-note">' + (state.storageError ? t("saveNoteErr") : t("saveNoteOk")) + ' · ' + APP_VERSION + '</p>';
-    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("tuAhorroTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("tuAhorroHint") + '</p></div><button class="icon-pencil' + (state.editingAhorro ? " done" : "") + '" data-action="toggleEditAhorro">' + (state.editingAhorro ? icon("check") : icon("pencil")) + '</button></div>';
+    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("saldosManualesTitle") + '</h2></div><button class="icon-pencil' + (state.editingAhorro ? " done" : "") + '" data-action="toggleEditAhorro">' + (state.editingAhorro ? icon("check") : icon("pencil")) + '</button></div>';
     if (!state.editingAhorro) {
       html += '<div class="sub-row-locked"><span class="locked-name">' + t("debitoLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.debito)) + '</span></div>';
       html += '<div class="sub-row-locked"><span class="locked-name">' + t("cashLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.cash)) + '</span></div>';
-      html += '<div class="sub-row-locked"><span class="locked-name">' + t("ahorroActualLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.ahorroActual)) + '</span></div>';
-      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + t("metaAhorroLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.metaAhorro)) + '</span></div>';
-      if (toNum(state.metaAhorro) > 0) {
-        html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
-        html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
-      }
+      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + t("ahorroActualLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.ahorroActual)) + '</span></div>';
     } else {
-      html += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '" style="width:100%;"></div>';
-      html += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("cashLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="cash-input" data-scope="cash" value="' + esc(state.cash) + '" style="width:100%;"></div>';
       html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '"></div>';
-      html += '<div class="goal-field"><label>' + t("metaAhorroLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="meta-ahorro-input" data-scope="metaAhorro" value="' + esc(state.metaAhorro) + '"></div>';
+      html += '<div class="goal-field"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '"></div>';
+      html += '<div class="goal-field"><label>' + t("cashLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="cash-input" data-scope="cash" value="' + esc(state.cash) + '"></div>';
       html += '</div>';
-      if (toNum(state.metaAhorro) > 0) {
-        html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
-        html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
-      }
+      html += '<div class="goal-field" style="margin-top:10px;"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '" style="width:100%;"></div>';
     }
-    html += '<p class="hint" style="margin-top:10px;">' + t("ahorroPctTitle") + ': <b>' + state.savingsRate + '%</b></p>';
     html += '</div>';
-
     if (state.autoPagoNotif && state.autoPagoNotif.length > 0) {
       html += '<div class="flash">' + t("autoPagoAplicado")(state.autoPagoNotif.join(", ")) + '</div>';
     }
@@ -536,9 +506,10 @@ function renderApp() {
     }
     html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(t2.totalSubs) + '</b></div></div>';
 
-    if (state.gastosFijosReconocidos.length > 0) {
+    const insCuentas = computeInsights();
+    if (state.gastosFijosReconocidos.length > 0 || insCuentas.suscripcionesDetectadas.length > 0) {
       html += '<div class="panel"><h2>' + t("gastosFijosBancoTitle") + '</h2><p class="hint">' + t("gastosFijosBancoHint") + '</p>';
-      let totalPendiente = 0, totalPagado = 0;
+      let totalPendiente = 0, totalPagado = 0, totalSuscripcionesMes = insCuentas.suscripcionesTotalMensual;
       state.gastosFijosReconocidos.forEach((gf) => {
         const ultimaTx = gastoFijoUltimaTx(gf);
         const monto = ultimaTx ? Math.abs(toNum(ultimaTx.monto)) : toNum(gf.monto);
@@ -547,8 +518,30 @@ function renderApp() {
         html += '<div class="sub-row-locked"><span class="locked-name" style="display:flex;align-items:center;gap:8px;"><span class="status-pill ' + (pagado ? "verde" : "amarillo") + '" style="font-size:9.5px;">' + (pagado ? t("pagadoEsteMesLbl") : t("pendienteEsteMesLbl")) + '</span>' + esc(gf.nombre) + '</span><span class="locked-amount">' + sym() + fmt0(monto) + '</span></div>';
         html += '<button class="delete-link" style="margin-bottom:6px;" data-action="removeGastoFijoReconocido" data-id="' + gf.id + '">' + t("olvidarBtn") + '</button>';
       });
-      html += '<div class="mini-total"><span>' + t("pendienteEsteMesTotalLbl") + '</span><b style="color:#FF3B30;">' + sym() + fmt0(totalPendiente) + '</b></div>';
-      html += '<div class="mini-total"><span>' + t("pagadoEsteMesTotalLbl") + '</span><b style="color:#34C759;">' + sym() + fmt0(totalPagado) + '</b></div>';
+      if (state.gastosFijosReconocidos.length > 0) {
+        html += '<div class="mini-total"><span>' + t("pendienteEsteMesTotalLbl") + '</span><b style="color:#FF3B30;">' + sym() + fmt0(totalPendiente) + '</b></div>';
+        html += '<div class="mini-total"><span>' + t("pagadoEsteMesTotalLbl") + '</span><b style="color:#34C759;">' + sym() + fmt0(totalPagado) + '</b></div>';
+      }
+
+      if (insCuentas.suscripcionesDetectadas.length > 0) {
+        html += '<p class="opt-section-title" style="margin-top:14px;">' + t("suscripcionesDetectadasTitle") + '</p>';
+        insCuentas.suscripcionesDetectadas.forEach((s) => {
+          html += '<div class="card-entry" style="' + (s.cancelada ? "opacity:0.5;" : "") + '">';
+          html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(s.nombre) + (s.cancelada ? ' \u00b7 ' + t("canceladaLbl") : '') + '</span><span class="locked-amount" style="' + (s.cancelada ? "text-decoration:line-through;" : "") + '">' + sym() + fmt0(s.monto) + '</span></div>';
+          if (!s.cancelada) html += '<p class="opt-row-sub">' + esc(diasLabel(s.diasFaltan)) + ' \u00b7 ' + esc(formatDate(s.proxima)) + '</p>';
+          html += '<div class="seg" style="width:100%;margin-top:6px;">';
+          ["semanal", "quincenal", "mensual", "anual"].forEach((f) => {
+            html += '<button style="flex:1;font-size:10.5px;padding:5px;" class="' + (s.frecuencia === f ? "active" : "") + '" data-action="' + (s.origen === "manual" ? "setManualFrecuencia" : "setFrecuenciaAuto") + '" data-id="' + esc(s.origen === "manual" ? s.id : s.key) + '" data-freq="' + f + '">' + t(f === "anual" ? "freqAnual" : f === "mensual" ? "payMensual" : f === "quincenal" ? "payQuincenal" : "paySemanal") + '</button>';
+          });
+          html += '</div>';
+          html += '<div style="display:flex;gap:8px;margin-top:6px;">';
+          html += '<button class="delete-link" data-action="toggleSuscripcionCancelada" data-id="' + esc(s.origen === "manual" ? s.id : s.key) + '">' + (s.cancelada ? t("reactivarBtn") : t("cancelarBtn")) + '</button>';
+          if (s.origen === "manual") html += '<button class="delete-link" data-action="removeSuscripcionManual" data-id="' + s.id + '">' + t("eliminar") + '</button>';
+          html += '</div>';
+          html += '</div>';
+        });
+        html += '<div class="mini-total"><span>' + t("totalSuscripcionesLbl") + '</span><b>' + sym() + fmt0(totalSuscripcionesMes) + '</b></div>';
+      }
       html += '</div>';
     }
 
@@ -636,58 +629,6 @@ function renderApp() {
       });
       html += '</div>';
     }
-    html += '<div class="panel"><div class="panel-head-row"><p class="hint" style="margin-bottom:0;">' + t("cardsHint") + '</p><button class="icon-pencil' + (state.editingCards ? " done" : "") + '" data-action="toggleEditCards">' + (state.editingCards ? icon("check") : icon("pencil")) + '</button></div>';
-    if (!state.editingCards) {
-      state.cards.forEach((c) => {
-        html += '<div class="sub-row-locked"><span class="locked-name">' + esc(c.nombre || t("cardNombrePh")) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(c.saldo)) + '</span></div>';
-      });
-      if (state.cards.length === 0) html += '<div class="empty-state">' + t("cardsEmpty") + '</div>';
-      html += '<div class="mini-total"><span>' + t("totalMinimos") + '</span><b>' + sym() + fmt0(t2.totalMinimos) + '</b></div></div>';
-    } else {
-    state.cards.forEach((c) => {
-      const lim = toNum(c.limite);
-      const saldo = toNum(c.saldo);
-      const uso = lim > 0 ? Math.min((saldo / lim) * 100, 100) : null;
-      const usoNivel = uso === null ? "" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
-
-      if (state.confirmDeleteCardId === c.id) {
-        html += '<div class="card-entry"><div class="confirm-row"><span>' + esc(t("confirmDeleteCardMsg")(c.nombre || t("cardNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeCard" data-id="' + c.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteCard">' + t("cancel") + '</button></div></div></div>';
-        return;
-      }
-
-      if (state.expandedCardIds[c.id]) {
-        html += '<div class="card-entry">';
-        html += '<div class="card-entry-top"><input type="text" placeholder="' + t("cardNombrePh") + '" id="card-nombre-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="nombre" value="' + esc(c.nombre) + '">';
-        html += '<button class="icon-pencil done" data-action="toggleCardExpand" data-id="' + c.id + '">' + icon("check") + '</button></div>';
-        html += '<div class="card-fields">';
-        html += '<div><span class="field-label">' + t("saldoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + esc(c.saldo) + '"></div>';
-        html += '<div><span class="field-label">' + t("limiteLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="card-limite-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="limite" value="' + esc(c.limite) + '"></div>';
-        html += '<div><span class="field-label">' + t("taeLbl") + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-apr-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="apr" value="' + esc(c.apr) + '"></div>';
-        html += '<div><span class="field-label">' + t("minimoLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-minimo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="minimo" value="' + esc(c.minimo) + '"></div>';
-        html += '</div>';
-        if (uso !== null) {
-          html += utilBarHtml(uso, usoNivel);
-          html += '<div class="util-label">' + t("usoLimite") + Math.round(uso) + '%</div>';
-        }
-        html += renderPagoBlock('card', c, c.saldo);
-        html += '<button class="delete-link" data-action="askDeleteCard" data-id="' + c.id + '">' + t("deleteCardLink") + '</button>';
-        html += '</div>';
-      } else {
-        html += '<div class="card-entry">';
-        html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(c.nombre || t("cardNombrePh")) + '</span><button class="icon-pencil" data-action="toggleCardExpand" data-id="' + c.id + '">' + icon("pencil") + '</button></div>';
-        html += '<div class="card-collapsed-balance"><span class="field-label">' + t("debesAhoraLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="card-saldo-' + c.id + '" data-scope="card" data-id="' + c.id + '" data-field="saldo" value="' + esc(c.saldo) + '" style="font-size:19px;font-weight:800;"></div>';
-        if (uso !== null) {
-          html += utilBarHtml(uso, usoNivel);
-          html += '<div class="util-label">' + t("usoLimite") + Math.round(uso) + '%</div>';
-        }
-        html += renderPagoBlock('card', c, c.saldo);
-        html += '</div>';
-      }
-    });
-    if (state.cards.length === 0) html += '<div class="empty-state">' + t("cardsEmpty") + '</div>';
-    html += '<button class="add-btn" data-action="addCard">' + t("addCard") + '</button>';
-    html += '<div class="mini-total"><span>' + t("totalMinimos") + '</span><b>' + sym() + fmt0(t2.totalMinimos) + '</b></div></div>';
-    }
   }
 
   if (tab === "insights") {
@@ -710,27 +651,7 @@ function renderApp() {
     if (ins.categoriasOrdenadas.length > 0) {
       html += '<div class="panel"><h2>' + t("gastoPorCategoriaTitle") + '</h2>';
       html += renderBarChart(ins.categoriasOrdenadas, 110);
-      html += '</div>';
-    }
-
-    if (ins.suscripcionesDetectadas.length > 0) {
-      html += '<div class="panel"><h2>' + t("suscripcionesDetectadasTitle") + '</h2><p class="hint">' + t("suscripcionesDetectadasHint") + '</p>';
-      html += '<div class="mini-total"><span>' + t("totalSuscripcionesLbl") + '</span><b>' + sym() + fmt0(ins.suscripcionesTotalMensual) + '</b></div>';
-      ins.suscripcionesDetectadas.forEach((s) => {
-        html += '<div class="card-entry" style="' + (s.cancelada ? "opacity:0.5;" : "") + '">';
-        html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(s.nombre) + (s.cancelada ? ' \u00b7 ' + t("canceladaLbl") : '') + '</span><span class="locked-amount" style="' + (s.cancelada ? "text-decoration:line-through;" : "") + '">' + sym() + fmt0(s.monto) + '</span></div>';
-        if (!s.cancelada) html += '<p class="opt-row-sub">' + esc(diasLabel(s.diffDays !== undefined ? s.diffDays : s.diasFaltan)) + ' \u00b7 ' + esc(formatDate(s.proxima)) + '</p>';
-        html += '<div class="seg" style="width:100%;margin-top:6px;">';
-        ["semanal", "quincenal", "mensual", "anual"].forEach((f) => {
-          html += '<button style="flex:1;font-size:10.5px;padding:5px;" class="' + (s.frecuencia === f ? "active" : "") + '" data-action="' + (s.origen === "manual" ? "setManualFrecuencia" : "setFrecuenciaAuto") + '" data-id="' + esc(s.origen === "manual" ? s.id : s.key) + '" data-freq="' + f + '">' + t(f === "anual" ? "freqAnual" : f === "mensual" ? "payMensual" : f === "quincenal" ? "payQuincenal" : "paySemanal") + '</button>';
-        });
-        html += '</div>';
-        html += '<div style="display:flex;gap:8px;margin-top:6px;">';
-        html += '<button class="delete-link" data-action="toggleSuscripcionCancelada" data-id="' + esc(s.origen === "manual" ? s.id : s.key) + '">' + (s.cancelada ? t("reactivarBtn") : t("cancelarBtn")) + '</button>';
-        if (s.origen === "manual") html += '<button class="delete-link" data-action="removeSuscripcionManual" data-id="' + s.id + '">' + t("eliminar") + '</button>';
-        html += '</div>';
-        html += '</div>';
-      });
+      html += renderDonutChart(ins.categoriasOrdenadas);
       html += '</div>';
     }
 
@@ -783,15 +704,24 @@ function renderApp() {
 
       if (compras.length === 0) html += '<div class="empty-state">' + t("sinResultadosMsg") + '</div>';
       const gruposCompras = agruparPorMes(compras);
-      gruposCompras.slice(0, state.historialMesesVisibles).forEach((grupo, idx) => {
-        html += '<p class="opt-section-title" style="margin-top:' + (idx === 0 ? "4px" : "16px") + ';">' + esc(grupo.label) + '</p>';
-        grupo.items.forEach((tx) => {
-          html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
-        });
+      gruposCompras.forEach((grupo, idx) => {
+        if (idx === 0) {
+          html += '<p class="opt-section-title" style="margin-top:4px;">' + esc(grupo.label) + '</p>';
+          grupo.items.forEach((tx) => {
+            html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
+          });
+          return;
+        }
+        const abierto = state.historialMesAbierto === grupo.monthKey;
+        const totalMes = grupo.items.reduce((a, tx) => a + Math.abs(toNum(tx.monto)), 0);
+        html += '<button class="sub-row-locked" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;font:inherit;color:inherit;" data-action="toggleMesHistorial" data-id="' + grupo.monthKey + '"><span class="locked-name" style="display:flex;align-items:center;gap:6px;">' + (abierto ? '\u2304' : '\u203a') + ' ' + esc(grupo.label) + '</span><span class="locked-amount">' + sym() + fmt0(totalMes) + '</span></button>';
+        if (abierto) {
+          grupo.items.forEach((tx) => {
+            html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
+          });
+        }
       });
-      if (gruposCompras.length > state.historialMesesVisibles) {
-        html += '<button class="pill-btn wide" style="margin-top:10px;" data-action="verMasMesesHistorial">' + t("verMesesAnterioresBtn") + '</button>';
-      }
+
       html += '</div>';
     }
   }

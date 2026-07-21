@@ -23,7 +23,7 @@ async function enterProfile(id) {
   state.suscripcionesFrecuencia = d.suscripcionesFrecuencia || {};
   state.gastosFijosReconocidos = d.gastosFijosReconocidos || [];
   state.showMarcarGastoFijo = false; state.nombreGastoFijoTemp = "";
-  state.historialMesesVisibles = 3; state.pagosMesesVisibles = 3;
+  state.historialMesesVisibles = 3; state.pagosMesesVisibles = 3; state.historialMesAbierto = null;
   state.editingGoals = false; state.confirmDeleteGoalId = null;
   state.consentimientoAceptado = !!d.consentimientoAceptado;
   state.consentimientoFecha = d.consentimientoFecha || "";
@@ -283,6 +283,7 @@ root.addEventListener("click", (e) => {
     toggleEditGoals: toggleEditGoals, addGoal: addGoal, askDeleteGoal: () => askDeleteGoal(id), cancelDeleteGoal: cancelDeleteGoal, removeGoal: () => removeGoal(id),
     setHistorialFiltro: () => { state.historialCategoriaFiltro = id || ""; render(); },
     verMasMesesHistorial: () => { state.historialMesesVisibles += 3; render(); },
+    toggleMesHistorial: () => { state.historialMesAbierto = state.historialMesAbierto === id ? null : id; render(); },
     verMasMesesPagos: () => { state.pagosMesesVisibles += 3; render(); },
     toggleSuscripcionCancelada: () => toggleSuscripcionCancelada(id),
     verDetalleTx: () => verDetalleTx(id), cerrarDetalleTx: cerrarDetalleTx,
