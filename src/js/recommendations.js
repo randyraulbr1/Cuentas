@@ -1,5 +1,39 @@
 "use strict";
 
+function computeInsights() {
+  const now = new Date();
+  const mesActualKey = monthKey();
+  const mesAnteriorDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const mesAnteriorKey = mesAnteriorDate.getFullYear() + "-" + String(mesAnteriorDate.getMonth() + 1).padStart(2, "0");
+
+  function txMonthKey(fecha) { return String(fecha || "").slice(0, 7); }
+
+  const gastosMesActual = state.cloudTransactions.filter((tx) => txMonthKey(tx.fecha) === mesActualKey && toNum(tx.monto) < 0);
+  const gastosMesAnterior = state.cloudTransactions.filter((tx) => txMonthKey(tx.fecha) === mesAnteriorKey && toNum(tx.monto) < 0);
+  const totalActual = gastosMesActual.reduce((a, tx) => a + Math.abs(toNum(tx.monto)), 0);
+  const totalAnterior = gastosMesAnterior.reduce((a, tx) => a + Math.abs(toNum(tx.monto)), 0);
+  const cambioPct = totalAnterior > 0 ? ((totalActual - totalAnterior) / totalAnterior) * 100 : null;
+
+  const porCategoria = {};
+  gastosMesActual.forEach((tx) => { const c = tx.categoria || "otros"; porCategoria[c] = (porCategoria[c] || 0) + Math.abs(toNum(tx.monto)); });
+  let topCategoria = null, topMonto = 0;
+  Object.keys(porCategoria).forEach((c) => { if (porCategoria[c] > topMonto) { topMonto = porCategoria[c]; topCategoria = c; } });
+
+  const porComercio = {};
+  state.cloudTransactions.forEach((tx) => {
+    if (toNum(tx.monto) >= 0) return;
+    const key = merchantKey(tx.descripcion);
+    if (!porComercio[key]) porComercio[key] = [];
+    porComercio[key].push(tx);
+  });
+  const suscripcionesDetectadas = Object.keys(porComercio)
+    .map((k) => porComercio[k])
+    .filter((txs) => txs.length >= 2 && (txs[0].categoria === "suscripciones" || txs[0].categoria === "streaming"))
+    .map((txs) => ({ nombre: txs[0].descripcion, monto: Math.abs(toNum(txs[0].monto)), veces: txs.length }));
+
+  return { totalActual, totalAnterior, cambioPct, topCategoria, topMonto, suscripcionesDetectadas };
+}
+
 function buildSugerencias(t2, resultado) {
   const s = [];
   const r = resultado;

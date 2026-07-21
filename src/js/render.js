@@ -226,9 +226,9 @@ function renderPagoBlock(type, item, saldoActual) {
 function renderTabBar() {
   const tabs = [
     { id: "inicio", icon: "home", label: t("tabInicio") },
-    { id: "tarjetas", icon: "card", label: t("tabTarjetas") },
-    { id: "pagos", icon: "receipt", label: t("tabPagos") },
-    { id: "historial", icon: "chart", label: t("tabHistorial") },
+    { id: "historial", icon: "receipt", label: t("tabHistorial") },
+    { id: "insights", icon: "chart", label: t("tabInsights") },
+    { id: "cuentas", icon: "wallet", label: t("tabCuentas") },
     { id: "opciones", icon: "gear", label: t("optionsTitle") },
   ];
   let h = '<div class="tab-bar">';
@@ -255,17 +255,27 @@ function renderApp() {
   html += '</div>';
 
   if (tab !== "inicio") {
-    html += '<div class="tab-subheader"><h2>' + t(tab === "tarjetas" ? "tabTarjetas" : tab === "pagos" ? "tabPagos" : tab === "opciones" ? "optionsTitle" : "tabHistorial") + '</h2></div>';
+    html += '<div class="tab-subheader"><h2>' + t(tab === "cuentas" ? "tabCuentas" : tab === "insights" ? "tabInsights" : tab === "opciones" ? "optionsTitle" : "tabHistorial") + '</h2></div>';
   }
 
   if (tab === "inicio") {
+    const cloudNoCredit = state.cloudAccounts.filter((a) => a.type !== "credit").reduce((a, c) => a + toNum(c.balance_current), 0);
+    const deudaPrestamos = state.loans.reduce((a, l) => a + Math.max(toNum(l.saldoTotal), 0), 0);
+    const patrimonioNeto = toNum(state.ahorroActual) + toNum(state.cash) + toNum(state.debito) + cloudNoCredit - t2.totalDeuda - deudaPrestamos;
+    html += '<div class="panel" style="text-align:center;">';
+    html += '<p class="hint" style="margin-bottom:2px;">' + t("patrimonioNetoLbl") + '</p>';
+    html += '<div style="font-size:32px;font-weight:800;letter-spacing:-0.01em;color:' + (patrimonioNeto >= 0 ? "var(--text)" : "#FF3B30") + ';">' + (patrimonioNeto < 0 ? "-" : "") + sym() + fmt0(Math.abs(patrimonioNeto)) + '</div>';
+    html += '</div>';
     html += '<div class="summary">';
-    html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></div>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("debitoLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito)) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("cashLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.cash)) + '</div></div>';
-    if (t2.cardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("debitoLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito) + cloudNoCredit) + '</div></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></div>';
+    html += '</div>';
+
+    html += '<div class="summary">';
+    html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
+    if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
     if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + (np.ajustado ? ' ' + icon("pencil") : "") + '</div></div>';
     html += '</div>';
 
@@ -313,31 +323,6 @@ function renderApp() {
     }
     html += '</div>';
 
-    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("tuAhorroTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("tuAhorroHint") + '</p></div><button class="icon-pencil' + (state.editingAhorro ? " done" : "") + '" data-action="toggleEditAhorro">' + (state.editingAhorro ? icon("check") : icon("pencil")) + '</button></div>';
-    if (!state.editingAhorro) {
-      html += '<div class="sub-row-locked"><span class="locked-name">' + t("debitoLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.debito)) + '</span></div>';
-      html += '<div class="sub-row-locked"><span class="locked-name">' + t("cashLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.cash)) + '</span></div>';
-      html += '<div class="sub-row-locked"><span class="locked-name">' + t("ahorroActualLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.ahorroActual)) + '</span></div>';
-      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + t("metaAhorroLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.metaAhorro)) + '</span></div>';
-      if (toNum(state.metaAhorro) > 0) {
-        html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
-        html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
-      }
-    } else {
-      html += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '" style="width:100%;"></div>';
-      html += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("cashLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="cash-input" data-scope="cash" value="' + esc(state.cash) + '" style="width:100%;"></div>';
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '"></div>';
-      html += '<div class="goal-field"><label>' + t("metaAhorroLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="meta-ahorro-input" data-scope="metaAhorro" value="' + esc(state.metaAhorro) + '"></div>';
-      html += '</div>';
-      if (toNum(state.metaAhorro) > 0) {
-        html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
-        html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
-      }
-    }
-    html += '<p class="hint" style="margin-top:10px;">' + t("ahorroPctTitle") + ': <b>' + state.savingsRate + '%</b></p>';
-    html += '</div>';
-
     if (resultado && resultado.insuficiente) {
       html += '<div class="warn-box"><b>' + t("noAlcanza") + '</b><br>' + t("faltan") + ' <b>' + sym() + fmt0(resultado.faltante) + '</b>.</div>';
     }
@@ -366,7 +351,32 @@ function renderApp() {
     html += '<p class="save-note">' + (state.storageError ? t("saveNoteErr") : t("saveNoteOk")) + ' · ' + APP_VERSION + '</p>';
   }
 
-  if (tab === "pagos") {
+  if (tab === "cuentas") {
+    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("tuAhorroTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("tuAhorroHint") + '</p></div><button class="icon-pencil' + (state.editingAhorro ? " done" : "") + '" data-action="toggleEditAhorro">' + (state.editingAhorro ? icon("check") : icon("pencil")) + '</button></div>';
+    if (!state.editingAhorro) {
+      html += '<div class="sub-row-locked"><span class="locked-name">' + t("debitoLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.debito)) + '</span></div>';
+      html += '<div class="sub-row-locked"><span class="locked-name">' + t("cashLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.cash)) + '</span></div>';
+      html += '<div class="sub-row-locked"><span class="locked-name">' + t("ahorroActualLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.ahorroActual)) + '</span></div>';
+      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + t("metaAhorroLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.metaAhorro)) + '</span></div>';
+      if (toNum(state.metaAhorro) > 0) {
+        html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
+        html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
+      }
+    } else {
+      html += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '" style="width:100%;"></div>';
+      html += '<div class="goal-field" style="margin-bottom:10px;"><label>' + t("cashLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="cash-input" data-scope="cash" value="' + esc(state.cash) + '" style="width:100%;"></div>';
+      html += '<div class="goal-grid">';
+      html += '<div class="goal-field"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '"></div>';
+      html += '<div class="goal-field"><label>' + t("metaAhorroLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="meta-ahorro-input" data-scope="metaAhorro" value="' + esc(state.metaAhorro) + '"></div>';
+      html += '</div>';
+      if (toNum(state.metaAhorro) > 0) {
+        html += '<div class="progress-track"><div class="progress-fill" style="width:' + metaProgreso + '%"></div></div>';
+        html += '<div class="goal-caption"><span>' + sym() + fmt0(toNum(state.ahorroActual)) + ' / ' + sym() + fmt0(toNum(state.metaAhorro)) + '</span><span>' + Math.round(metaProgreso) + '%</span></div>';
+      }
+    }
+    html += '<p class="hint" style="margin-top:10px;">' + t("ahorroPctTitle") + ': <b>' + state.savingsRate + '%</b></p>';
+    html += '</div>';
+
     if (state.autoPagoNotif && state.autoPagoNotif.length > 0) {
       html += '<div class="flash">' + t("autoPagoAplicado")(state.autoPagoNotif.join(", ")) + '</div>';
     }
@@ -483,7 +493,7 @@ function renderApp() {
   }
 
 
-  if (tab === "tarjetas") {
+  if (tab === "cuentas") {
     if (state.payFlash) html += '<div class="flash">' + icon("check") + ' ' + t("pagoRegistrado") + '</div>';
 
     const cloudCards = cloudCreditCards();
@@ -561,6 +571,40 @@ function renderApp() {
     if (state.cards.length === 0) html += '<div class="empty-state">' + t("cardsEmpty") + '</div>';
     html += '<button class="add-btn" data-action="addCard">' + t("addCard") + '</button>';
     html += '<div class="mini-total"><span>' + t("totalMinimos") + '</span><b>' + sym() + fmt0(t2.totalMinimos) + '</b></div></div>';
+    }
+  }
+
+  if (tab === "insights") {
+    const ins = computeInsights();
+    html += '<div class="panel">';
+    html += '<h2>' + t("gastoMesTitle") + '</h2>';
+    html += '<div class="mini-total"><span>' + t("esteMesLbl") + '</span><b class="locked-amount">' + sym() + fmt0(ins.totalActual) + '</b></div>';
+    if (ins.cambioPct !== null) {
+      const subio = ins.cambioPct > 0;
+      html += '<p class="opt-row-sub" style="color:' + (subio ? "#FF3B30" : "#34C759") + ';margin-top:6px;">' + t(subio ? "gastasteMasMsg" : "gastasteMenosMsg")(Math.round(Math.abs(ins.cambioPct))) + '</p>';
+    }
+    if (ins.topCategoria) html += '<p class="opt-row-sub" style="margin-top:4px;">' + t("mayorGastoMsg")(t("cat_" + ins.topCategoria), sym() + fmt0(ins.topMonto)) + '</p>';
+    html += '</div>';
+
+    if (ins.suscripcionesDetectadas.length > 0) {
+      html += '<div class="panel"><h2>' + t("suscripcionesDetectadasTitle") + '</h2><p class="hint">' + t("suscripcionesDetectadasHint") + '</p>';
+      ins.suscripcionesDetectadas.forEach((s) => {
+        html += '<div class="sub-row-locked"><span class="locked-name">' + esc(s.nombre) + '</span><span class="locked-amount">' + sym() + fmt0(s.monto) + '</span></div>';
+      });
+      const totalSuscripciones = ins.suscripcionesDetectadas.reduce((a, s) => a + s.monto, 0);
+      html += '<div class="mini-total"><span>' + t("totalSuscripcionesLbl") + '</span><b>' + sym() + fmt0(totalSuscripciones) + '</b></div>';
+      html += '</div>';
+    }
+
+    const resultado2 = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
+    const consejos = buildSugerencias(t2, resultado2);
+    if (consejos.length > 0) {
+      html += '<div class="panel"><h2>' + t("consejosTitle") + '</h2>';
+      consejos.forEach((c) => { html += '<p class="opt-row-sub" style="margin-bottom:8px;">\u2022 ' + esc(c) + '</p>'; });
+      html += '</div>';
+    }
+    if (ins.suscripcionesDetectadas.length === 0 && consejos.length === 0 && !ins.topCategoria) {
+      html += '<div class="empty-state">' + t("insightsEmpty") + '</div>';
     }
   }
 
