@@ -34,7 +34,7 @@ const CATEGORY_ICON_MAP = {
   transferencias: { icon: "bills", color: "#546E7A" },
   depositos: { icon: "bills", color: "#2E7D32" },
   tarjeta_credito: { icon: "card", color: "#37474F" },
-  otros: { icon: "store", color: "#78909C" },
+  otros: { icon: "store", color: "#5C6BC0" },
 };
 function categoriaIconoColor(cat) { return CATEGORY_ICON_MAP[cat] || CATEGORY_ICON_MAP.otros; }
 

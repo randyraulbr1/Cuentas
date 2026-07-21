@@ -27,7 +27,6 @@ function renderBancoNubePanel(compact) {
   });
 
   html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
-  if (state.cloudInstitutions.length > 0) html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="actualizarDatosNube"' + (state.cloudBusy ? " disabled" : "") + '>' + t("actualizarNubeBtn") + '</button>';
   if (state.cloudLastSync) html += '<p class="opt-row-sub" style="text-align:center;margin-top:8px;">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(state.cloudLastSync).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
 
   if (state.cloudAccounts.length > 0 && !compact) {
@@ -166,6 +165,21 @@ function renderExportSheet() {
 
 function renderOpcionesTab() {
   let h = '<p class="opt-row-sub" style="text-align:center;margin:-4px 0 12px;">' + t("optionsTitle") + ' \u00b7 v' + APP_VERSION.replace("v", "") + '</p>';
+    h += renderBancoNubePanel(true);
+
+    h += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("saldosManualesTitle") + '</h2></div><button class="icon-pencil' + (state.editingAhorro ? " done" : "") + '" data-action="toggleEditAhorro">' + (state.editingAhorro ? icon("check") : icon("pencil")) + '</button></div>';
+    if (!state.editingAhorro) {
+      h += '<div class="sub-row-locked"><span class="locked-name">' + t("debitoLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.debito)) + '</span></div>';
+      h += '<div class="sub-row-locked"><span class="locked-name">' + t("cashLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.cash)) + '</span></div>';
+      h += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + t("ahorroActualLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.ahorroActual)) + '</span></div>';
+    } else {
+      h += '<div class="goal-grid">';
+      h += '<div class="goal-field"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '"></div>';
+      h += '<div class="goal-field"><label>' + t("cashLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="cash-input" data-scope="cash" value="' + esc(state.cash) + '"></div>';
+      h += '</div>';
+      h += '<div class="goal-field" style="margin-top:10px;"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '" style="width:100%;"></div>';
+    }
+    h += '</div>';
 
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
   h += '<div class="panel"><p class="opt-section-title">' + t("secPerfil") + '</p>';
@@ -369,7 +383,13 @@ function renderApp() {
       const sugGustos = debitoBase * 0.2;
       const resultadoMes = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
       const sugAhorro = resultadoMes && !resultadoMes.insuficiente ? resultadoMes.ahorro : t2.disponibleBruto * (state.savingsRate / 100);
+      const insGustos = computeInsights();
+      const mkActual = monthKey();
+      const fijosPagadosEsteMes = state.gastosFijosReconocidos.filter((gf) => gastoFijoPagadoEsteMes(gf)).reduce((a, gf) => { const ux = gastoFijoUltimaTx(gf); return a + (ux ? Math.abs(toNum(ux.monto)) : toNum(gf.monto)); }, 0);
+      const suscripcionesEsteMes = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0 && String(tx.fecha).slice(0, 7) === mkActual && (tx.categoria === "suscripciones" || tx.categoria === "streaming")).reduce((a, tx) => a + Math.abs(toNum(tx.monto)), 0);
+      const gastadoGustos = Math.max(insGustos.totalActual - fijosPagadosEsteMes - suscripcionesEsteMes, 0);
       html += '<div class="panel"><h2>' + t("esteMesSugerenciasTitle") + '</h2>';
+      html += '<div class="mini-total"><span>' + t("gastadoGustosLbl") + '</span><b>' + sym() + fmt0(gastadoGustos) + '</b></div>';
       html += '<div class="mini-total"><span>' + t("sugGustosLbl") + '</span><b>' + sym() + fmt0(sugGustos) + '</b></div>';
       html += '<p class="opt-row-sub" style="margin-top:-6px;margin-bottom:8px;">' + t("sugGustosHint") + '</p>';
       html += '<div class="mini-total"><span>' + t("sugAhorroLbl") + '</span><b>' + sym() + fmt0(sugAhorro) + '</b></div>';
@@ -445,39 +465,8 @@ function renderApp() {
   }
 
   if (tab === "cuentas") {
-    html += renderBancoNubePanel(true);
-
-    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("saldosManualesTitle") + '</h2></div><button class="icon-pencil' + (state.editingAhorro ? " done" : "") + '" data-action="toggleEditAhorro">' + (state.editingAhorro ? icon("check") : icon("pencil")) + '</button></div>';
-    if (!state.editingAhorro) {
-      html += '<div class="sub-row-locked"><span class="locked-name">' + t("debitoLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.debito)) + '</span></div>';
-      html += '<div class="sub-row-locked"><span class="locked-name">' + t("cashLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.cash)) + '</span></div>';
-      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + t("ahorroActualLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.ahorroActual)) + '</span></div>';
-    } else {
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '"></div>';
-      html += '<div class="goal-field"><label>' + t("cashLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="cash-input" data-scope="cash" value="' + esc(state.cash) + '"></div>';
-      html += '</div>';
-      html += '<div class="goal-field" style="margin-top:10px;"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '" style="width:100%;"></div>';
-    }
-    html += '</div>';
     if (state.autoPagoNotif && state.autoPagoNotif.length > 0) {
       html += '<div class="flash">' + t("autoPagoAplicado")(state.autoPagoNotif.join(", ")) + '</div>';
-    }
-
-    const pagosRecibidos = state.cloudTransactions.filter((tx) => toNum(tx.monto) > 0);
-    if (pagosRecibidos.length > 0) {
-      html += '<div class="panel"><h2>' + t("pagosRecibidosBancoTitle") + '</h2><p class="hint">' + t("pagosRecibidosBancoHint") + '</p>';
-      const gruposPagos = agruparPorMes(pagosRecibidos);
-      gruposPagos.slice(0, state.pagosMesesVisibles).forEach((grupo, idx) => {
-        html += '<p class="opt-section-title" style="margin-top:' + (idx === 0 ? "4px" : "16px") + ';">' + esc(grupo.label) + '</p>';
-        grupo.items.forEach((tx) => {
-          html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
-        });
-      });
-      if (gruposPagos.length > state.pagosMesesVisibles) {
-        html += '<button class="pill-btn wide" style="margin-top:10px;" data-action="verMasMesesPagos">' + t("verMesesAnterioresBtn") + '</button>';
-      }
-      html += '</div>';
     }
     html += '<div class="panel"><div class="panel-head-row"><div><p class="hint" style="margin-bottom:0;">' + t("subsHint") + '</p></div><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? icon("check") : icon("pencil")) + '</button></div>';
     if (state.editingSubs) {
@@ -704,9 +693,18 @@ function renderApp() {
     html += '</div>';
 
     const comprasBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0);
-    if (comprasBase.length > 0) {
-      const categoriasPresentes = Array.from(new Set(comprasBase.map((tx) => tx.categoria || "otros")));
-      html += '<div class="panel"><h2>' + t("comprasTitle") + '</h2><p class="hint">' + t("comprasHint") + '</p>';
+    const recibidosBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) > 0);
+    if (comprasBase.length > 0 || recibidosBase.length > 0) {
+      html += '<div class="panel">';
+      html += '<div class="seg" style="width:100%;margin-bottom:10px;"><button style="flex:1;" class="' + (state.historialVista === "compras" ? "active" : "") + '" data-action="setHistorialVista" data-id="compras">' + t("comprasTitle") + '</button><button style="flex:1;" class="' + (state.historialVista === "recibidos" ? "active" : "") + '" data-action="setHistorialVista" data-id="recibidos">' + t("pagosRecibidosBancoTitle") + '</button></div>';
+
+      const listaBase = state.historialVista === "recibidos" ? recibidosBase : comprasBase;
+      const categoriasPresentes = Array.from(new Set(listaBase.map((tx) => tx.categoria || "otros")));
+      if (state.historialVista === "recibidos") {
+        html += '<p class="hint">' + t("pagosRecibidosBancoHint") + '</p>';
+      } else {
+        html += '<p class="hint">' + t("comprasHint") + '</p>';
+      }
       html += '<input type="text" placeholder="' + t("buscarPh") + '" id="historial-search" data-scope="historialSearch" value="' + esc(state.historialSearch) + '" style="width:100%;margin-bottom:8px;">';
       html += '<div class="preset-row">';
       html += '<button class="preset-chip' + (!state.historialCategoriaFiltro ? " active-chip" : "") + '" data-action="setHistorialFiltro" data-id="">' + t("todasLbl") + '</button>';
@@ -715,7 +713,7 @@ function renderApp() {
       });
       html += '</div>';
 
-      let compras = comprasBase;
+      let compras = listaBase;
       if (state.historialCategoriaFiltro) compras = compras.filter((tx) => (tx.categoria || "otros") === state.historialCategoriaFiltro);
       if (state.historialSearch.trim()) {
         const q = state.historialSearch.trim().toLowerCase();

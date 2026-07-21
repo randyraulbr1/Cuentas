@@ -23,7 +23,7 @@ async function enterProfile(id) {
   state.suscripcionesFrecuencia = d.suscripcionesFrecuencia || {};
   state.gastosFijosReconocidos = d.gastosFijosReconocidos || [];
   state.showMarcarGastoFijo = false; state.nombreGastoFijoTemp = "";
-  state.historialMesesVisibles = 3; state.pagosMesesVisibles = 3; state.historialMesAbierto = null;
+  state.historialMesesVisibles = 3; state.pagosMesesVisibles = 3; state.historialMesAbierto = null; state.historialVista = "compras";
   state.editingGoals = false; state.confirmDeleteGoalId = null;
   state.consentimientoAceptado = !!d.consentimientoAceptado;
   state.consentimientoFecha = d.consentimientoFecha || "";
@@ -288,6 +288,7 @@ root.addEventListener("click", (e) => {
     iniciarConectarBanco: iniciarConectarBanco, actualizarDatosNube: actualizarDatosNube, resetConexionNube: resetConexionNube,
     toggleEditGoals: toggleEditGoals, addGoal: addGoal, askDeleteGoal: () => askDeleteGoal(id), cancelDeleteGoal: cancelDeleteGoal, removeGoal: () => removeGoal(id),
     setHistorialFiltro: () => { state.historialCategoriaFiltro = id || ""; render(); },
+    setHistorialVista: () => { state.historialVista = id; state.historialCategoriaFiltro = ""; state.historialMesAbierto = null; render(); },
     verMasMesesHistorial: () => { state.historialMesesVisibles += 3; render(); },
     toggleMesHistorial: () => { state.historialMesAbierto = state.historialMesAbierto === id ? null : id; render(); },
     verMesTendencia: () => verMesTendencia(id),
