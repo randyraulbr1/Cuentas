@@ -31,7 +31,16 @@ function computeInsights() {
     .filter((txs) => txs.length >= 2 && (txs[0].categoria === "suscripciones" || txs[0].categoria === "streaming"))
     .map((txs) => ({ nombre: txs[0].descripcion, monto: Math.abs(toNum(txs[0].monto)), veces: txs.length }));
 
-  return { totalActual, totalAnterior, cambioPct, topCategoria, topMonto, suscripcionesDetectadas };
+  const tendenciaMeses = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    const total = state.cloudTransactions.filter((tx) => txMonthKey(tx.fecha) === key && toNum(tx.monto) < 0).reduce((a, tx) => a + Math.abs(toNum(tx.monto)), 0);
+    tendenciaMeses.push({ etiqueta: (LANG === "es" ? MESES_ES : MESES_EN)[d.getMonth()].slice(0, 3), valor: total });
+  }
+  const categoriasOrdenadas = Object.keys(porCategoria).sort((a, b) => porCategoria[b] - porCategoria[a]).slice(0, 6).map((c) => ({ etiqueta: t("cat_" + c), valor: porCategoria[c] }));
+
+  return { totalActual, totalAnterior, cambioPct, topCategoria, topMonto, suscripcionesDetectadas, tendenciaMeses, categoriasOrdenadas };
 }
 
 function buildSugerencias(t2, resultado) {

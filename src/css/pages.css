@@ -32,6 +32,7 @@
 .preset-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .preset-chip { background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text); border-radius: 16px; padding: 6px 11px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .preset-chip:hover { border-color: #3D5AFE; color: #3D5AFE; }
+.preset-chip.active-chip { background: #3D5AFE; border-color: #3D5AFE; color: #fff; }
 .sugerencias { background: #EAF3FF; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
 [data-theme="dark"] .sugerencias { background: #0A2A4A; }
 .sugerencias h2 { font-size: 14.5px; color: #3D5AFE; margin: 0 0 8px; }

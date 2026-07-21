@@ -193,6 +193,21 @@ function renderOpcionesTab() {
   return h;
 }
 
+function renderBarChart(items, height) {
+  height = height || 90;
+  const max = Math.max(...items.map((i) => i.valor), 1);
+  let h = '<div style="display:flex;align-items:flex-end;gap:6px;height:' + height + 'px;margin:8px 0;">';
+  items.forEach((it) => {
+    const barH = Math.max((it.valor / max) * (height - 18), 2);
+    h += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">';
+    h += '<div style="width:100%;max-width:28px;height:' + barH + 'px;background:#3D5AFE;border-radius:4px 4px 0 0;"></div>';
+    h += '<div style="font-size:9.5px;color:var(--text-muted);margin-top:4px;white-space:nowrap;">' + esc(it.etiqueta) + '</div>';
+    h += '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
 function utilBarHtml(uso, usoNivel) {
   const blink = uso >= 30 ? " blink" : "";
   return '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + blink + '" style="width:' + uso + '%"></div><div class="util-bar-marker"></div></div>';
@@ -279,6 +294,16 @@ function renderApp() {
     if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + (np.ajustado ? ' ' + icon("pencil") : "") + '</div></div>';
     html += '</div>';
 
+    const pagosProximos = proximosPagos();
+    if (pagosProximos.length > 0) {
+      html += '<div class="panel"><h2>' + t("proximosPagosTitle") + '</h2>';
+      pagosProximos.slice(0, 6).forEach((p) => {
+        html += '<div class="history-row"><div class="history-top"><span class="history-month" style="text-transform:none;">' + esc(p.nombre) + '</span><span class="locked-amount">' + sym() + fmt0(p.monto) + '</span></div>';
+        html += '<div class="opt-row-sub">' + esc(diasLabel(p.diffDays)) + ' \u00b7 ' + esc(formatDate(p.fecha)) + '</div></div>';
+      });
+      html += '</div>';
+    }
+
     html += renderBancoNubePanel();
 
     if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) {
@@ -302,6 +327,33 @@ function renderApp() {
       });
       html += '</div>';
     }
+
+    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("objetivosTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("objetivosHint") + '</p></div><button class="icon-pencil' + (state.editingGoals ? " done" : "") + '" data-action="toggleEditGoals">' + (state.editingGoals ? icon("check") : icon("pencil")) + '</button></div>';
+    state.goals.forEach((g) => {
+      const objetivo = toNum(g.montoObjetivo);
+      const actual = toNum(g.montoActual);
+      const pct = objetivo > 0 ? Math.min((actual / objetivo) * 100, 100) : 0;
+      if (state.confirmDeleteGoalId === g.id) {
+        html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteGoalMsg")(g.nombre || t("goalNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeGoal" data-id="' + g.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteGoal">' + t("cancel") + '</button></div></div>';
+        return;
+      }
+      html += '<div style="margin-bottom:14px;">';
+      if (!state.editingGoals) {
+        html += '<div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(g.nombre || t("goalNombrePh")) + '</span><span class="opt-row-sub">' + sym() + fmt0(actual) + ' / ' + sym() + fmt0(objetivo) + '</span></div>';
+        html += '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>';
+      } else {
+        html += '<div class="goal-grid" style="margin-bottom:6px;"><input type="text" placeholder="' + t("goalNombrePh") + '" data-scope="goal" data-id="' + g.id + '" data-field="nombre" value="' + esc(g.nombre) + '"><button class="icon-del" data-action="askDeleteGoal" data-id="' + g.id + '">' + icon("close") + '</button></div>';
+        html += '<div class="goal-grid">';
+        html += '<div class="goal-field"><label>' + t("goalActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" data-scope="goal" data-id="' + g.id + '" data-field="montoActual" value="' + esc(g.montoActual) + '"></div>';
+        html += '<div class="goal-field"><label>' + t("goalObjetivoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" data-scope="goal" data-id="' + g.id + '" data-field="montoObjetivo" value="' + esc(g.montoObjetivo) + '"></div>';
+        html += '</div>';
+        html += '<div class="progress-track" style="margin-top:6px;"><div class="progress-fill" style="width:' + pct + '%"></div></div>';
+      }
+      html += '</div>';
+    });
+    if (state.goals.length === 0) html += '<div class="empty-state">' + t("objetivosEmpty") + '</div>';
+    if (state.editingGoals) html += '<button class="add-btn" data-action="addGoal">' + t("addGoal") + '</button>';
+    html += '</div>';
 
     html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("ingresoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + (state.payFrequency === "mensual" ? t("ingresoMensualHint") : t("ingresoHint")) + '</p></div><button class="icon-pencil' + (state.editingIngreso ? " done" : "") + '" data-action="toggleEditIngreso">' + (state.editingIngreso ? icon("check") : icon("pencil")) + '</button></div>';
     if (!state.editingIngreso) {
@@ -586,6 +638,17 @@ function renderApp() {
     if (ins.topCategoria) html += '<p class="opt-row-sub" style="margin-top:4px;">' + t("mayorGastoMsg")(t("cat_" + ins.topCategoria), sym() + fmt0(ins.topMonto)) + '</p>';
     html += '</div>';
 
+    if (ins.tendenciaMeses.some((m) => m.valor > 0)) {
+      html += '<div class="panel"><h2>' + t("tendenciaMensualTitle") + '</h2>';
+      html += renderBarChart(ins.tendenciaMeses);
+      html += '</div>';
+    }
+    if (ins.categoriasOrdenadas.length > 0) {
+      html += '<div class="panel"><h2>' + t("gastoPorCategoriaTitle") + '</h2>';
+      html += renderBarChart(ins.categoriasOrdenadas, 110);
+      html += '</div>';
+    }
+
     if (ins.suscripcionesDetectadas.length > 0) {
       html += '<div class="panel"><h2>' + t("suscripcionesDetectadasTitle") + '</h2><p class="hint">' + t("suscripcionesDetectadasHint") + '</p>';
       ins.suscripcionesDetectadas.forEach((s) => {
@@ -624,9 +687,26 @@ function renderApp() {
     });
     html += '</div>';
 
-    const compras = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0);
-    if (compras.length > 0) {
+    const comprasBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0);
+    if (comprasBase.length > 0) {
+      const categoriasPresentes = Array.from(new Set(comprasBase.map((tx) => tx.categoria || "otros")));
       html += '<div class="panel"><h2>' + t("comprasTitle") + '</h2><p class="hint">' + t("comprasHint") + '</p>';
+      html += '<input type="text" placeholder="' + t("buscarPh") + '" id="historial-search" data-scope="historialSearch" value="' + esc(state.historialSearch) + '" style="width:100%;margin-bottom:8px;">';
+      html += '<div class="preset-row">';
+      html += '<button class="preset-chip' + (!state.historialCategoriaFiltro ? " active-chip" : "") + '" data-action="setHistorialFiltro" data-id="">' + t("todasLbl") + '</button>';
+      categoriasPresentes.forEach((c) => {
+        html += '<button class="preset-chip' + (state.historialCategoriaFiltro === c ? " active-chip" : "") + '" data-action="setHistorialFiltro" data-id="' + c + '">' + t("cat_" + c) + '</button>';
+      });
+      html += '</div>';
+
+      let compras = comprasBase;
+      if (state.historialCategoriaFiltro) compras = compras.filter((tx) => (tx.categoria || "otros") === state.historialCategoriaFiltro);
+      if (state.historialSearch.trim()) {
+        const q = state.historialSearch.trim().toLowerCase();
+        compras = compras.filter((tx) => (tx.descripcion || "").toLowerCase().indexOf(q) !== -1);
+      }
+
+      if (compras.length === 0) html += '<div class="empty-state">' + t("sinResultadosMsg") + '</div>';
       compras.slice(0, 60).forEach((tx) => {
         html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10));
       });

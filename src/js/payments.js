@@ -204,6 +204,7 @@ function resetAll() {
   state.ingreso = ""; state.subs = []; state.cards = []; state.savingsRate = 20;
   state.ahorroActual = ""; state.metaAhorro = ""; state.debito = ""; state.cash = ""; state.resultado = null; state.confirmReset = false;
   state.bankTransactions = []; state.categoriaAprendida = {}; state.bankPendingCategoria = []; state.bankImportMsg = ""; state.confirmDeleteBankTxId = null;
+  state.goals = []; state.editingGoals = false; state.confirmDeleteGoalId = null;
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.ingresosLog = []; state.loans = [];
   state.job = { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false };
   state.turnos = []; state.turnoActivo = null; state.pagosTrabajo = [];
@@ -211,3 +212,13 @@ function resetAll() {
   state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payingSubId = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
   scheduleSave(); rerenderPreservingFocus();
 }
+
+function toggleEditGoals() { state.editingGoals = !state.editingGoals; state.confirmDeleteGoalId = null; render(); }
+function addGoal() {
+  state.goals.push({ id: uid(), nombre: "", montoObjetivo: "", montoActual: "" });
+  state.editingGoals = true;
+  scheduleSave(); rerenderPreservingFocus();
+}
+function askDeleteGoal(id) { state.confirmDeleteGoalId = id; render(); }
+function cancelDeleteGoal() { state.confirmDeleteGoalId = null; render(); }
+function removeGoal(id) { pushUndo(); state.goals = state.goals.filter((g) => g.id !== id); state.confirmDeleteGoalId = null; scheduleSave(); rerenderPreservingFocus(); }

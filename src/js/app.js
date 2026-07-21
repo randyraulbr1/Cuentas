@@ -16,6 +16,8 @@ async function enterProfile(id) {
   state.cash = d.cash != null ? d.cash : "";
   state.bankTransactions = d.bankTransactions || [];
   state.categoriaAprendida = d.categoriaAprendida || {};
+  state.goals = d.goals || [];
+  state.editingGoals = false; state.confirmDeleteGoalId = null;
   state.consentimientoAceptado = !!d.consentimientoAceptado;
   state.consentimientoFecha = d.consentimientoFecha || "";
   state.showConsentimiento = false;
@@ -166,6 +168,14 @@ root.addEventListener("input", (e) => {
   if (scope === "apiBaseUrl") { state.apiBaseUrl = el.value.trim(); saveSettings(); rerenderPreservingFocus(); return; }
   if (scope === "authEmail") { state.authEmail = el.value; rerenderPreservingFocus(); return; }
   if (scope === "authPassword") { state.authPassword = el.value; rerenderPreservingFocus(); return; }
+  if (scope === "goal") {
+    const g = state.goals.find((x) => x.id === el.dataset.id);
+    if (!g) return;
+    const f = el.dataset.field;
+    g[f] = f === "nombre" ? el.value : sanitizeNum(el.value);
+    scheduleSave(); rerenderPreservingFocus(); return;
+  }
+  if (scope === "historialSearch") { state.historialSearch = el.value; rerenderPreservingFocus(); return; }
   if (scope === "payFormMonto") { state.payFormMonto = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "metaAhorro") { state.metaAhorro = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "savingsRate") { state.savingsRate = Number(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
@@ -250,6 +260,8 @@ root.addEventListener("click", (e) => {
     setAuthRegister: () => { state.authMode = "register"; state.authFormError = ""; render(); },
     submitAuthForm: submitAuthForm, apiLogout: apiLogout, apiDeleteCloudAccount: apiDeleteCloudAccount,
     iniciarConectarBanco: iniciarConectarBanco, actualizarDatosNube: actualizarDatosNube, resetConexionNube: resetConexionNube,
+    toggleEditGoals: toggleEditGoals, addGoal: addGoal, askDeleteGoal: () => askDeleteGoal(id), cancelDeleteGoal: cancelDeleteGoal, removeGoal: () => removeGoal(id),
+    setHistorialFiltro: () => { state.historialCategoriaFiltro = id || ""; render(); },
     askDisconnectBank: () => askDisconnectBank(id), cancelDisconnectBank: cancelDisconnectBank,
     confirmDisconnectBank: () => confirmDisconnectBank(id),
     aceptarConsentimiento: aceptarConsentimiento, cancelarConsentimiento: cancelarConsentimiento,
