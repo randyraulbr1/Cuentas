@@ -27,9 +27,9 @@ function computeInsights() {
     porComercio[key].push(tx);
   });
   const suscripcionesDetectadas = Object.keys(porComercio)
-    .map((k) => porComercio[k])
-    .filter((txs) => txs.length >= 2 && (txs[0].categoria === "suscripciones" || txs[0].categoria === "streaming"))
-    .map((txs) => ({ nombre: txs[0].descripcion, monto: Math.abs(toNum(txs[0].monto)), veces: txs.length }));
+    .map((k) => ({ key: k, txs: porComercio[k] }))
+    .filter(({ txs }) => txs.length >= 2 && (txs[0].categoria === "suscripciones" || txs[0].categoria === "streaming"))
+    .map(({ key, txs }) => ({ key: key, nombre: txs[0].descripcion, monto: Math.abs(toNum(txs[0].monto)), veces: txs.length, cancelada: state.suscripcionesCanceladas.indexOf(key) !== -1 }));
 
   const tendenciaMeses = [];
   for (let i = 5; i >= 0; i--) {
@@ -41,6 +41,16 @@ function computeInsights() {
   const categoriasOrdenadas = Object.keys(porCategoria).sort((a, b) => porCategoria[b] - porCategoria[a]).slice(0, 6).map((c) => ({ etiqueta: t("cat_" + c), valor: porCategoria[c] }));
 
   return { totalActual, totalAnterior, cambioPct, topCategoria, topMonto, suscripcionesDetectadas, tendenciaMeses, categoriasOrdenadas };
+}
+
+function comparaConPromedioCategoria(tx) {
+  if (!tx.categoria || toNum(tx.monto) >= 0) return null;
+  const mismos = state.cloudTransactions.filter((t) => t.categoria === tx.categoria && toNum(t.monto) < 0 && t.id !== tx.id);
+  if (mismos.length < 2) return null;
+  const promedio = mismos.reduce((a, t) => a + Math.abs(toNum(t.monto)), 0) / mismos.length;
+  if (promedio <= 0) return null;
+  const pct = ((Math.abs(toNum(tx.monto)) - promedio) / promedio) * 100;
+  return { promedio, pct };
 }
 
 function buildSugerencias(t2, resultado) {

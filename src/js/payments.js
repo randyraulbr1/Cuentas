@@ -205,6 +205,7 @@ function resetAll() {
   state.ahorroActual = ""; state.metaAhorro = ""; state.debito = ""; state.cash = ""; state.resultado = null; state.confirmReset = false;
   state.bankTransactions = []; state.categoriaAprendida = {}; state.bankPendingCategoria = []; state.bankImportMsg = ""; state.confirmDeleteBankTxId = null;
   state.goals = []; state.editingGoals = false; state.confirmDeleteGoalId = null;
+  state.suscripcionesCanceladas = [];
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.ingresosLog = []; state.loans = [];
   state.job = { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false };
   state.turnos = []; state.turnoActivo = null; state.pagosTrabajo = [];
@@ -222,3 +223,13 @@ function addGoal() {
 function askDeleteGoal(id) { state.confirmDeleteGoalId = id; render(); }
 function cancelDeleteGoal() { state.confirmDeleteGoalId = null; render(); }
 function removeGoal(id) { pushUndo(); state.goals = state.goals.filter((g) => g.id !== id); state.confirmDeleteGoalId = null; scheduleSave(); rerenderPreservingFocus(); }
+
+function toggleSuscripcionCancelada(merchantKey) {
+  const idx = state.suscripcionesCanceladas.indexOf(merchantKey);
+  if (idx === -1) state.suscripcionesCanceladas.push(merchantKey);
+  else state.suscripcionesCanceladas.splice(idx, 1);
+  scheduleSave(); render();
+}
+
+function verDetalleTx(id) { state.showTxDetalle = id; render(); }
+function cerrarDetalleTx() { state.showTxDetalle = null; render(); }

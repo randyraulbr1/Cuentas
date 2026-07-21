@@ -220,10 +220,10 @@ router.get("/accounts", requireAuth, async (req, res) => {
 router.get("/transactions", requireAuth, async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 200, 500);
   const result = await query(
-    `SELECT id, fecha, descripcion, merchant_name, monto, categoria, pendiente
-     FROM transactions
-     WHERE user_id = $1 AND removed = false
-     ORDER BY fecha DESC, created_at DESC
+    `SELECT t.id, t.fecha, t.descripcion, t.merchant_name, t.monto, t.categoria, t.pendiente, a.id as account_id, a.name as account_name, a.mask as account_mask
+     FROM transactions t JOIN accounts a ON a.id = t.account_id
+     WHERE t.user_id = $1 AND t.removed = false
+     ORDER BY t.fecha DESC, t.created_at DESC
      LIMIT $2`,
     [req.userId, limit]
   );

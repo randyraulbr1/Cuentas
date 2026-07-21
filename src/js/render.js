@@ -9,7 +9,7 @@ function renderBancoNubePanel() {
   if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
 
   if (!state.authUser) {
-    html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
+    html += '<button class="pay-trigger" style="background:#1E3A8A;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
     html += '<button class="delete-link" style="display:block;margin:8px auto 0;" data-action="resetConexionNube">' + t("restablecerConexionBtn") + '</button>';
     html += '</div>';
     return html;
@@ -26,7 +26,7 @@ function renderBancoNubePanel() {
     }
   });
 
-  html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
+  html += '<button class="pay-trigger" style="background:#1E3A8A;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
   if (state.cloudInstitutions.length > 0) html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="actualizarDatosNube"' + (state.cloudBusy ? " disabled" : "") + '>' + t("actualizarNubeBtn") + '</button>';
   if (state.cloudLastSync) html += '<p class="opt-row-sub" style="text-align:center;margin-top:8px;">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(state.cloudLastSync).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
 
@@ -38,7 +38,7 @@ function renderBancoNubePanel() {
   }
   if (state.cloudTransactions.length > 0) {
     state.cloudTransactions.slice(0, 8).forEach((tx) => {
-      html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10));
+      html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
     });
   }
   html += '</div>';
@@ -53,7 +53,7 @@ function renderSelector() {
 
   if (state.cloudBusy) html += '<p class="opt-row-sub" style="text-align:left;margin:0 0 8px;">' + t("esperaServidorMsg") + '</p>';
   html += renderBancoNubePanel();
-  html += '<p class="opt-row-sub" style="text-align:center;margin:6px 0 -4px;">v' + APP_VERSION.replace("v", "") + ' \u00b7 <button data-action="actualizar" style="background:none;border:none;color:#3D5AFE;font:inherit;padding:0;cursor:pointer;">' + t("update") + '</button></p>';
+  html += '<p class="opt-row-sub" style="text-align:center;margin:6px 0 -4px;">v' + APP_VERSION.replace("v", "") + ' \u00b7 <button data-action="actualizar" style="background:none;border:none;color:#1E3A8A;font:inherit;padding:0;cursor:pointer;">' + t("update") + '</button></p>';
   state.profiles.forEach((p) => {
     const initial = (p.nombre || "?").trim().charAt(0).toUpperCase();
     if (state.confirmDeleteProfileId === p.id) {
@@ -79,6 +79,28 @@ function renderSelector() {
   root.innerHTML = html;
 }
 
+function renderTxDetalleSheet() {
+  const tx = state.cloudTransactions.find((t) => t.id === state.showTxDetalle);
+  if (!tx) return "";
+  const comp = comparaConPromedioCategoria(tx);
+  let h = '<div class="options-overlay">';
+  h += '<div class="options-sheet">';
+  h += '<div class="options-head"><h2>' + esc(tx.descripcion) + '</h2><button class="options-close" data-action="cerrarDetalleTx">' + icon("close") + '</button></div>';
+  h += renderTxChip(tx.categoria);
+  h += '<div style="font-size:26px;font-weight:800;margin:10px 0;">' + (toNum(tx.monto) > 0 ? "+" : "\u2212") + sym() + fmt0(Math.abs(toNum(tx.monto))) + '</div>';
+  h += '<div class="opt-row"><span class="opt-row-label">' + t("categoriaDetalleLbl") + '</span><span>' + t("cat_" + (tx.categoria || "otros")) + '</span></div>';
+  h += '<div class="opt-row"><span class="opt-row-label">' + t("fechaDetalleLbl") + '</span><span>' + esc(String(tx.fecha).slice(0, 10)) + '</span></div>';
+  if (tx.account_name) h += '<div class="opt-row"><span class="opt-row-label">' + t("cuentaDetalleLbl") + '</span><span>' + esc(tx.account_name) + (tx.account_mask ? " ****" + esc(tx.account_mask) : "") + '</span></div>';
+  if (tx.merchant_name) h += '<div class="opt-row"><span class="opt-row-label">' + t("comercioDetalleLbl") + '</span><span>' + esc(tx.merchant_name) + '</span></div>';
+  if (tx.pendiente) h += '<div class="opt-row"><span class="opt-row-label">' + t("estadoDetalleLbl") + '</span><span class="status-pill amarillo">' + t("pendienteLbl") + '</span></div>';
+  if (comp) {
+    const subio = comp.pct > 0;
+    h += '<p class="opt-row-sub" style="margin-top:10px;color:' + (subio ? "#FF3B30" : "#34C759") + ';">' + t(subio ? "gastoMayorPromedioMsg" : "gastoMenorPromedioMsg")(Math.round(Math.abs(comp.pct))) + '</p>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
 function renderConsentimientoSheet() {
   let h = '<div class="options-overlay">';
   h += '<div class="options-sheet">';
@@ -87,7 +109,7 @@ function renderConsentimientoSheet() {
   h += '<ul style="margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.6;color:var(--text);">';
   [t("consentItem1"), t("consentItem2"), t("consentItem3"), t("consentItem4")].forEach((it) => { h += "<li>" + esc(it) + "</li>"; });
   h += "</ul>";
-  h += '<p class="opt-row-sub" style="margin-bottom:12px;">' + t("consentPoliza") + ' <a href="privacy.html" style="color:#3D5AFE;" target="_blank" rel="noopener">' + t("consentPolizaLink") + "</a></p>";
+  h += '<p class="opt-row-sub" style="margin-bottom:12px;">' + t("consentPoliza") + ' <a href="privacy.html" style="color:#1E3A8A;" target="_blank" rel="noopener">' + t("consentPolizaLink") + "</a></p>";
   h += '<div style="display:flex;gap:8px;">';
   h += '<button class="pill-btn confirm" style="flex:1;" data-action="aceptarConsentimiento">' + t("consentAceptar") + "</button>";
   h += '<button class="pill-btn" style="flex:1;" data-action="cancelarConsentimiento">' + t("cancel") + "</button>";
@@ -99,9 +121,9 @@ function renderTxChip(categoria) {
   const c = categoriaIconoColor(categoria);
   return '<div class="tx-chip" style="background:' + c.color + ';">' + icon(c.icon) + '</div>';
 }
-function renderTxRow(descripcion, categoria, monto, fecha, rightExtraHtml) {
+function renderTxRow(descripcion, categoria, monto, fecha, rightExtraHtml, txId) {
   const positivo = toNum(monto) > 0;
-  let h = '<div class="history-row"><div class="tx-row">';
+  let h = '<div class="history-row"' + (txId ? ' data-action="verDetalleTx" data-id="' + txId + '" style="cursor:pointer;"' : '') + '><div class="tx-row">';
   h += renderTxChip(categoria);
   h += '<div class="tx-row-main"><div class="tx-row-top"><span class="tx-row-name">' + esc(descripcion) + '</span><span class="locked-amount" style="color:' + (positivo ? "#34C759" : "var(--text)") + ';white-space:nowrap;">' + (positivo ? "+" : "\u2212") + sym() + fmt0(Math.abs(toNum(monto))) + '</span></div>';
   h += '<div class="tx-row-cat">' + esc(fecha || "") + (categoria ? " \u00b7 " + t("cat_" + categoria) : "") + '</div></div>';
@@ -200,7 +222,7 @@ function renderBarChart(items, height) {
   items.forEach((it) => {
     const barH = Math.max((it.valor / max) * (height - 18), 2);
     h += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">';
-    h += '<div style="width:100%;max-width:28px;height:' + barH + 'px;background:#3D5AFE;border-radius:4px 4px 0 0;"></div>';
+    h += '<div style="width:100%;max-width:28px;height:' + barH + 'px;background:#1E3A8A;border-radius:4px 4px 0 0;"></div>';
     h += '<div style="font-size:9.5px;color:var(--text-muted);margin-top:4px;white-space:nowrap;">' + esc(it.etiqueta) + '</div>';
     h += '</div>';
   });
@@ -369,7 +391,7 @@ function renderApp() {
         html += '<button class="icon-del" data-action="removeIngresoEntry" data-id="' + en.id + '">' + icon("close") + '</button></div>';
       });
       if (entradas.length === 0) html += '<div class="empty-state">' + t("ingresoLogEmpty") + '</div>';
-      html += '<button class="pay-trigger" data-action="addIngresoEntry" style="background:#3D5AFE;">' + t("addIngreso") + '</button>';
+      html += '<button class="pay-trigger" data-action="addIngresoEntry" style="background:#1E3A8A;">' + t("addIngreso") + '</button>';
       html += '<div class="mini-total"><span>' + t("pagosEsperados")(entradas.length, esperados) + '</span><b>' + sym() + fmt0(t2.ingresoEfectivo) + '</b></div>';
       if (entradas.length < esperados) html += '<p class="opt-row-sub" style="margin-top:8px;color:#B25E00;">' + t("pagosIncompletos") + '</p>';
     }
@@ -437,7 +459,7 @@ function renderApp() {
     if (pagosRecibidos.length > 0) {
       html += '<div class="panel"><h2>' + t("pagosRecibidosBancoTitle") + '</h2><p class="hint">' + t("pagosRecibidosBancoHint") + '</p>';
       pagosRecibidos.slice(0, 30).forEach((tx) => {
-        html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10));
+        html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
       });
       html += '</div>';
     }
@@ -652,9 +674,10 @@ function renderApp() {
     if (ins.suscripcionesDetectadas.length > 0) {
       html += '<div class="panel"><h2>' + t("suscripcionesDetectadasTitle") + '</h2><p class="hint">' + t("suscripcionesDetectadasHint") + '</p>';
       ins.suscripcionesDetectadas.forEach((s) => {
-        html += '<div class="sub-row-locked"><span class="locked-name">' + esc(s.nombre) + '</span><span class="locked-amount">' + sym() + fmt0(s.monto) + '</span></div>';
+        html += '<div class="sub-row-locked" style="' + (s.cancelada ? "opacity:0.5;" : "") + '"><span class="locked-name">' + esc(s.nombre) + (s.cancelada ? ' \u00b7 ' + t("canceladaLbl") : '') + '</span><span class="locked-amount" style="' + (s.cancelada ? "text-decoration:line-through;" : "") + '">' + sym() + fmt0(s.monto) + '</span></div>';
+        html += '<button class="delete-link" style="margin-bottom:6px;" data-action="toggleSuscripcionCancelada" data-id="' + esc(s.key) + '">' + (s.cancelada ? t("reactivarBtn") : t("cancelarBtn")) + '</button>';
       });
-      const totalSuscripciones = ins.suscripcionesDetectadas.reduce((a, s) => a + s.monto, 0);
+      const totalSuscripciones = ins.suscripcionesDetectadas.filter((s) => !s.cancelada).reduce((a, s) => a + s.monto, 0);
       html += '<div class="mini-total"><span>' + t("totalSuscripcionesLbl") + '</span><b>' + sym() + fmt0(totalSuscripciones) + '</b></div>';
       html += '</div>';
     }
@@ -708,7 +731,7 @@ function renderApp() {
 
       if (compras.length === 0) html += '<div class="empty-state">' + t("sinResultadosMsg") + '</div>';
       compras.slice(0, 60).forEach((tx) => {
-        html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10));
+        html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
       });
       html += '</div>';
     }
@@ -721,6 +744,7 @@ function renderApp() {
   html += '</div>';
   html += renderTabBar();
   if (state.showExport) html += renderExportSheet();
+  if (state.showTxDetalle) html += renderTxDetalleSheet();
   if (state.showConsentimiento) html += renderConsentimientoSheet();
   html += '</div>';
 

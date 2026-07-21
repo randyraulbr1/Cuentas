@@ -17,6 +17,7 @@ async function enterProfile(id) {
   state.bankTransactions = d.bankTransactions || [];
   state.categoriaAprendida = d.categoriaAprendida || {};
   state.goals = d.goals || [];
+  state.suscripcionesCanceladas = d.suscripcionesCanceladas || [];
   state.editingGoals = false; state.confirmDeleteGoalId = null;
   state.consentimientoAceptado = !!d.consentimientoAceptado;
   state.consentimientoFecha = d.consentimientoFecha || "";
@@ -232,6 +233,7 @@ root.addEventListener("click", (e) => {
   if (e.target.classList && e.target.classList.contains("options-overlay")) {
     if (state.showConsentimiento) { state.showConsentimiento = false; render(); return; }
     if (state.showExport) { state.showExport = false; state.exportCopied = false; render(); return; }
+    if (state.showTxDetalle) { state.showTxDetalle = null; render(); return; }
     return;
   }
   const btn = e.target.closest("[data-action]");
@@ -262,6 +264,8 @@ root.addEventListener("click", (e) => {
     iniciarConectarBanco: iniciarConectarBanco, actualizarDatosNube: actualizarDatosNube, resetConexionNube: resetConexionNube,
     toggleEditGoals: toggleEditGoals, addGoal: addGoal, askDeleteGoal: () => askDeleteGoal(id), cancelDeleteGoal: cancelDeleteGoal, removeGoal: () => removeGoal(id),
     setHistorialFiltro: () => { state.historialCategoriaFiltro = id || ""; render(); },
+    toggleSuscripcionCancelada: () => toggleSuscripcionCancelada(id),
+    verDetalleTx: () => verDetalleTx(id), cerrarDetalleTx: cerrarDetalleTx,
     askDisconnectBank: () => askDisconnectBank(id), cancelDisconnectBank: cancelDisconnectBank,
     confirmDisconnectBank: () => confirmDisconnectBank(id),
     aceptarConsentimiento: aceptarConsentimiento, cancelarConsentimiento: cancelarConsentimiento,
