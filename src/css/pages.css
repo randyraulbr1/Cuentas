@@ -12,15 +12,15 @@
 .options-close { background: var(--pill-bg); border: none; color: var(--text); width: 28px; height: 28px; border-radius: 50%; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .opt-section { padding: 10px 0; border-bottom: 1px solid var(--border); }
 .opt-section:last-child { border-bottom: none; }
-.opt-section-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 0 0 6px; }
+.opt-section-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 0 0 10px; }
 .opt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.opt-row + .opt-row { margin-top: 8px; }
+.opt-row + .opt-row { margin-top: 14px; }
 .opt-row-label { font-size: 13.5px; font-weight: 600; }
 .opt-row-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 .opt-slider-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
 .opt-slider-row input[type=range] { flex: 1; accent-color: #3D5AFE; }
 .opt-slider-val { font-size: 15px; font-weight: 800; color: #3D5AFE; width: 42px; text-align: right; }
-.opt-btn-stack button { margin-bottom: 7px; }
+.opt-btn-stack button { margin-bottom: 10px; }
 .opt-btn-stack button:last-child { margin-bottom: 0; }
 .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 10px; margin-bottom: 14px; }
 .sum-card { background: var(--card-bg); border-radius: 16px; padding: 14px 14px 12px; box-shadow: var(--shadow); }
