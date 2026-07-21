@@ -18,6 +18,7 @@ async function enterProfile(id) {
   state.categoriaAprendida = d.categoriaAprendida || {};
   state.goals = d.goals || [];
   state.suscripcionesCanceladas = d.suscripcionesCanceladas || [];
+  state.notasTransacciones = d.notasTransacciones || {};
   state.editingGoals = false; state.confirmDeleteGoalId = null;
   state.consentimientoAceptado = !!d.consentimientoAceptado;
   state.consentimientoFecha = d.consentimientoFecha || "";
@@ -130,7 +131,14 @@ async function copyExport() {
   }
 }
 
-function goTab(id) { state.activeTab = id; render(); window.scrollTo(0, 0); }
+function goTab(id) {
+  state.activeTab = id;
+  if (document.startViewTransition) {
+    document.startViewTransition(() => { render(); window.scrollTo(0, 0); });
+  } else {
+    render(); window.scrollTo(0, 0);
+  }
+}
 
 function goInicio() { goTab("inicio"); }
 
@@ -177,6 +185,10 @@ root.addEventListener("input", (e) => {
     scheduleSave(); rerenderPreservingFocus(); return;
   }
   if (scope === "historialSearch") { state.historialSearch = el.value; rerenderPreservingFocus(); return; }
+  if (scope === "txNota") {
+    state.notasTransacciones[el.dataset.id] = el.value;
+    scheduleSave(); rerenderPreservingFocus(); return;
+  }
   if (scope === "payFormMonto") { state.payFormMonto = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "metaAhorro") { state.metaAhorro = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "savingsRate") { state.savingsRate = Number(el.value); scheduleSave(); rerenderPreservingFocus(); return; }

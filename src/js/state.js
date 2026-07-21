@@ -6,7 +6,7 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v46";
+const APP_VERSION = "v47";
 
 let uidCounter = 1;
 
@@ -80,7 +80,7 @@ const state = {
   cloudAccounts: [], cloudTransactions: [], cloudInstitutions: [], cloudLastSync: "", cloudLiabilities: {},
 
   goals: [], editingGoals: false, confirmDeleteGoalId: null,
-  historialSearch: "", historialCategoriaFiltro: "", showTxDetalle: null,
+  historialSearch: "", historialCategoriaFiltro: "", showTxDetalle: null, notasTransacciones: {},
   cloudErrorMsg: "", cloudBusy: false, cloudFlash: "", confirmDisconnectId: null,
   payFrequency: "mensual", ultimoPago: "", proximoPagoAjuste: "", ingresosLog: [], loans: [],
   job: { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false },
