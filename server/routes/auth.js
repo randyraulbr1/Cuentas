@@ -32,17 +32,34 @@ router.post("/register", rateLimit(20, 60 * 60 * 1000), async (req, res) => {
   res.status(201).json({ token, user: { id: user.id, email: user.email } });
 });
 
+const MAX_INTENTOS_FALLIDOS = 8;
+const BLOQUEO_MINUTOS = 15;
+
 router.post("/login", rateLimit(20, 15 * 60 * 1000), async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: "Correo y contraseña requeridos" });
 
-  const result = await query("SELECT id, email, password_hash FROM users WHERE email = $1", [String(email).toLowerCase()]);
+  const result = await query("SELECT id, email, password_hash, failed_login_attempts, locked_until FROM users WHERE email = $1", [String(email).toLowerCase()]);
   const user = result.rows[0];
   if (!user) return res.status(401).json({ error: "Correo o contraseña incorrectos" });
 
-  const ok = await bcrypt.compare(password, user.password_hash);
-  if (!ok) return res.status(401).json({ error: "Correo o contraseña incorrectos" });
+  if (user.locked_until && new Date(user.locked_until) > new Date()) {
+    const minutosRestantes = Math.ceil((new Date(user.locked_until) - new Date()) / 60000);
+    return res.status(423).json({ error: "Cuenta bloqueada temporalmente por demasiados intentos fallidos. Intenta de nuevo en " + minutosRestantes + " minuto(s).", locked: true });
+  }
 
+  const ok = await bcrypt.compare(password, user.password_hash);
+  if (!ok) {
+    const intentos = (user.failed_login_attempts || 0) + 1;
+    if (intentos >= MAX_INTENTOS_FALLIDOS) {
+      await query("UPDATE users SET failed_login_attempts = 0, locked_until = now() + interval '" + BLOQUEO_MINUTOS + " minutes' WHERE id = $1", [user.id]);
+      return res.status(423).json({ error: "Cuenta bloqueada temporalmente por demasiados intentos fallidos. Intenta de nuevo en " + BLOQUEO_MINUTOS + " minutos.", locked: true });
+    }
+    await query("UPDATE users SET failed_login_attempts = $1 WHERE id = $2", [intentos, user.id]);
+    return res.status(401).json({ error: "Correo o contraseña incorrectos" });
+  }
+
+  await query("UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1", [user.id]);
   const token = signToken(user.id);
   res.json({ token, user: { id: user.id, email: user.email } });
 });

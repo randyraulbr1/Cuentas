@@ -3,6 +3,17 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
+const REQUIRED_ENV_VARS = ["DATABASE_URL", "JWT_SECRET", "ENCRYPTION_KEY", "PLAID_CLIENT_ID", "PLAID_SECRET"];
+function verificarVariablesObligatorias() {
+  const faltantes = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
+  if (faltantes.length > 0) {
+    console.error("No se puede arrancar: faltan variables de entorno obligatorias: " + faltantes.join(", "));
+    console.error("Configuralas en Render -> tu servicio -> Environment, o en tu .env local (ver .env.example).");
+    process.exit(1);
+  }
+}
+if (require.main === module) verificarVariablesObligatorias();
+
 const { ensureExtensions, getDbStatus } = require("./db");
 const { rateLimit } = require("./middleware/rateLimit");
 const authRoutes = require("./routes/auth");

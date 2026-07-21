@@ -10,9 +10,15 @@ CREATE TABLE IF NOT EXISTS users (
   email         TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   consent_accepted_at TIMESTAMPTZ,           -- consentimiento de Plaid/privacidad
+  failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+  locked_until  TIMESTAMPTZ,                 -- bloqueo temporal tras demasiados intentos fallidos
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;
+
 
 -- Un "item" de Plaid = una conexión bancaria autorizada (puede tener varias cuentas dentro).
 CREATE TABLE IF NOT EXISTS plaid_items (
