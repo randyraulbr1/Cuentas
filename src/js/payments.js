@@ -234,8 +234,12 @@ function toggleSuscripcionCancelada(merchantKey) {
   scheduleSave(); render();
 }
 
-function verDetalleTx(id) { state.showTxDetalle = id; render(); }
-function cerrarDetalleTx() { state.showTxDetalle = null; render(); }
+function verDetalleTx(id) { pushOverlayNavState("txDetalle"); state.showTxDetalle = id; render(); }
+function cerrarDetalleTx() {
+  state.showTxDetalle = null;
+  try { if (history.state && history.state.ccOverlay === "txDetalle") { history.back(); return; } } catch (e) {}
+  render();
+}
 
 function marcarComoSuscripcion(txId, frecuencia) {
   const tx = state.cloudTransactions.find((t) => t.id === txId);

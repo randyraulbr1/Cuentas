@@ -118,9 +118,13 @@ function buildExportData() {
   };
 }
 
-function showExport() { state.showExport = true; render(); }
+function showExport() { pushOverlayNavState("export"); state.showExport = true; render(); }
 
-function closeExport() { state.showExport = false; state.exportCopied = false; render(); }
+function closeExport() {
+  state.showExport = false; state.exportCopied = false;
+  try { if (history.state && history.state.ccOverlay === "export") { history.back(); return; } } catch (e) {}
+  render();
+}
 
 async function copyExport() {
   const ta = document.getElementById("export-textarea");
@@ -137,13 +141,30 @@ async function copyExport() {
 }
 
 function goTab(id) {
+  if (state.activeTab !== id) {
+    try { history.pushState({ ccTab: id, ccOverlay: null }, ""); } catch (e) {}
+  }
   state.activeTab = id;
+  state.showExport = false; state.showTxDetalle = null;
   if (document.startViewTransition) {
     document.startViewTransition(() => { render(); window.scrollTo(0, 0); });
   } else {
     render(); window.scrollTo(0, 0);
   }
 }
+
+function pushOverlayNavState(overlayName) {
+  try { history.pushState({ ccTab: state.activeTab, ccOverlay: overlayName }, ""); } catch (e) {}
+}
+
+window.addEventListener("popstate", (e) => {
+  const s = e.state;
+  if (!s) return; // se acabaron nuestros estados; deja que el navegador haga lo normal (salir/atras real)
+  state.showExport = s.ccOverlay === "export";
+  state.showTxDetalle = s.ccOverlay === "txDetalle" ? state.showTxDetalle : null;
+  state.activeTab = s.ccTab || "inicio";
+  render();
+});
 
 function goInicio() { goTab("inicio"); }
 
@@ -347,6 +368,7 @@ root.addEventListener("click", (e) => {
 });
 
 (async function boot() {
+  try { history.replaceState({ ccTab: "inicio", ccOverlay: null }, ""); } catch (e) {}
   applyTheme();
   await ensureMigrated();
   const session = await loadAuthSession();

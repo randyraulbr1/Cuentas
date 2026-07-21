@@ -203,16 +203,6 @@ function renderOpcionesTab() {
   h += '<button style="flex:1;" class="' + (state.objetivo === "ahorro" ? "active" : "") + '" data-action="setObjAhorro">' + t("objAhorro") + '</button>';
   h += '</div></div>';
 
-  h += '<div class="panel"><p class="opt-section-title">' + t("secPago") + '</p>';
-  h += '<div class="seg" style="width:100%;">';
-  h += '<button style="flex:1;" class="' + (state.payFrequency === "mensual" ? "active" : "") + '" data-action="setPayMensual">' + t("payMensual") + '</button>';
-  h += '<button style="flex:1;" class="' + (state.payFrequency === "quincenal" ? "active" : "") + '" data-action="setPayQuincenal">' + t("payQuincenal") + '</button>';
-  h += '<button style="flex:1;" class="' + (state.payFrequency === "semanal" ? "active" : "") + '" data-action="setPaySemanal">' + t("paySemanal") + '</button>';
-  h += '</div>';
-  h += '<div class="pay-config"><label>' + t("ultimoPagoLbl") + '</label><input type="date" id="ultimo-pago" data-scope="ultimoPago" value="' + esc(state.ultimoPago) + '"></div>';
-  h += '<div class="pay-config"><label>' + t("ajustePagoLbl") + '</label><input type="date" id="ajuste-pago" data-scope="proximoPagoAjuste" value="' + esc(state.proximoPagoAjuste) + '"><p class="opt-row-sub" style="margin-top:4px;">' + t("ajustePagoHint") + '</p></div>';
-  h += '</div>';
-
   h += '<div class="panel"><p class="opt-section-title">' + t("secAhorroPct") + '</p>';
   h += '<div class="seg" style="width:100%;margin-bottom:8px;">';
   h += '<button style="flex:1;" class="' + (state.savingsRate === 10 ? "active" : "") + '" data-action="setAhorroNormal">' + t("ahorroNormal") + '</button>';
@@ -239,11 +229,11 @@ function renderOpcionesTab() {
     h += '</div>';
   }
 
-  h += '<div class="panel"><p class="opt-section-title">' + t("secLegal") + '</p><div class="opt-btn-stack">';
-  h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="privacy.html" target="_blank" rel="noopener">' + t("verPrivacidad") + '</a>';
-  h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="data-policy.html" target="_blank" rel="noopener">' + t("verDatosPolitica") + '</a>';
-  h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="terms.html" target="_blank" rel="noopener">' + t("verTerminos") + '</a>';
-  h += '<a class="pill-btn wide" style="text-align:center;text-decoration:none;box-sizing:border-box;" href="contact.html" target="_blank" rel="noopener">' + t("verContacto") + '</a>';
+  h += '<div class="panel"><p class="opt-section-title">' + t("secLegal") + '</p><div class="legal-links">';
+  h += '<a href="privacy.html" target="_blank" rel="noopener">' + t("verPrivacidad") + '</a>';
+  h += '<a href="data-policy.html" target="_blank" rel="noopener">' + t("verDatosPolitica") + '</a>';
+  h += '<a href="terms.html" target="_blank" rel="noopener">' + t("verTerminos") + '</a>';
+  h += '<a href="contact.html" target="_blank" rel="noopener">' + t("verContacto") + '</a>';
   h += '</div></div>';
 
   return h;
@@ -391,7 +381,7 @@ function renderApp() {
       html += '<div class="panel"><h2>' + t("esteMesSugerenciasTitle") + '</h2>';
       html += '<div class="mini-total"><span>' + t("gastadoGustosLbl") + '</span><b>' + sym() + fmt0(gastadoGustos) + '</b></div>';
       html += '<div class="mini-total"><span>' + t("sugGustosLbl") + '</span><b>' + sym() + fmt0(sugGustos) + '</b></div>';
-      html += '<p class="opt-row-sub" style="margin-top:-6px;margin-bottom:8px;">' + t("sugGustosHint") + '</p>';
+      html += '<p class="opt-row-sub" style="margin-top:4px;margin-bottom:10px;">' + t("sugGustosHint") + '</p>';
       html += '<div class="mini-total"><span>' + t("sugAhorroLbl") + '</span><b>' + sym() + fmt0(sugAhorro) + '</b></div>';
       const historialAhorro = state.history.slice().sort((a, b) => (a.month < b.month ? 1 : -1)).slice(0, 6);
       if (historialAhorro.length > 0) {
