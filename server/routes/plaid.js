@@ -123,6 +123,23 @@ router.post("/sync-transactions", requireAuth, async (req, res) => {
       await query("UPDATE plaid_items SET cursor = $1, last_synced_at = now(), updated_at = now() WHERE id = $2", [cursor, item.id]);
       await query("INSERT INTO sync_logs (user_id, plaid_item_id, tipo, detalle) VALUES ($1,$2,'sync',$3)",
         [req.userId, item.id, `added=${totalAdded} modified=${totalModified} removed=${totalRemoved}`]);
+
+      try {
+        const liabResp = await plaidClient.liabilitiesGet({ access_token: accessToken });
+        const liab = liabResp.data.liabilities || {};
+        const todas = [].concat(liab.credit || [], liab.mortgage || [], liab.student || []);
+        for (const l of todas) {
+          const apr = l.aprs ? (l.aprs.find((a) => a.apr_percentage) || {}).apr_percentage : (l.interest_rate ? l.interest_rate.percentage : l.interest_rate_percentage);
+          const pagoMinimo = l.minimum_payment_amount != null ? l.minimum_payment_amount : l.next_monthly_payment;
+          const fechaLimite = l.next_payment_due_date || null;
+          const ultimoSaldo = l.last_statement_balance != null ? l.last_statement_balance : null;
+          await query(
+            `UPDATE accounts SET liab_apr = $1, liab_pago_minimo = $2, liab_fecha_limite = $3, liab_ultimo_saldo = $4, liab_actualizado_en = now()
+             WHERE user_id = $5 AND account_id = $6`,
+            [apr || null, pagoMinimo || null, fechaLimite, ultimoSaldo, req.userId, l.account_id]
+          );
+        }
+      } catch (e) { /* no todas las instituciones dan liabilities; no bloquea el sync */ }
     }
 
     res.json({ ok: true, added: totalAdded, modified: totalModified, removed: totalRemoved });
@@ -208,6 +225,7 @@ router.get("/accounts", requireAuth, async (req, res) => {
   const result = await query(
     `SELECT a.id, a.account_id, a.name, a.official_name, a.mask, a.type, a.subtype,
             a.balance_available, a.balance_current, a.balance_limit, a.currency,
+            a.liab_apr, a.liab_pago_minimo, a.liab_fecha_limite, a.liab_ultimo_saldo,
             pi.institution_name
      FROM accounts a JOIN plaid_items pi ON pi.id = a.plaid_item_id
      WHERE a.user_id = $1 AND pi.status = 'active'

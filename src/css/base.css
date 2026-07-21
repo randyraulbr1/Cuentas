@@ -20,8 +20,8 @@ html, body { margin:0; padding:0; }
 .pay-trigger .ic svg { width: 16px; height: 16px; }
 .flash .ic { margin-right: 5px; }
 .flash .ic svg { width: 14px; height: 14px; }
-.tab-btn.active { color: #1E3A8A; }
-[data-theme="dark"] .tab-btn.active { color: #7B93E0; }
+.tab-btn.active { color: #3D5AFE; }
+[data-theme="dark"] .tab-btn.active { color: #8C99FF; }
 .tab-icon { font-size: 17px; line-height: 1; }
 .tab-label { font-size: 9.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .app-header { margin-bottom: 16px; }

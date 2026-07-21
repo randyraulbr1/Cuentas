@@ -23,6 +23,7 @@ async function enterProfile(id) {
   state.suscripcionesFrecuencia = d.suscripcionesFrecuencia || {};
   state.gastosFijosReconocidos = d.gastosFijosReconocidos || [];
   state.showMarcarGastoFijo = false; state.nombreGastoFijoTemp = "";
+  state.historialMesesVisibles = 3; state.pagosMesesVisibles = 3;
   state.editingGoals = false; state.confirmDeleteGoalId = null;
   state.consentimientoAceptado = !!d.consentimientoAceptado;
   state.consentimientoFecha = d.consentimientoFecha || "";
@@ -281,6 +282,8 @@ root.addEventListener("click", (e) => {
     iniciarConectarBanco: iniciarConectarBanco, actualizarDatosNube: actualizarDatosNube, resetConexionNube: resetConexionNube,
     toggleEditGoals: toggleEditGoals, addGoal: addGoal, askDeleteGoal: () => askDeleteGoal(id), cancelDeleteGoal: cancelDeleteGoal, removeGoal: () => removeGoal(id),
     setHistorialFiltro: () => { state.historialCategoriaFiltro = id || ""; render(); },
+    verMasMesesHistorial: () => { state.historialMesesVisibles += 3; render(); },
+    verMasMesesPagos: () => { state.pagosMesesVisibles += 3; render(); },
     toggleSuscripcionCancelada: () => toggleSuscripcionCancelada(id),
     verDetalleTx: () => verDetalleTx(id), cerrarDetalleTx: cerrarDetalleTx,
     marcarComoSuscripcion: () => marcarComoSuscripcion(id, freq),
@@ -346,14 +349,26 @@ root.addEventListener("click", (e) => {
   if (activeId && state.profiles.some((p) => p.id === activeId)) await enterProfile(activeId);
   else render();
   if (state.authToken && state.apiBaseUrl) {
-    refrescarDatosNube().then(async () => {
-      if (!state.activeProfileId && state.profiles.length === 0 && state.cloudInstitutions.length > 0) {
+    const huboCache = await cargarCacheNube();
+    const necesitaCrearPerfilAuto = !state.activeProfileId && state.profiles.length === 0 && state.cloudInstitutions.length > 0;
+    if (huboCache) {
+      if (necesitaCrearPerfilAuto) {
         state.newProfileName = state.cloudInstitutions[0].institution_name || t("bancoDesconocido");
         createProfile();
       } else {
         render();
       }
-    });
+    }
+    if (!huboCache || cacheNubeVencido()) {
+      refrescarDatosNube().then(() => {
+        if (!state.activeProfileId && state.profiles.length === 0 && state.cloudInstitutions.length > 0) {
+          state.newProfileName = state.cloudInstitutions[0].institution_name || t("bancoDesconocido");
+          createProfile();
+        } else {
+          render();
+        }
+      });
+    }
   }
 })();
 

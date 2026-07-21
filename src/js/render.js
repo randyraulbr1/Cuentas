@@ -9,7 +9,7 @@ function renderBancoNubePanel() {
   if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
 
   if (!state.authUser) {
-    html += '<button class="pay-trigger" style="background:#1E3A8A;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
+    html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
     html += '<button class="delete-link" style="display:block;margin:8px auto 0;" data-action="resetConexionNube">' + t("restablecerConexionBtn") + '</button>';
     html += '</div>';
     return html;
@@ -26,7 +26,7 @@ function renderBancoNubePanel() {
     }
   });
 
-  html += '<button class="pay-trigger" style="background:#1E3A8A;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
+  html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
   if (state.cloudInstitutions.length > 0) html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="actualizarDatosNube"' + (state.cloudBusy ? " disabled" : "") + '>' + t("actualizarNubeBtn") + '</button>';
   if (state.cloudLastSync) html += '<p class="opt-row-sub" style="text-align:center;margin-top:8px;">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(state.cloudLastSync).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
 
@@ -53,7 +53,7 @@ function renderSelector() {
 
   if (state.cloudBusy) html += '<p class="opt-row-sub" style="text-align:left;margin:0 0 8px;">' + t("esperaServidorMsg") + '</p>';
   html += renderBancoNubePanel();
-  html += '<p class="opt-row-sub" style="text-align:center;margin:6px 0 -4px;">v' + APP_VERSION.replace("v", "") + ' \u00b7 <button data-action="actualizar" style="background:none;border:none;color:#1E3A8A;font:inherit;padding:0;cursor:pointer;">' + t("update") + '</button></p>';
+  html += '<p class="opt-row-sub" style="text-align:center;margin:6px 0 -4px;">v' + APP_VERSION.replace("v", "") + ' \u00b7 <button data-action="actualizar" style="background:none;border:none;color:#3D5AFE;font:inherit;padding:0;cursor:pointer;">' + t("update") + '</button></p>';
   state.profiles.forEach((p) => {
     const initial = (p.nombre || "?").trim().charAt(0).toUpperCase();
     if (state.confirmDeleteProfileId === p.id) {
@@ -128,7 +128,7 @@ function renderConsentimientoSheet() {
   h += '<ul style="margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.6;color:var(--text);">';
   [t("consentItem1"), t("consentItem2"), t("consentItem3"), t("consentItem4")].forEach((it) => { h += "<li>" + esc(it) + "</li>"; });
   h += "</ul>";
-  h += '<p class="opt-row-sub" style="margin-bottom:12px;">' + t("consentPoliza") + ' <a href="privacy.html" style="color:#1E3A8A;" target="_blank" rel="noopener">' + t("consentPolizaLink") + "</a></p>";
+  h += '<p class="opt-row-sub" style="margin-bottom:12px;">' + t("consentPoliza") + ' <a href="privacy.html" style="color:#3D5AFE;" target="_blank" rel="noopener">' + t("consentPolizaLink") + "</a></p>";
   h += '<div style="display:flex;gap:8px;">';
   h += '<button class="pill-btn confirm" style="flex:1;" data-action="aceptarConsentimiento">' + t("consentAceptar") + "</button>";
   h += '<button class="pill-btn" style="flex:1;" data-action="cancelarConsentimiento">' + t("cancel") + "</button>";
@@ -242,7 +242,7 @@ function renderBarChart(items, height) {
   items.forEach((it) => {
     const barH = Math.max((it.valor / max) * (height - 18), 2);
     h += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">';
-    h += '<div style="width:100%;max-width:28px;height:' + barH + 'px;background:#1E3A8A;border-radius:4px 4px 0 0;"></div>';
+    h += '<div style="width:100%;max-width:28px;height:' + barH + 'px;background:#3D5AFE;border-radius:4px 4px 0 0;"></div>';
     h += '<div style="font-size:9.5px;color:var(--text-muted);margin-top:4px;white-space:nowrap;">' + esc(it.etiqueta) + '</div>';
     h += '</div>';
   });
@@ -362,7 +362,7 @@ function renderApp() {
         const limite = toNum(c.balance_limit);
         const uso = Math.min((saldo / limite) * 100, 100);
         const usoNivel = uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
-        const liab = state.cloudLiabilities[c.account_id];
+        const liab = c.liab_apr != null || c.liab_pago_minimo != null ? { apr: c.liab_apr, pago_minimo: c.liab_pago_minimo, fecha_limite: c.liab_fecha_limite } : null;
         html += '<div style="margin-bottom:14px;"><div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(c.name || t("cardNombrePh")) + (c.mask ? " ****" + esc(c.mask) : "") + '</span><span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span></div>';
         html += '<div class="opt-row-sub" style="margin-bottom:4px;">' + sym() + fmt0(saldo) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(limite) + (liab && liab.apr ? ' \u00b7 ' + t("cardAprLbl") + ' ' + liab.apr + '%' : '') + '</div>';
         html += utilBarHtml(uso, usoNivel) + '</div>';
@@ -411,7 +411,7 @@ function renderApp() {
         html += '<button class="icon-del" data-action="removeIngresoEntry" data-id="' + en.id + '">' + icon("close") + '</button></div>';
       });
       if (entradas.length === 0) html += '<div class="empty-state">' + t("ingresoLogEmpty") + '</div>';
-      html += '<button class="pay-trigger" data-action="addIngresoEntry" style="background:#1E3A8A;">' + t("addIngreso") + '</button>';
+      html += '<button class="pay-trigger" data-action="addIngresoEntry" style="background:#3D5AFE;">' + t("addIngreso") + '</button>';
       html += '<div class="mini-total"><span>' + t("pagosEsperados")(entradas.length, esperados) + '</span><b>' + sym() + fmt0(t2.ingresoEfectivo) + '</b></div>';
       if (entradas.length < esperados) html += '<p class="opt-row-sub" style="margin-top:8px;color:#B25E00;">' + t("pagosIncompletos") + '</p>';
     }
@@ -478,9 +478,16 @@ function renderApp() {
     const pagosRecibidos = state.cloudTransactions.filter((tx) => toNum(tx.monto) > 0);
     if (pagosRecibidos.length > 0) {
       html += '<div class="panel"><h2>' + t("pagosRecibidosBancoTitle") + '</h2><p class="hint">' + t("pagosRecibidosBancoHint") + '</p>';
-      pagosRecibidos.slice(0, 30).forEach((tx) => {
-        html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
+      const gruposPagos = agruparPorMes(pagosRecibidos);
+      gruposPagos.slice(0, state.pagosMesesVisibles).forEach((grupo, idx) => {
+        html += '<p class="opt-section-title" style="margin-top:' + (idx === 0 ? "4px" : "16px") + ';">' + esc(grupo.label) + '</p>';
+        grupo.items.forEach((tx) => {
+          html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
+        });
       });
+      if (gruposPagos.length > state.pagosMesesVisibles) {
+        html += '<button class="pill-btn wide" style="margin-top:10px;" data-action="verMasMesesPagos">' + t("verMesesAnterioresBtn") + '</button>';
+      }
       html += '</div>';
     }
     html += '<div class="panel"><div class="panel-head-row"><div><p class="hint" style="margin-bottom:0;">' + t("subsHint") + '</p></div><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? icon("check") : icon("pencil")) + '</button></div>';
@@ -614,7 +621,7 @@ function renderApp() {
         const limite = toNum(c.balance_limit);
         const uso = limite > 0 ? Math.min((saldo / limite) * 100, 100) : null;
         const usoNivel = uso === null ? "verde" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
-        const liab = state.cloudLiabilities[c.account_id];
+        const liab = c.liab_apr != null || c.liab_pago_minimo != null ? { apr: c.liab_apr, pago_minimo: c.liab_pago_minimo, fecha_limite: c.liab_fecha_limite } : null;
         html += '<div class="card-entry">';
         html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(c.name || t("cardNombrePh")) + (c.mask ? " ****" + esc(c.mask) : "") + '</span>' + (uso !== null ? '<span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span>' : "") + '</div>';
         html += '<div class="card-collapsed-balance"><span class="field-label">' + t("debesAhoraLbl") + ' ' + sym() + '</span><span class="locked-amount" style="font-size:19px;">' + sym() + fmt0(saldo) + '</span></div>';
@@ -776,9 +783,16 @@ function renderApp() {
       }
 
       if (compras.length === 0) html += '<div class="empty-state">' + t("sinResultadosMsg") + '</div>';
-      compras.slice(0, 60).forEach((tx) => {
-        html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
+      const gruposCompras = agruparPorMes(compras);
+      gruposCompras.slice(0, state.historialMesesVisibles).forEach((grupo, idx) => {
+        html += '<p class="opt-section-title" style="margin-top:' + (idx === 0 ? "4px" : "16px") + ';">' + esc(grupo.label) + '</p>';
+        grupo.items.forEach((tx) => {
+          html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
+        });
       });
+      if (gruposCompras.length > state.historialMesesVisibles) {
+        html += '<button class="pill-btn wide" style="margin-top:10px;" data-action="verMasMesesHistorial">' + t("verMesesAnterioresBtn") + '</button>';
+      }
       html += '</div>';
     }
   }

@@ -132,13 +132,42 @@ async function apiGetLiabilitiesAll() {
   return apiFetch("/api/plaid/liabilities-all");
 }
 
+const CLOUD_CACHE_KEY = "cloud:cache";
+const CLOUD_CACHE_MAX_AGE_MS = 4 * 60 * 60 * 1000; // 4 horas: evita pedir datos de mas y gastar en Plaid sin necesidad
+
+async function guardarCacheNube() {
+  try {
+    await idbSet(CLOUD_CACHE_KEY, {
+      cloudAccounts: state.cloudAccounts, cloudTransactions: state.cloudTransactions,
+      cloudInstitutions: state.cloudInstitutions, cloudLiabilities: state.cloudLiabilities,
+      cloudLastSync: state.cloudLastSync,
+    });
+  } catch (e) {}
+}
+async function cargarCacheNube() {
+  try {
+    const c = await idbGet(CLOUD_CACHE_KEY);
+    if (!c) return false;
+    state.cloudAccounts = c.cloudAccounts || [];
+    state.cloudTransactions = c.cloudTransactions || [];
+    state.cloudInstitutions = c.cloudInstitutions || [];
+    state.cloudLiabilities = c.cloudLiabilities || {};
+    state.cloudLastSync = c.cloudLastSync || "";
+    return true;
+  } catch (e) { return false; }
+}
+function cacheNubeVencido() {
+  if (!state.cloudLastSync) return true;
+  return (Date.now() - new Date(state.cloudLastSync).getTime()) > CLOUD_CACHE_MAX_AGE_MS;
+}
+
 async function refrescarDatosNube() {
-  const [accRes, txRes, instRes, liabRes] = await Promise.all([apiGetAccounts(), apiGetTransactions(), apiGetInstitutionsStatus(), apiGetLiabilitiesAll()]);
+  const [accRes, txRes, instRes] = await Promise.all([apiGetAccounts(), apiGetTransactions(), apiGetInstitutionsStatus()]);
   if (accRes.ok) state.cloudAccounts = accRes.data.accounts;
   if (txRes.ok) state.cloudTransactions = txRes.data.transactions;
   if (instRes.ok) state.cloudInstitutions = instRes.data.items;
-  if (liabRes.ok) state.cloudLiabilities = liabRes.data.liabilities;
   state.cloudLastSync = new Date().toISOString();
+  await guardarCacheNube();
   if (!accRes.ok) return accRes;
   if (!txRes.ok) return txRes;
   if (!instRes.ok) return instRes;

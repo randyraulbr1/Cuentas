@@ -41,15 +41,24 @@ function proximosPagos() {
     if (np) items.push({ nombre: l.nombre || t("loanNombrePh"), monto: toNum(l.montoPago), fecha: np.date, diffDays: np.diffDays });
   });
   cloudCreditCards().forEach((c) => {
-    const liab = state.cloudLiabilities[c.account_id];
-    if (liab && liab.fecha_limite) {
-      const d = new Date(liab.fecha_limite);
+    if (c.liab_fecha_limite) {
+      const d = new Date(c.liab_fecha_limite);
       const now = new Date(); now.setHours(0, 0, 0, 0);
-      items.push({ nombre: c.name || t("cardNombrePh"), monto: toNum(liab.pago_minimo) || toNum(c.balance_current), fecha: d, diffDays: Math.round((d - now) / 86400000) });
+      items.push({ nombre: c.name || t("cardNombrePh"), monto: toNum(c.liab_pago_minimo) || toNum(c.balance_current), fecha: d, diffDays: Math.round((d - now) / 86400000) });
     }
   });
   items.sort((a, b) => a.fecha - b.fecha);
   return items;
+}
+
+function agruparPorMes(transacciones) {
+  const grupos = {};
+  transacciones.forEach((tx) => {
+    const mk = String(tx.fecha).slice(0, 7);
+    if (!grupos[mk]) grupos[mk] = [];
+    grupos[mk].push(tx);
+  });
+  return Object.keys(grupos).sort((a, b) => (a < b ? 1 : -1)).map((mk) => ({ monthKey: mk, label: monthLabel(mk), items: grupos[mk] }));
 }
 
 function nextGenericPayInfo(ultimoPagoStr, frecuencia) {
@@ -88,7 +97,7 @@ function computeTotals() {
   const ingresoEfectivo = ingresoActivo();
   const totalSubs = state.subs.reduce((a, s) => a + toNum(s.monto), 0);
   const cloudCards = cloudCreditCards();
-  const totalMinimosCloud = cloudCards.reduce((a, c) => { const liab = state.cloudLiabilities[c.account_id]; return a + (liab && liab.pago_minimo ? toNum(liab.pago_minimo) : 0); }, 0);
+  const totalMinimosCloud = cloudCards.reduce((a, c) => { const liab = c.liab_apr != null || c.liab_pago_minimo != null ? { apr: c.liab_apr, pago_minimo: c.liab_pago_minimo } : null; return a + (liab && liab.pago_minimo ? toNum(liab.pago_minimo) : 0); }, 0);
   const totalMinimos = state.cards.reduce((a, c) => a + toNum(c.minimo), 0) + totalMinimosCloud;
   const totalPrestamos = state.loans.reduce((a, l) => a + (toNum(l.saldoTotal) > 0 ? toNum(l.montoPago) : 0), 0);
   const totalDeudaCloud = cloudCards.reduce((a, c) => a + toNum(c.balance_current), 0);

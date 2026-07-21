@@ -47,10 +47,23 @@ CREATE TABLE IF NOT EXISTS accounts (
   balance_current    NUMERIC(14,2),
   balance_limit      NUMERIC(14,2),
   currency      TEXT,
+  liab_apr           NUMERIC(6,3),           -- cache de liabilities: interes, pago minimo, etc.
+  liab_pago_minimo    NUMERIC(14,2),
+  liab_fecha_limite   DATE,
+  liab_ultimo_saldo   NUMERIC(14,2),
+  liab_actualizado_en TIMESTAMPTZ,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (user_id, account_id)
 );
+
+-- Migracion segura: agrega las columnas de cache de liabilities si la tabla
+-- accounts ya existia de antes (CREATE TABLE IF NOT EXISTS no las hubiera creado).
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS liab_apr NUMERIC(6,3);
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS liab_pago_minimo NUMERIC(14,2);
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS liab_fecha_limite DATE;
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS liab_ultimo_saldo NUMERIC(14,2);
+ALTER TABLE accounts ADD COLUMN IF NOT EXISTS liab_actualizado_en TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS transactions (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
