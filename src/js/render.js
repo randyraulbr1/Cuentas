@@ -262,13 +262,14 @@ function renderDonutChart(items) {
   return h;
 }
 
-function renderBarChart(items, height) {
+function renderBarChart(items, height, clickAction) {
   height = height || 90;
   const max = Math.max(...items.map((i) => i.valor), 1);
   let h = '<div style="display:flex;align-items:flex-end;gap:6px;height:' + height + 'px;margin:8px 0;">';
   items.forEach((it) => {
     const barH = Math.max((it.valor / max) * (height - 18), 2);
-    h += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">';
+    const attrs = clickAction ? ' data-action="' + clickAction + '" data-id="' + esc(it.monthKey || "") + '" style="cursor:pointer;"' : '';
+    h += '<div' + attrs + ' style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;' + (clickAction ? "cursor:pointer;" : "") + '">';
     h += '<div style="width:100%;max-width:28px;height:' + barH + 'px;background:#3D5AFE;border-radius:4px 4px 0 0;"></div>';
     h += '<div style="font-size:9.5px;color:var(--text-muted);margin-top:4px;white-space:nowrap;">' + esc(it.etiqueta) + '</div>';
     h += '</div>';
@@ -362,6 +363,25 @@ function renderApp() {
     if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
     if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + (np.ajustado ? ' ' + icon("pencil") : "") + '</div></div>';
     html += '</div>';
+
+    if (t2.disponibleBruto > 0) {
+      const debitoBase = toNum(state.debito) + cloudNoCredit;
+      const sugGustos = debitoBase * 0.2;
+      const resultadoMes = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
+      const sugAhorro = resultadoMes && !resultadoMes.insuficiente ? resultadoMes.ahorro : t2.disponibleBruto * (state.savingsRate / 100);
+      html += '<div class="panel"><h2>' + t("esteMesSugerenciasTitle") + '</h2>';
+      html += '<div class="mini-total"><span>' + t("sugGustosLbl") + '</span><b>' + sym() + fmt0(sugGustos) + '</b></div>';
+      html += '<p class="opt-row-sub" style="margin-top:-6px;margin-bottom:8px;">' + t("sugGustosHint") + '</p>';
+      html += '<div class="mini-total"><span>' + t("sugAhorroLbl") + '</span><b>' + sym() + fmt0(sugAhorro) + '</b></div>';
+      const historialAhorro = state.history.slice().sort((a, b) => (a.month < b.month ? 1 : -1)).slice(0, 6);
+      if (historialAhorro.length > 0) {
+        html += '<p class="opt-section-title" style="margin-top:14px;">' + t("historialAhorroTitle") + '</p>';
+        historialAhorro.forEach((h) => {
+          html += '<div class="sub-row-locked"><span class="locked-name">' + esc(monthLabel(h.month)) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(h.ahorro)) + '</span></div>';
+        });
+      }
+      html += '</div>';
+    }
 
     const pagosProximos = proximosPagos();
     if (pagosProximos.length > 0) {
@@ -645,7 +665,7 @@ function renderApp() {
 
     if (ins.tendenciaMeses.some((m) => m.valor > 0)) {
       html += '<div class="panel"><h2>' + t("tendenciaMensualTitle") + '</h2>';
-      html += renderBarChart(ins.tendenciaMeses);
+      html += renderBarChart(ins.tendenciaMeses, 90, "verMesTendencia");
       html += '</div>';
     }
     if (ins.categoriasOrdenadas.length > 0) {

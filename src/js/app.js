@@ -147,6 +147,12 @@ function goTab(id) {
 
 function goInicio() { goTab("inicio"); }
 
+function verMesTendencia(mk) {
+  const esMesActual = mk === monthKey();
+  state.historialMesAbierto = esMesActual ? null : mk;
+  goTab("historial");
+}
+
 async function actualizarApp() {
   try {
     if ("serviceWorker" in navigator) {
@@ -284,6 +290,7 @@ root.addEventListener("click", (e) => {
     setHistorialFiltro: () => { state.historialCategoriaFiltro = id || ""; render(); },
     verMasMesesHistorial: () => { state.historialMesesVisibles += 3; render(); },
     toggleMesHistorial: () => { state.historialMesAbierto = state.historialMesAbierto === id ? null : id; render(); },
+    verMesTendencia: () => verMesTendencia(id),
     verMasMesesPagos: () => { state.pagosMesesVisibles += 3; render(); },
     toggleSuscripcionCancelada: () => toggleSuscripcionCancelada(id),
     verDetalleTx: () => verDetalleTx(id), cerrarDetalleTx: cerrarDetalleTx,
