@@ -69,6 +69,7 @@ async function saveUserDataNow() {
     bankTransactions: state.bankTransactions, categoriaAprendida: state.categoriaAprendida, goals: state.goals,
     suscripcionesCanceladas: state.suscripcionesCanceladas, notasTransacciones: state.notasTransacciones,
     suscripcionesManuales: state.suscripcionesManuales, suscripcionesFrecuencia: state.suscripcionesFrecuencia,
+    gastosFijosReconocidos: state.gastosFijosReconocidos,
     consentimientoAceptado: state.consentimientoAceptado, consentimientoFecha: state.consentimientoFecha,
     payFrequency: state.payFrequency, ultimoPago: state.ultimoPago, proximoPagoAjuste: state.proximoPagoAjuste,
     ingresosLog: state.ingresosLog, loans: state.loans, job: state.job, turnos: state.turnos, turnoActivo: state.turnoActivo, pagosTrabajo: state.pagosTrabajo,

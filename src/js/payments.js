@@ -208,6 +208,7 @@ function resetAll() {
   state.suscripcionesCanceladas = [];
   state.notasTransacciones = {};
   state.suscripcionesManuales = []; state.suscripcionesFrecuencia = {};
+  state.gastosFijosReconocidos = []; state.showMarcarGastoFijo = false; state.nombreGastoFijoTemp = "";
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.ingresosLog = []; state.loans = [];
   state.job = { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false };
   state.turnos = []; state.turnoActivo = null; state.pagosTrabajo = [];
@@ -260,4 +261,41 @@ function setManualFrecuencia(id, frecuencia) {
   if (!s) return;
   s.frecuencia = frecuencia;
   scheduleSave(); render();
+}
+
+function abrirMarcarGastoFijo() {
+  const tx = state.cloudTransactions.find((t) => t.id === state.showTxDetalle);
+  state.showMarcarGastoFijo = true;
+  state.nombreGastoFijoTemp = tx ? tx.descripcion : "";
+  render();
+}
+function cancelarMarcarGastoFijo() { state.showMarcarGastoFijo = false; render(); }
+function confirmarGastoFijo() {
+  const tx = state.cloudTransactions.find((t) => t.id === state.showTxDetalle);
+  if (!tx) return;
+  const nombre = (state.nombreGastoFijoTemp || "").trim();
+  if (!nombre) return;
+  const key = merchantKey(tx.descripcion);
+  pushUndo();
+  const existente = state.gastosFijosReconocidos.find((g) => g.merchantKey === key);
+  if (existente) { existente.nombre = nombre; }
+  else state.gastosFijosReconocidos.push({ id: uid(), nombre: nombre, merchantKey: key, monto: Math.abs(toNum(tx.monto)) });
+  state.showMarcarGastoFijo = false;
+  state.showTxDetalle = null;
+  scheduleSave();
+  render();
+}
+function removeGastoFijoReconocido(id) {
+  pushUndo();
+  state.gastosFijosReconocidos = state.gastosFijosReconocidos.filter((g) => g.id !== id);
+  scheduleSave(); render();
+}
+function gastoFijoUltimaTx(gf) {
+  const coincidencias = state.cloudTransactions.filter((tx) => merchantKey(tx.descripcion) === gf.merchantKey);
+  coincidencias.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  return coincidencias[0] || null;
+}
+function gastoFijoPagadoEsteMes(gf) {
+  const mk = monthKey();
+  return state.cloudTransactions.some((tx) => merchantKey(tx.descripcion) === gf.merchantKey && String(tx.fecha).slice(0, 7) === mk);
 }

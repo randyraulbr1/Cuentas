@@ -106,6 +106,16 @@ function renderTxDetalleSheet() {
     });
     h += '</div></div>';
   }
+  if (toNum(tx.monto) < 0) {
+    if (state.showMarcarGastoFijo) {
+      h += '<div class="pay-config" style="margin-top:10px;"><label>' + t("nombreGastoFijoLbl") + '</label>';
+      h += '<input type="text" placeholder="' + t("nombreGastoFijoPh") + '" id="nombre-gasto-fijo-input" data-scope="nombreGastoFijoTemp" value="' + esc(state.nombreGastoFijoTemp) + '" style="width:100%;">';
+      h += '<div style="display:flex;gap:8px;margin-top:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmarGastoFijo">' + t("guardarBtn") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelarMarcarGastoFijo">' + t("cancel") + '</button></div>';
+      h += '</div>';
+    } else {
+      h += '<button class="delete-link" style="display:block;margin-top:10px;" data-action="abrirMarcarGastoFijo">' + t("marcarGastoFijoLbl") + '</button>';
+    }
+  }
   h += '</div></div>';
   return h;
 }
@@ -519,6 +529,22 @@ function renderApp() {
       html += '<div class="mini-total"><span>' + t("subsPagados")(pagadosCount, state.subs.length) + '</span></div>';
     }
     html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(t2.totalSubs) + '</b></div></div>';
+
+    if (state.gastosFijosReconocidos.length > 0) {
+      html += '<div class="panel"><h2>' + t("gastosFijosBancoTitle") + '</h2><p class="hint">' + t("gastosFijosBancoHint") + '</p>';
+      let totalPendiente = 0, totalPagado = 0;
+      state.gastosFijosReconocidos.forEach((gf) => {
+        const ultimaTx = gastoFijoUltimaTx(gf);
+        const monto = ultimaTx ? Math.abs(toNum(ultimaTx.monto)) : toNum(gf.monto);
+        const pagado = gastoFijoPagadoEsteMes(gf);
+        if (pagado) totalPagado += monto; else totalPendiente += monto;
+        html += '<div class="sub-row-locked"><span class="locked-name" style="display:flex;align-items:center;gap:8px;"><span class="status-pill ' + (pagado ? "verde" : "amarillo") + '" style="font-size:9.5px;">' + (pagado ? t("pagadoEsteMesLbl") : t("pendienteEsteMesLbl")) + '</span>' + esc(gf.nombre) + '</span><span class="locked-amount">' + sym() + fmt0(monto) + '</span></div>';
+        html += '<button class="delete-link" style="margin-bottom:6px;" data-action="removeGastoFijoReconocido" data-id="' + gf.id + '">' + t("olvidarBtn") + '</button>';
+      });
+      html += '<div class="mini-total"><span>' + t("pendienteEsteMesTotalLbl") + '</span><b style="color:#FF3B30;">' + sym() + fmt0(totalPendiente) + '</b></div>';
+      html += '<div class="mini-total"><span>' + t("pagadoEsteMesTotalLbl") + '</span><b style="color:#34C759;">' + sym() + fmt0(totalPagado) + '</b></div>';
+      html += '</div>';
+    }
 
     html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("loansTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("loansHint") + '</p></div><button class="icon-pencil' + (state.editingLoans ? " done" : "") + '" data-action="toggleEditLoans">' + (state.editingLoans ? icon("check") : icon("pencil")) + '</button></div>';
     state.loans.forEach((l) => {

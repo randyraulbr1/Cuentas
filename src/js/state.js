@@ -6,7 +6,7 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v48";
+const APP_VERSION = "v49";
 
 let uidCounter = 1;
 
@@ -73,6 +73,7 @@ const state = {
   ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", debito: "", cash: "", history: [],
   bankTransactions: [], categoriaAprendida: {}, bankPendingCategoria: [], bankImportMsg: "", confirmDeleteBankTxId: null,
   suscripcionesCanceladas: [], suscripcionesManuales: [], suscripcionesFrecuencia: {},
+  gastosFijosReconocidos: [], showMarcarGastoFijo: false, nombreGastoFijoTemp: "",
   consentimientoAceptado: false, consentimientoFecha: "", showConsentimiento: false,
 
   apiBaseUrl: settingsInit.apiBaseUrl || "https://cuentas-1duj.onrender.com", authToken: null, authUser: null,

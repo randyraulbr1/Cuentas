@@ -21,6 +21,8 @@ async function enterProfile(id) {
   state.notasTransacciones = d.notasTransacciones || {};
   state.suscripcionesManuales = d.suscripcionesManuales || [];
   state.suscripcionesFrecuencia = d.suscripcionesFrecuencia || {};
+  state.gastosFijosReconocidos = d.gastosFijosReconocidos || [];
+  state.showMarcarGastoFijo = false; state.nombreGastoFijoTemp = "";
   state.editingGoals = false; state.confirmDeleteGoalId = null;
   state.consentimientoAceptado = !!d.consentimientoAceptado;
   state.consentimientoFecha = d.consentimientoFecha || "";
@@ -191,6 +193,7 @@ root.addEventListener("input", (e) => {
     state.notasTransacciones[el.dataset.id] = el.value;
     scheduleSave(); rerenderPreservingFocus(); return;
   }
+  if (scope === "nombreGastoFijoTemp") { state.nombreGastoFijoTemp = el.value; rerenderPreservingFocus(); return; }
   if (scope === "payFormMonto") { state.payFormMonto = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "metaAhorro") { state.metaAhorro = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "savingsRate") { state.savingsRate = Number(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
@@ -281,6 +284,8 @@ root.addEventListener("click", (e) => {
     toggleSuscripcionCancelada: () => toggleSuscripcionCancelada(id),
     verDetalleTx: () => verDetalleTx(id), cerrarDetalleTx: cerrarDetalleTx,
     marcarComoSuscripcion: () => marcarComoSuscripcion(id, freq),
+    abrirMarcarGastoFijo: abrirMarcarGastoFijo, cancelarMarcarGastoFijo: cancelarMarcarGastoFijo, confirmarGastoFijo: confirmarGastoFijo,
+    removeGastoFijoReconocido: () => removeGastoFijoReconocido(id),
     setFrecuenciaAuto: () => setFrecuenciaAuto(id, freq),
     setManualFrecuencia: () => setManualFrecuencia(id, freq),
     removeSuscripcionManual: () => removeSuscripcionManual(id),
