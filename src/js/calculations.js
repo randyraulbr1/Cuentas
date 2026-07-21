@@ -29,6 +29,11 @@ function expectedPagosEsteMes() {
 }
 
 function ingresoActivo() {
+  if (state.cloudTransactions && state.cloudTransactions.length > 0) {
+    const mk = monthKey();
+    const ingresosBanco = state.cloudTransactions.filter((tx) => toNum(tx.monto) > 0 && String(tx.fecha).slice(0, 7) === mk);
+    if (ingresosBanco.length > 0) return ingresosBanco.reduce((a, tx) => a + toNum(tx.monto), 0);
+  }
   if (state.payFrequency === "mensual") return toNum(state.ingreso);
   return ingresosEsteMes().reduce((a, x) => a + toNum(x.monto), 0);
 }
