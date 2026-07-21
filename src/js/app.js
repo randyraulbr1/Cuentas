@@ -19,6 +19,8 @@ async function enterProfile(id) {
   state.goals = d.goals || [];
   state.suscripcionesCanceladas = d.suscripcionesCanceladas || [];
   state.notasTransacciones = d.notasTransacciones || {};
+  state.suscripcionesManuales = d.suscripcionesManuales || [];
+  state.suscripcionesFrecuencia = d.suscripcionesFrecuencia || {};
   state.editingGoals = false; state.confirmDeleteGoalId = null;
   state.consentimientoAceptado = !!d.consentimientoAceptado;
   state.consentimientoFecha = d.consentimientoFecha || "";
@@ -278,6 +280,10 @@ root.addEventListener("click", (e) => {
     setHistorialFiltro: () => { state.historialCategoriaFiltro = id || ""; render(); },
     toggleSuscripcionCancelada: () => toggleSuscripcionCancelada(id),
     verDetalleTx: () => verDetalleTx(id), cerrarDetalleTx: cerrarDetalleTx,
+    marcarComoSuscripcion: () => marcarComoSuscripcion(id, freq),
+    setFrecuenciaAuto: () => setFrecuenciaAuto(id, freq),
+    setManualFrecuencia: () => setManualFrecuencia(id, freq),
+    removeSuscripcionManual: () => removeSuscripcionManual(id),
     askDisconnectBank: () => askDisconnectBank(id), cancelDisconnectBank: cancelDisconnectBank,
     confirmDisconnectBank: () => confirmDisconnectBank(id),
     aceptarConsentimiento: aceptarConsentimiento, cancelarConsentimiento: cancelarConsentimiento,

@@ -207,6 +207,7 @@ function resetAll() {
   state.goals = []; state.editingGoals = false; state.confirmDeleteGoalId = null;
   state.suscripcionesCanceladas = [];
   state.notasTransacciones = {};
+  state.suscripcionesManuales = []; state.suscripcionesFrecuencia = {};
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.ingresosLog = []; state.loans = [];
   state.job = { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false };
   state.turnos = []; state.turnoActivo = null; state.pagosTrabajo = [];
@@ -234,3 +235,29 @@ function toggleSuscripcionCancelada(merchantKey) {
 
 function verDetalleTx(id) { state.showTxDetalle = id; render(); }
 function cerrarDetalleTx() { state.showTxDetalle = null; render(); }
+
+function marcarComoSuscripcion(txId, frecuencia) {
+  const tx = state.cloudTransactions.find((t) => t.id === txId);
+  if (!tx) return;
+  pushUndo();
+  state.suscripcionesManuales.push({ id: uid(), nombre: tx.descripcion, monto: Math.abs(toNum(tx.monto)), frecuencia: frecuencia, ultimaFecha: String(tx.fecha).slice(0, 10) });
+  scheduleSave();
+  state.showTxDetalle = null;
+  render();
+}
+function setFrecuenciaAuto(key, frecuencia) {
+  state.suscripcionesFrecuencia[key] = frecuencia;
+  scheduleSave(); render();
+}
+function removeSuscripcionManual(id) {
+  pushUndo();
+  state.suscripcionesManuales = state.suscripcionesManuales.filter((s) => s.id !== id);
+  scheduleSave(); render();
+}
+
+function setManualFrecuencia(id, frecuencia) {
+  const s = state.suscripcionesManuales.find((x) => x.id === id);
+  if (!s) return;
+  s.frecuencia = frecuencia;
+  scheduleSave(); render();
+}

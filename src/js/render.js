@@ -98,6 +98,14 @@ function renderTxDetalleSheet() {
     h += '<p class="opt-row-sub" style="margin-top:10px;color:' + (subio ? "#FF3B30" : "#34C759") + ';">' + t(subio ? "gastoMayorPromedioMsg" : "gastoMenorPromedioMsg")(Math.round(Math.abs(comp.pct))) + '</p>';
   }
   h += '<div class="goal-field" style="margin-top:12px;"><label>' + t("notaDetalleLbl") + '</label><input type="text" placeholder="' + t("notaDetallePh") + '" id="tx-nota-input" data-scope="txNota" data-id="' + tx.id + '" value="' + esc(state.notasTransacciones[tx.id] || "") + '" style="width:100%;"></div>';
+  if (toNum(tx.monto) < 0) {
+    h += '<div class="pay-config" style="margin-top:10px;"><label>' + t("marcarSuscripcionLbl") + '</label>';
+    h += '<div class="seg" style="width:100%;flex-wrap:wrap;">';
+    [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["mensual", "payMensual"], ["anual", "freqAnual"]].forEach((f) => {
+      h += '<button style="flex:1 1 45%;" data-action="marcarComoSuscripcion" data-id="' + tx.id + '" data-freq="' + f[0] + '">' + t(f[1]) + '</button>';
+    });
+    h += '</div></div>';
+  }
   h += '</div></div>';
   return h;
 }
@@ -675,12 +683,22 @@ function renderApp() {
 
     if (ins.suscripcionesDetectadas.length > 0) {
       html += '<div class="panel"><h2>' + t("suscripcionesDetectadasTitle") + '</h2><p class="hint">' + t("suscripcionesDetectadasHint") + '</p>';
+      html += '<div class="mini-total"><span>' + t("totalSuscripcionesLbl") + '</span><b>' + sym() + fmt0(ins.suscripcionesTotalMensual) + '</b></div>';
       ins.suscripcionesDetectadas.forEach((s) => {
-        html += '<div class="sub-row-locked" style="' + (s.cancelada ? "opacity:0.5;" : "") + '"><span class="locked-name">' + esc(s.nombre) + (s.cancelada ? ' \u00b7 ' + t("canceladaLbl") : '') + '</span><span class="locked-amount" style="' + (s.cancelada ? "text-decoration:line-through;" : "") + '">' + sym() + fmt0(s.monto) + '</span></div>';
-        html += '<button class="delete-link" style="margin-bottom:6px;" data-action="toggleSuscripcionCancelada" data-id="' + esc(s.key) + '">' + (s.cancelada ? t("reactivarBtn") : t("cancelarBtn")) + '</button>';
+        html += '<div class="card-entry" style="' + (s.cancelada ? "opacity:0.5;" : "") + '">';
+        html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(s.nombre) + (s.cancelada ? ' \u00b7 ' + t("canceladaLbl") : '') + '</span><span class="locked-amount" style="' + (s.cancelada ? "text-decoration:line-through;" : "") + '">' + sym() + fmt0(s.monto) + '</span></div>';
+        if (!s.cancelada) html += '<p class="opt-row-sub">' + esc(diasLabel(s.diffDays !== undefined ? s.diffDays : s.diasFaltan)) + ' \u00b7 ' + esc(formatDate(s.proxima)) + '</p>';
+        html += '<div class="seg" style="width:100%;margin-top:6px;">';
+        ["semanal", "quincenal", "mensual", "anual"].forEach((f) => {
+          html += '<button style="flex:1;font-size:10.5px;padding:5px;" class="' + (s.frecuencia === f ? "active" : "") + '" data-action="' + (s.origen === "manual" ? "setManualFrecuencia" : "setFrecuenciaAuto") + '" data-id="' + esc(s.origen === "manual" ? s.id : s.key) + '" data-freq="' + f + '">' + t(f === "anual" ? "freqAnual" : f === "mensual" ? "payMensual" : f === "quincenal" ? "payQuincenal" : "paySemanal") + '</button>';
+        });
+        html += '</div>';
+        html += '<div style="display:flex;gap:8px;margin-top:6px;">';
+        html += '<button class="delete-link" data-action="toggleSuscripcionCancelada" data-id="' + esc(s.origen === "manual" ? s.id : s.key) + '">' + (s.cancelada ? t("reactivarBtn") : t("cancelarBtn")) + '</button>';
+        if (s.origen === "manual") html += '<button class="delete-link" data-action="removeSuscripcionManual" data-id="' + s.id + '">' + t("eliminar") + '</button>';
+        html += '</div>';
+        html += '</div>';
       });
-      const totalSuscripciones = ins.suscripcionesDetectadas.filter((s) => !s.cancelada).reduce((a, s) => a + s.monto, 0);
-      html += '<div class="mini-total"><span>' + t("totalSuscripcionesLbl") + '</span><b>' + sym() + fmt0(totalSuscripciones) + '</b></div>';
       html += '</div>';
     }
 

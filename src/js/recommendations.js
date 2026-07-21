@@ -26,10 +26,48 @@ function computeInsights() {
     if (!porComercio[key]) porComercio[key] = [];
     porComercio[key].push(tx);
   });
-  const suscripcionesDetectadas = Object.keys(porComercio)
+  const FREQ_DIAS = { semanal: 7, quincenal: 15, mensual: 30, trimestral: 90, anual: 365 };
+  function inferirFrecuencia(fechas) {
+    const ordenadas = fechas.map((f) => new Date(f)).sort((a, b) => a - b);
+    const gaps = [];
+    for (let i = 1; i < ordenadas.length; i++) gaps.push((ordenadas[i] - ordenadas[i - 1]) / 86400000);
+    const avg = gaps.reduce((a, g) => a + g, 0) / gaps.length;
+    if (avg <= 10) return "semanal";
+    if (avg <= 20) return "quincenal";
+    if (avg <= 50) return "mensual";
+    if (avg <= 150) return "trimestral";
+    return "anual";
+  }
+
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const suscripcionesAuto = Object.keys(porComercio)
     .map((k) => ({ key: k, txs: porComercio[k] }))
     .filter(({ txs }) => txs.length >= 2 && (txs[0].categoria === "suscripciones" || txs[0].categoria === "streaming"))
-    .map(({ key, txs }) => ({ key: key, nombre: txs[0].descripcion, monto: Math.abs(toNum(txs[0].monto)), veces: txs.length, cancelada: state.suscripcionesCanceladas.indexOf(key) !== -1 }));
+    .map(({ key, txs }) => {
+      const ordenadas = txs.slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+      const ultimaFecha = ordenadas[0].fecha;
+      const frecuencia = state.suscripcionesFrecuencia[key] || inferirFrecuencia(txs.map((t) => t.fecha));
+      const intervalo = FREQ_DIAS[frecuencia] || 30;
+      const proxima = new Date(ultimaFecha); proxima.setDate(proxima.getDate() + intervalo);
+      const diasFaltan = Math.round((proxima - hoy) / 86400000);
+      return { key: key, origen: "auto", nombre: ordenadas[0].descripcion, monto: Math.abs(toNum(ordenadas[0].monto)), frecuencia, proxima, diasFaltan, cancelada: state.suscripcionesCanceladas.indexOf(key) !== -1 };
+    });
+
+  const suscripcionesManualesCalc = state.suscripcionesManuales.map((s) => {
+    const intervalo = FREQ_DIAS[s.frecuencia] || 30;
+    const proxima = new Date(s.ultimaFecha || new Date()); proxima.setDate(proxima.getDate() + intervalo);
+    const diasFaltan = Math.round((proxima - hoy) / 86400000);
+    return { key: s.id, origen: "manual", id: s.id, nombre: s.nombre, monto: toNum(s.monto), frecuencia: s.frecuencia, proxima, diasFaltan, cancelada: state.suscripcionesCanceladas.indexOf(s.id) !== -1 };
+  });
+
+  const suscripcionesDetectadas = suscripcionesAuto.concat(suscripcionesManualesCalc).sort((a, b) => a.proxima - b.proxima);
+
+  const suscripcionesTotalMensual = suscripcionesDetectadas
+    .filter((s) => !s.cancelada)
+    .reduce((a, s) => {
+      const factor = { semanal: 52 / 12, quincenal: 26 / 12, mensual: 1, trimestral: 1 / 3, anual: 1 / 12 }[s.frecuencia] || 1;
+      return a + s.monto * factor;
+    }, 0);
 
   const tendenciaMeses = [];
   for (let i = 5; i >= 0; i--) {
@@ -40,7 +78,7 @@ function computeInsights() {
   }
   const categoriasOrdenadas = Object.keys(porCategoria).sort((a, b) => porCategoria[b] - porCategoria[a]).slice(0, 6).map((c) => ({ etiqueta: t("cat_" + c), valor: porCategoria[c] }));
 
-  return { totalActual, totalAnterior, cambioPct, topCategoria, topMonto, suscripcionesDetectadas, tendenciaMeses, categoriasOrdenadas };
+  return { totalActual, totalAnterior, cambioPct, topCategoria, topMonto, suscripcionesDetectadas, suscripcionesTotalMensual, tendenciaMeses, categoriasOrdenadas };
 }
 
 function comparaConPromedioCategoria(tx) {
