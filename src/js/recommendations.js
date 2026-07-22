@@ -199,3 +199,25 @@ function computeResumenSemanal() {
   const cambioPct = prev > 0 ? ((total - prev) / prev) * 100 : null;
   return { total, prev, cambioPct, topCat, topMonto, dias, diaHoy: dia };
 }
+
+/* Comercios donde mas gastas este mes, agrupando por nombre normalizado */
+function computeTopComercios(limite) {
+  if (!state.cloudTransactions || state.cloudTransactions.length === 0) return [];
+  const mesActual = new Date().toISOString().slice(0, 7);
+  const mapa = {};
+  state.cloudTransactions.forEach((tx) => {
+    const m = toNum(tx.monto);
+    if (m >= 0) return;
+    if (String(tx.fecha).slice(0, 7) !== mesActual) return;
+    const limpio = String(tx.descripcion || "")
+      .replace(/[0-9#*]+/g, " ")
+      .replace(/\b(purchase|payment|debit|card|pos|recurring|autopay)\b/gi, " ")
+      .replace(/\s+/g, " ").trim();
+    const nombre = (limpio || t("cat_otros")).slice(0, 24);
+    const k = nombre.toLowerCase();
+    if (!mapa[k]) mapa[k] = { nombre: nombre, total: 0, veces: 0, categoria: tx.categoria || "otros" };
+    mapa[k].total += Math.abs(m);
+    mapa[k].veces += 1;
+  });
+  return Object.keys(mapa).map((k) => mapa[k]).sort((a, b) => b.total - a.total).slice(0, limite || 5);
+}

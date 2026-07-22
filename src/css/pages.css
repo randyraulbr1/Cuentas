@@ -100,3 +100,15 @@
 .cat-ico { display: inline-flex; color: var(--accent); }
 .cat-ico .ic svg, .preset-ico .ic svg { width: 17px; height: 17px; }
 .preset-ico { display: inline-flex; color: var(--accent); }
+
+/* Top comercios */
+.merch-row { display: flex; align-items: flex-start; gap: 11px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.merch-row:last-child { border-bottom: none; }
+.merch-ico { flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--input-bg); border-radius: 9px; }
+.merch-mid { flex: 1; min-width: 0; }
+.merch-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.merch-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.merch-amt { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.merch-track { height: 5px; background: var(--input-bg); border-radius: 3px; margin: 6px 0 4px; overflow: hidden; }
+.merch-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.5s ease; }
+.merch-sub { font-size: 11.5px; color: var(--text-muted); }

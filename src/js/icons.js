@@ -4,6 +4,7 @@
    Iconos propios en SVG (trazo fino, estilo profesional), sin depender de
    ninguna libreria externa por CDN. Cada uno hereda color con currentColor. */
 const ICONS = {
+  chevron: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg>',
   droplet: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8s6.5 7 6.5 11.7a6.5 6.5 0 0 1-13 0C5.5 9.8 12 2.8 12 2.8Z"/></svg>',
   flame: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5c1 3-0.5 4.5-2 6C8 10.5 6.5 12.5 6.5 15a5.5 5.5 0 0 0 11 0c0-2-1-3.6-2-5-1.5 1.5-2 2-3.5 2 1.5-3 1-6.5 0-9.5Z"/></svg>',
   wifi: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 9.5a14 14 0 0 1 19 0"/><path d="M5.8 13a9.5 9.5 0 0 1 12.4 0"/><path d="M9 16.4a5 5 0 0 1 6 0"/><circle cx="12" cy="19.3" r="1" fill="currentColor"/></svg>',

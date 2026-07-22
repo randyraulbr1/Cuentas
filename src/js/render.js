@@ -743,6 +743,21 @@ function renderApp() {
       html += '<div class="empty-state">' + t("insightsEmpty") + '</div>';
     }
 
+    const comercios = computeTopComercios(5);
+    if (comercios.length > 0) {
+      const maxCom = comercios[0].total || 1;
+      html += '<div class="panel"><div class="panel-head-row"><h2 style="margin-bottom:0;">' + t("topComerciosTitle") + '</h2><span class="sync-badge">' + icon("bank") + t("sincronizadoLbl") + '</span></div>';
+      comercios.forEach((c) => {
+        const ic = categoriaIconoColor(c.categoria);
+        html += '<div class="merch-row">';
+        html += '<span class="merch-ico" style="color:' + ic.color + ';">' + icon(ic.icon) + '</span>';
+        html += '<div class="merch-mid"><div class="merch-top"><span class="merch-name">' + esc(c.nombre) + '</span><span class="merch-amt">' + sym() + fmt0(c.total) + '</span></div>';
+        html += '<div class="merch-track"><div class="merch-fill" style="width:' + Math.max((c.total / maxCom) * 100, 4) + '%;"></div></div>';
+        html += '<span class="merch-sub">' + t("vecesMsg")(c.veces) + '</span></div></div>';
+      });
+      html += '</div>';
+    }
+
     const salud = computeSaludCreditoEstimada();
     if (salud) {
       const nivelSalud = salud.scoreFinal >= 70 ? "verde" : salud.scoreFinal >= 40 ? "amarillo" : "rojo";
@@ -799,9 +814,6 @@ function renderApp() {
 
       const listaBase = state.historialVista === "recibidos" ? recibidosBase : comprasBase;
       const categoriasPresentes = Array.from(new Set(listaBase.map((tx) => tx.categoria || "otros")));
-      if (state.historialVista === "recibidos") {
-              } else {
-              }
       html += '<input type="text" placeholder="' + t("buscarPh") + '" id="historial-search" data-scope="historialSearch" value="' + esc(state.historialSearch) + '" style="width:100%;margin-bottom:8px;">';
       html += '<div class="preset-row">';
       html += '<button class="preset-chip' + (!state.historialCategoriaFiltro ? " active-chip" : "") + '" data-action="setHistorialFiltro" data-id="">' + t("todasLbl") + '</button>';
@@ -829,7 +841,7 @@ function renderApp() {
         }
         const abierto = state.historialMesAbierto === grupo.monthKey;
         const totalMes = grupo.items.reduce((a, tx) => a + Math.abs(toNum(tx.monto)), 0);
-        html += '<button class="sub-row-locked" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;font:inherit;color:inherit;" data-action="toggleMesHistorial" data-id="' + grupo.monthKey + '"><span class="locked-name" style="display:flex;align-items:center;gap:6px;">' + (abierto ? '\u2304' : '\u203a') + ' ' + esc(grupo.label) + '</span><span class="locked-amount">' + sym() + fmt0(totalMes) + '</span></button>';
+        html += '<button class="sub-row-locked" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;font:inherit;color:inherit;" data-action="toggleMesHistorial" data-id="' + grupo.monthKey + '"><span class="locked-name" style="display:flex;align-items:center;gap:6px;"><span class="chev' + (abierto ? " open" : "") + '">' + icon("chevron") + '</span>' + esc(grupo.label) + '</span><span class="locked-amount">' + sym() + fmt0(totalMes) + '</span></button>';
         if (abierto) {
           grupo.items.forEach((tx) => {
             html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
