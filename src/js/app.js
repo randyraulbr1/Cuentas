@@ -355,6 +355,10 @@ root.addEventListener("click", (e) => {
     setThemeLight: () => { if (state.theme !== "light") toggleTheme(); },
     setThemeDark: () => { if (state.theme !== "dark") toggleTheme(); },
     setTextSizeChico: () => setTextSize("pequeno"), setTextSizeNormal: () => setTextSize("normal"), setTextSizeGrande: () => setTextSize("grande"),
+    pedirSumarAhorro: () => { state.confirmSumarAhorro = true; render(); },
+    cancelSumarAhorro: () => { state.confirmSumarAhorro = false; render(); },
+    sumarAhorro100: () => { pushUndo(); state.ahorroActual = String(toNum(state.ahorroActual) + 100); state.confirmSumarAhorro = false; scheduleSave(); render(); },
+    verDiaSemana: () => { state.diaSemanaSel = state.diaSemanaSel === Number(id) ? null : Number(id); render(); },
     abrirIconPicker: () => { state.iconPickerSubId = state.iconPickerSubId === id ? null : id; render(); },
     cerrarIconPicker: () => { state.iconPickerSubId = null; render(); },
     elegirIconoSub: () => {

@@ -197,7 +197,12 @@ function computeResumenSemanal() {
   let topCat = null, topMonto = 0;
   Object.keys(porCat).forEach((c) => { if (porCat[c] > topMonto) { topCat = c; topMonto = porCat[c]; } });
   const cambioPct = prev > 0 ? ((total - prev) / prev) * 100 : null;
-  return { total, prev, cambioPct, topCat, topMonto, dias, diaHoy: dia };
+  const nombresDias = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(iniSemana); d.setDate(iniSemana.getDate() + i);
+    nombresDias.push(formatDate(d));
+  }
+  return { total, prev, cambioPct, topCat, topMonto, dias, diaHoy: dia, nombresDias };
 }
 
 /* Comercios donde mas gastas este mes, agrupando por nombre normalizado */

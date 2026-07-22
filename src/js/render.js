@@ -172,28 +172,9 @@ function renderOpcionesTab() {
   let h = '<p class="opt-row-sub" style="text-align:center;margin:-4px 0 12px;">' + t("optionsTitle") + ' \u00b7 v' + APP_VERSION.replace("v", "") + '</p>';
     h += renderBancoNubePanel(true);
 
-    h += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("saldosManualesTitle") + '</h2></div><button class="icon-pencil' + (state.editingAhorro ? " done" : "") + '" data-action="toggleEditAhorro">' + (state.editingAhorro ? icon("check") : icon("pencil")) + '</button></div>';
-    if (!state.editingAhorro) {
-      h += '<div class="sub-row-locked"><span class="locked-name">' + t("debitoLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.debito)) + '</span></div>';
-      h += '<div class="sub-row-locked"><span class="locked-name">' + t("cashLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.cash)) + '</span></div>';
-      h += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + t("ahorroActualLbl") + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.ahorroActual)) + '</span></div>';
-    } else {
-      h += '<div class="goal-grid">';
-      h += '<div class="goal-field"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '"></div>';
-      h += '<div class="goal-field"><label>' + t("cashLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="cash-input" data-scope="cash" value="' + esc(state.cash) + '"></div>';
-      h += '</div>';
-      h += '<div class="goal-field" style="margin-top:10px;"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '" style="width:100%;"></div>';
-    }
-    h += '</div>';
-
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
   h += '<div class="panel"><p class="opt-section-title">' + t("secPerfil") + '</p>';
   h += '<div class="opt-row"><span class="opt-row-label">' + esc(activeProfile ? activeProfile.nombre : "") + '</span><button class="pill-btn" data-action="switchUser">' + t("switchUser") + '</button></div>';
-  if (state.confirmDeleteProfileId === state.activeProfileId) {
-    h += '<div class="confirm-row" style="margin-top:8px;"><span>' + t("confirmEliminarCuentaMsg") + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="deleteProfile" data-id="' + state.activeProfileId + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteProfile">' + t("cancel") + '</button></div></div>';
-  } else {
-    h += '<button class="pill-btn danger wide" style="margin-top:8px;width:100%;" data-action="askDeleteProfile" data-id="' + state.activeProfileId + '">' + t("eliminarCuentaBtn") + '</button>';
-  }
   h += '</div>';
 
   h += '<div class="panel"><p class="opt-section-title">' + t("secPreferencias") + '</p><div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div>';
@@ -218,28 +199,7 @@ function renderOpcionesTab() {
   h += '<div class="opt-slider-row"><input type="range" min="0" max="100" id="savings-rate-input" data-scope="savingsRate" value="' + state.savingsRate + '"><div class="opt-slider-val">' + state.savingsRate + '%</div></div></div>';
 
   h += '<div class="panel"><p class="opt-section-title">' + t("secDatos") + '</p><div class="opt-btn-stack">';
-  h += '<button class="pill-btn wide" data-action="showExport">' + t("exportarDatos") + '</button>';
   h += '<button class="pill-btn wide update" data-action="actualizar">' + t("update") + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button>';
-  h += '<button class="pill-btn wide" data-action="undo"' + (undoStack.length === 0 ? " disabled" : "") + '>' + t("undo") + '</button>';
-  if (!state.confirmReset) {
-    h += '<button class="pill-btn wide danger" data-action="confirmReset">' + t("resetAll") + '</button>';
-  } else {
-    h += '<p style="font-size:12px;color:var(--text-muted);text-align:center;margin:4px 0;">' + t("confirmResetMsg") + '</p>';
-    h += '<div style="display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="resetAll">' + t("yesDelete") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelReset">' + t("cancel") + '</button></div>';
-  }
-  h += '</div></div>';
-
-  if (state.authUser) {
-    h += '<div class="panel"><p class="opt-section-title">' + t("secNube") + '</p>';
-    h += '<button class="pill-btn wide danger" data-action="apiDeleteCloudAccount">' + t("eliminarCuentaNubeBtn") + '</button>';
-    h += '</div>';
-  }
-
-  h += '<div class="panel"><p class="opt-section-title">' + t("secLegal") + '</p><div class="legal-links">';
-  h += '<a href="privacy.html" target="_blank" rel="noopener">' + t("verPrivacidad") + '</a>';
-  h += '<a href="data-policy.html" target="_blank" rel="noopener">' + t("verDatosPolitica") + '</a>';
-  h += '<a href="terms.html" target="_blank" rel="noopener">' + t("verTerminos") + '</a>';
-  h += '<a href="contact.html" target="_blank" rel="noopener">' + t("verContacto") + '</a>';
   h += '</div></div>';
 
   return h;
@@ -373,9 +333,13 @@ function renderApp() {
       html += '<div class="week-bars">';
       rs.dias.forEach((v, i) => {
         const activo = i <= rs.diaHoy;
-        html += '<div class="week-day"><div class="week-bar-track"><div class="week-bar-fill' + (i === rs.diaHoy ? " hoy" : "") + '" style="height:' + Math.max((v / maxDia) * 100, v > 0 ? 6 : 2) + '%;opacity:' + (activo ? 1 : 0.25) + ';"></div></div><span class="week-day-lbl' + (i === rs.diaHoy ? " hoy" : "") + '">' + t("semanaDias")[i] + '</span></div>';
+        const sel = state.diaSemanaSel === i;
+        html += '<button class="week-day' + (sel ? " sel" : "") + '" data-action="verDiaSemana" data-id="' + i + '"><div class="week-bar-track"><div class="week-bar-fill' + (i === rs.diaHoy ? " hoy" : "") + (sel ? " sel" : "") + '" style="height:' + Math.max((v / maxDia) * 100, v > 0 ? 6 : 2) + '%;opacity:' + (activo ? 1 : 0.25) + ';"></div></div><span class="week-day-lbl' + (i === rs.diaHoy ? " hoy" : "") + '">' + t("semanaDias")[i] + '</span></button>';
       });
       html += '</div>';
+      if (state.diaSemanaSel !== null && rs.dias[state.diaSemanaSel] !== undefined) {
+        html += '<div class="day-detail"><span class="day-detail-lbl">' + esc(rs.nombresDias[state.diaSemanaSel]) + '</span><b class="day-detail-amt">' + sym() + fmt0(rs.dias[state.diaSemanaSel]) + '</b></div>';
+      }
       if (rs.topCat) html += '<p class="opt-row-sub" style="margin-top:8px;">' + t("semanaTopMsg")(t("cat_" + rs.topCat), sym() + fmt0(rs.topMonto)) + '</p>';
       html += '</div>';
     }
@@ -383,7 +347,16 @@ function renderApp() {
     html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("cashLbl") + ' ' + icon("pencil") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.cash)) + '</div></button>';
     html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("debitoLbl") + ' ' + icon("pencil") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito) + cloudNoCredit) + '</div></button>';
     html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
-    html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("ahorradoActual") + ' ' + icon("pencil") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></button>';
+    const ahorroMetas = state.goals.reduce((a, g) => a + toNum(g.montoActual), 0);
+    const ahorroTotal = toNum(state.ahorroActual) + ahorroMetas;
+    html += '<div class="sum-card"><button class="sum-card-inner" data-action="toggleSaldosInicio"><div class="sum-label">' + t("ahorradoActual") + ' ' + icon("pencil") + '</div><div class="sum-val green">' + sym() + fmt0(ahorroTotal) + '</div></button>';
+    if (ahorroMetas > 0) html += '<div class="sum-sub">' + t("incluyeMetasMsg")(sym() + fmt0(ahorroMetas)) + '</div>';
+    if (state.confirmSumarAhorro) {
+      html += '<div class="quick-confirm"><span>' + t("confirmSumar100Msg")(sym()) + '</span><div class="quick-confirm-btns"><button class="pill-btn confirm" data-action="sumarAhorro100">' + t("siSumar") + '</button><button class="pill-btn" data-action="cancelSumarAhorro">' + t("cancel") + '</button></div></div>';
+    } else {
+      html += '<button class="quick-add" data-action="pedirSumarAhorro">+' + sym() + '100</button>';
+    }
+    html += '</div>';
     html += '</div>';
 
     if (state.editingSaldosInicio) {
@@ -532,8 +505,8 @@ function renderApp() {
     const presetsDisponibles = SUB_PRESETS.filter((p) => !state.subs.some((s) => s.categoria === p.cat && (s.nombre || "").toLowerCase() === t("preset_" + p.key).toLowerCase()));
     if (presetsDisponibles.length > 0) {
       html += '<p class="opt-section-title" style="margin-top:2px;">' + t("presetsTitle") + '</p>';
-      html += '<div class="preset-row">';
-      presetsDisponibles.forEach((p) => { html += '<button class="preset-chip" data-action="addSubPreset" data-id="' + p.key + '"><span class="preset-ico">' + icon(CATEGORY_ICON[p.cat]) + '</span><span>' + t("preset_" + p.key) + '</span></button>'; });
+      html += '<div class="preset-scroll">';
+      presetsDisponibles.forEach((p) => { html += '<button class="preset-tile" data-action="addSubPreset" data-id="' + p.key + '"><span class="preset-tile-ico">' + icon(CATEGORY_ICON[p.cat]) + '</span><span class="preset-tile-lbl">' + t("preset_" + p.key) + '</span></button>'; });
       html += '</div>';
     }
     state.subs.forEach((s) => {
@@ -698,11 +671,11 @@ function renderApp() {
     if (cloudCards.length > 0) {
       html += '<div class="panel"><div class="panel-head-row"><h2 style="margin-bottom:0;">' + t("tarjetasNubeTitle") + '</h2><span class="sync-badge">' + icon("bank") + t("sincronizadoLbl") + '</span></div>';
       const ccGrads = [
-        "linear-gradient(135deg,#1d2b4f 0%,#0e1428 100%)",
-        "linear-gradient(135deg,#33333d 0%,#0f0f14 100%)",
-        "linear-gradient(135deg,#0f3d3e 0%,#071e1f 100%)",
-        "linear-gradient(135deg,#4a1526 0%,#220810 100%)",
-        "linear-gradient(135deg,#2c2a6b 0%,#141238 100%)"
+        "linear-gradient(140deg,#1B4E8C 0%,#0C2C52 55%,#081E39 100%)",
+        "linear-gradient(140deg,#B3202E 0%,#7A1220 55%,#4A0A14 100%)",
+        "linear-gradient(140deg,#6E7681 0%,#454B54 55%,#2A2E34 100%)",
+        "linear-gradient(140deg,#0E7C66 0%,#0A5347 55%,#06332C 100%)",
+        "linear-gradient(140deg,#5B3A9E 0%,#3A2468 55%,#22143F 100%)"
       ];
       html += '<div class="cc-stack">';
       cloudCards.forEach((c, ccIdx) => {
@@ -753,7 +726,6 @@ function renderApp() {
     if (ins.categoriasOrdenadas.length > 0) {
       html += '<div class="panel"><h2>' + t("gastoPorCategoriaTitle") + '</h2>';
       html += renderBarChart(ins.categoriasOrdenadas, 110);
-      html += renderDonutChart(ins.categoriasOrdenadas);
       html += '</div>';
     }
 
@@ -773,18 +745,6 @@ function renderApp() {
         html += '<div class="merch-track"><div class="merch-fill" style="width:' + Math.max((c.total / maxCom) * 100, 4) + '%;"></div></div>';
         html += '<span class="merch-sub">' + t("vecesMsg")(c.veces) + '</span></div></div>';
       });
-      html += '</div>';
-    }
-
-    const salud = computeSaludCreditoEstimada();
-    if (salud) {
-      const nivelSalud = salud.scoreFinal >= 70 ? "verde" : salud.scoreFinal >= 40 ? "amarillo" : "rojo";
-      html += '<div class="panel"><h2>' + t("saludEstimadaTitle") + '</h2>';
-      html += '<div style="text-align:center;margin:6px 0 10px;"><div style="font-size:40px;font-weight:800;color:' + (nivelSalud === "verde" ? "#34C759" : nivelSalud === "amarillo" ? "#FF9F0A" : "#FF3B30") + ';">' + salud.scoreFinal + '</div><div class="opt-row-sub">' + t("saludDe100Lbl") + '</div></div>';
-      html += utilBarHtml(salud.scoreFinal, nivelSalud);
-      html += '<p class="opt-row-sub" style="margin-top:10px;">' + t("saludUsoMsg")(Math.round(salud.usoPromedio)) + '</p>';
-      if (salud.fijosTotal > 0) html += '<p class="opt-row-sub" style="margin-top:4px;">' + t("saludPagosMsg")(salud.fijosPagados, salud.fijosTotal) + '</p>';
-      html += '<p class="opt-row-sub" style="margin-top:8px;font-style:italic;">' + t("saludDisclaimerMsg") + '</p>';
       html += '</div>';
     }
 
