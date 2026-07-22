@@ -94,6 +94,51 @@ function formatDate(d) { return d.toLocaleDateString(LANG === "es" ? "es-ES" : "
 
 function diasLabel(n) { if (n === 0) return t("hoy"); if (n === 1) return t("manana"); return t("enDias")(n); }
 
+function listaDeudas() {
+  const deudas = [];
+  state.cards.filter((c) => toNum(c.saldo) > 0).forEach((c) => {
+    deudas.push({ id: "m-" + c.id, nombre: c.nombre || t("cardNombrePh"), saldo: toNum(c.saldo), apr: toNum(c.apr) || 0, pagoMinimo: toNum(c.minimo) || Math.max(toNum(c.saldo) * 0.02, 25) });
+  });
+  cloudCreditCards().forEach((c) => {
+    if (toNum(c.balance_current) <= 0) return;
+    deudas.push({ id: "c-" + c.account_id, nombre: (c.name || t("cardNombrePh")) + (c.mask ? " ****" + c.mask : ""), saldo: toNum(c.balance_current), apr: toNum(c.liab_apr) || 0, pagoMinimo: toNum(c.liab_pago_minimo) || Math.max(toNum(c.balance_current) * 0.02, 25) });
+  });
+  state.loans.filter((l) => toNum(l.saldoTotal) > 0).forEach((l) => {
+    deudas.push({ id: "l-" + l.id, nombre: l.nombre || t("loanNombrePh"), saldo: toNum(l.saldoTotal), apr: toNum(l.tasa) || 0, pagoMinimo: toNum(l.montoPago) || 0 });
+  });
+  return deudas;
+}
+
+function computePlanDePago(strategy, extra) {
+  const deudas = listaDeudas().map((d) => Object.assign({}, d, { saldoRestante: d.saldo, pagada: false, mesesParaPagar: null }));
+  if (deudas.length === 0) return null;
+  const orden = deudas.slice().sort((a, b) => strategy === "avalancha" ? b.apr - a.apr : a.saldo - b.saldo);
+  const totalMinimos = deudas.reduce((a, d) => a + d.pagoMinimo, 0);
+  let mes = 0;
+  let totalInteresPagado = 0;
+  const MAX_MESES = 600; // limite de seguridad (50 anios) para evitar loop infinito si los pagos no alcanzan
+  while (orden.some((d) => !d.pagada) && mes < MAX_MESES) {
+    mes++;
+    let extraDisponible = extra;
+    orden.forEach((d) => {
+      if (d.pagada) return;
+      const interesMes = d.saldoRestante * (d.apr / 100 / 12);
+      totalInteresPagado += interesMes;
+      d.saldoRestante += interesMes;
+    });
+    orden.forEach((d) => {
+      if (d.pagada) return;
+      const esObjetivo = orden.find((x) => !x.pagada) === d;
+      let pago = d.pagoMinimo;
+      if (esObjetivo) pago += extraDisponible;
+      pago = Math.min(pago, d.saldoRestante);
+      d.saldoRestante -= pago;
+      if (d.saldoRestante <= 0.5) { d.saldoRestante = 0; d.pagada = true; d.mesesParaPagar = mes; }
+    });
+  }
+  return { orden, mesesTotales: mes >= MAX_MESES ? null : mes, totalInteresPagado, totalMinimos };
+}
+
 function cloudCreditCards() {
   return state.cloudAccounts.filter((a) => a.type === "credit");
 }
