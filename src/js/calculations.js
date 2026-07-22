@@ -94,6 +94,24 @@ function formatDate(d) { return d.toLocaleDateString(LANG === "es" ? "es-ES" : "
 
 function diasLabel(n) { if (n === 0) return t("hoy"); if (n === 1) return t("manana"); return t("enDias")(n); }
 
+function computeSaludCreditoEstimada() {
+  const cloudCards = cloudCreditCards().filter((c) => toNum(c.balance_limit) > 0);
+  const manualCards = state.cards.filter((c) => toNum(c.limite) > 0);
+  const todas = cloudCards.map((c) => Math.min((toNum(c.balance_current) / toNum(c.balance_limit)) * 100, 100))
+    .concat(manualCards.map((c) => Math.min((toNum(c.saldo) / toNum(c.limite)) * 100, 100)));
+  if (todas.length === 0) return null;
+
+  const usoPromedio = todas.reduce((a, u) => a + u, 0) / todas.length;
+  const scoreUso = Math.max(0, 100 - usoPromedio);
+
+  const fijos = state.gastosFijosReconocidos;
+  const fijosPagados = fijos.filter((gf) => gastoFijoPagadoEsteMes(gf)).length;
+  const scorePagos = fijos.length > 0 ? (fijosPagados / fijos.length) * 100 : 100;
+
+  const scoreFinal = Math.round(scoreUso * 0.6 + scorePagos * 0.4);
+  return { scoreFinal, usoPromedio, scorePagos, fijosPagados, fijosTotal: fijos.length };
+}
+
 function listaDeudas() {
   const deudas = [];
   state.cards.filter((c) => toNum(c.saldo) > 0).forEach((c) => {

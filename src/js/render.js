@@ -700,6 +700,18 @@ function renderApp() {
       html += '<div class="empty-state">' + t("insightsEmpty") + '</div>';
     }
 
+    const salud = computeSaludCreditoEstimada();
+    if (salud) {
+      const nivelSalud = salud.scoreFinal >= 70 ? "verde" : salud.scoreFinal >= 40 ? "amarillo" : "rojo";
+      html += '<div class="panel"><h2>' + t("saludEstimadaTitle") + '</h2>';
+      html += '<div style="text-align:center;margin:6px 0 10px;"><div style="font-size:40px;font-weight:800;color:' + (nivelSalud === "verde" ? "#34C759" : nivelSalud === "amarillo" ? "#FF9F0A" : "#FF3B30") + ';">' + salud.scoreFinal + '</div><div class="opt-row-sub">' + t("saludDe100Lbl") + '</div></div>';
+      html += utilBarHtml(salud.scoreFinal, nivelSalud);
+      html += '<p class="opt-row-sub" style="margin-top:10px;">' + t("saludUsoMsg")(Math.round(salud.usoPromedio)) + '</p>';
+      if (salud.fijosTotal > 0) html += '<p class="opt-row-sub" style="margin-top:4px;">' + t("saludPagosMsg")(salud.fijosPagados, salud.fijosTotal) + '</p>';
+      html += '<p class="opt-row-sub" style="margin-top:8px;font-style:italic;">' + t("saludDisclaimerMsg") + '</p>';
+      html += '</div>';
+    }
+
     const deudasPlan = listaDeudas();
     if (deudasPlan.length > 0) {
       html += '<div class="panel"><h2>' + t("planDeudaTitle") + '</h2><p class="hint">' + t("planDeudaHint") + '</p>';
