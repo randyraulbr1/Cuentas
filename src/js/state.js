@@ -18,6 +18,14 @@ const CURRENCY = { usd: "$", eur: "€" };
 
 const CATEGORIES = ["renta", "luz", "agua", "gas", "wifi", "telefono", "carro", "seguro", "gym", "streaming", "entretenimiento", "salud", "otro"];
 
+const ICON_PICKER = [
+  "home", "bulb", "droplet", "flame", "wifi", "router", "phone", "tv", "clapper", "music",
+  "gamepad", "cloud", "book", "car", "bus", "train", "fuel", "shield", "medcross", "pill",
+  "tooth", "dumbbell", "barbell", "cart", "store", "utensils", "coffee", "paw", "dog", "baby",
+  "scissors", "shirt", "sofa", "leaf", "gift", "church", "cap", "briefcase", "tools", "hammer",
+  "key", "lock", "globe", "camera", "printer", "plug", "box", "scale", "chart2", "card", "bills", "tag",
+];
+
 const CATEGORY_ICON = { renta: "home", luz: "bulb", agua: "droplet", gas: "flame", wifi: "wifi", telefono: "phone", carro: "car", seguro: "shield", gym: "dumbbell", streaming: "clapper", entretenimiento: "clapper", salud: "medcross", otro: "tag" };
 
 const SUB_PRESETS = [
@@ -83,7 +91,7 @@ const state = {
   authMode: "login", authEmail: "", authPassword: "", authFormError: "",
   cloudAccounts: [], cloudTransactions: [], cloudInstitutions: [], cloudLastSync: "", cloudLiabilities: {},
 
-  goals: [], editingGoals: false, confirmDeleteGoalId: null, editingSaldosInicio: false,
+  goals: [], editingGoals: false, confirmDeleteGoalId: null, editingSaldosInicio: false, iconPickerSubId: null,
   historialSearch: "", historialCategoriaFiltro: "", showTxDetalle: null, notasTransacciones: {},
   historialMesesVisibles: 3, pagosMesesVisibles: 3, historialMesAbierto: null, historialVista: "compras", txDetalleFlash: "",
   cloudErrorMsg: "", cloudBusy: false, cloudFlash: "", confirmDisconnectId: null,

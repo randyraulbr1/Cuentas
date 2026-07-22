@@ -540,14 +540,26 @@ function renderApp() {
       if (state.confirmDeleteSubId === s.id) {
         html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteSubMsg")(s.nombre || t("subNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeSub" data-id="' + s.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteSub">' + t("cancel") + '</button></div></div>';
       } else if (state.editingSubs) {
-        html += '<div class="sub-row-cat">';
+        const icoActual = s.icono || CATEGORY_ICON[s.categoria] || CATEGORY_ICON.otro;
+        html += '<div class="sub-edit">';
+        html += '<button class="sub-ico-btn" data-action="abrirIconPicker" data-id="' + s.id + '" title="' + t("elegirIconoLbl") + '">' + icon(icoActual) + '<span class="sub-ico-edit">' + icon("pencil") + '</span></button>';
+        html += '<div class="sub-edit-fields">';
         html += '<input type="text" placeholder="' + t("subNombrePh") + '" id="sub-nombre-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="nombre" value="' + esc(s.nombre) + '">';
-        html += '<input type="text" inputmode="decimal" placeholder="' + sym() + '" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '">';
-        html += '<button class="icon-del" data-action="askDeleteSub" data-id="' + s.id + '">' + icon("close") + '</button>';
-        html += '<select data-scope="sub" data-id="' + s.id + '" data-field="categoria" style="grid-column:1/3;">';
+        html += '<div class="sub-edit-row2">';
+        html += '<div class="amount-field"><span class="amount-sym">' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '"></div>';
+        html += '<select data-scope="sub" data-id="' + s.id + '" data-field="categoria">';
         CATEGORIES.forEach((c) => { html += '<option value="' + c + '"' + (s.categoria === c ? " selected" : "") + '>' + t("cat_" + c) + '</option>'; });
         html += '</select>';
+        html += '</div></div>';
+        html += '<button class="icon-del" data-action="askDeleteSub" data-id="' + s.id + '">' + icon("close") + '</button>';
         html += '</div>';
+        if (state.iconPickerSubId === s.id) {
+          html += '<div class="icon-picker"><div class="icon-picker-head"><span>' + t("elegirIconoLbl") + '</span><button class="icon-del" data-action="cerrarIconPicker">' + icon("close") + '</button></div><div class="icon-grid">';
+          ICON_PICKER.forEach((ik) => {
+            html += '<button class="icon-opt' + (icoActual === ik ? " sel" : "") + '" data-action="elegirIconoSub" data-id="' + s.id + '|' + ik + '">' + icon(ik) + '</button>';
+          });
+          html += '</div></div>';
+        }
       } else {
         const pagado = s.pagadoMes === monthKey();
         if (state.payingSubId === s.id) {
@@ -565,7 +577,13 @@ function renderApp() {
           html += '<button class="pill-btn" style="flex:1;" data-action="cancelPagoSub">' + t("cancel") + '</button>';
           html += '</div></div>';
         } else {
-          html += '<div class="sub-row-locked"><span class="locked-name" style="display:flex;align-items:center;gap:8px;"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + s.id + '">' + (pagado ? icon("check") : "") + '</button><span class="cat-ico">' + icon(CATEGORY_ICON[s.categoria] || CATEGORY_ICON.otro) + '</span> ' + esc(s.nombre || t("subNombrePh")) + '</span><span class="locked-amount"' + (pagado ? ' style="text-decoration:line-through;opacity:0.5;"' : '') + '>' + sym() + fmt0(toNum(s.monto)) + '</span></div>';
+          const ico = s.icono || CATEGORY_ICON[s.categoria] || CATEGORY_ICON.otro;
+          html += '<div class="sub-item' + (pagado ? " pagado" : "") + '">';
+          html += '<button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + s.id + '">' + (pagado ? icon("check") : "") + '</button>';
+          html += '<span class="sub-item-ico">' + icon(ico) + '</span>';
+          html += '<div class="sub-item-mid"><span class="sub-item-name">' + esc(s.nombre || t("subNombrePh")) + '</span><span class="sub-item-cat">' + t("cat_" + (s.categoria || "otro")) + '</span></div>';
+          html += '<span class="sub-item-amt">' + sym() + fmt0(toNum(s.monto)) + '</span>';
+          html += '</div>';
         }
       }
     });
