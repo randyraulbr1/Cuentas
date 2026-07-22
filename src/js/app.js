@@ -356,6 +356,7 @@ root.addEventListener("click", (e) => {
     setThemeDark: () => { if (state.theme !== "dark") toggleTheme(); },
     setTextSizeChico: () => setTextSize("pequeno"), setTextSizeNormal: () => setTextSize("normal"), setTextSizeGrande: () => setTextSize("grande"),
     seleccionarTarjeta: () => { state.cardSeleccionadaId = id; render(); },
+    toggleCardNube: () => { state.cardNubeExpandida = state.cardNubeExpandida === id ? null : id; render(); },
     abrirConfirmarAhorro: abrirConfirmarAhorro, cancelarConfirmarAhorro: cancelarConfirmarAhorro, confirmarAhorroMes: confirmarAhorroMes,
     setDebtAvalancha: () => { state.debtStrategy = "avalancha"; render(); }, setDebtBolaNieve: () => { state.debtStrategy = "bola_nieve"; render(); },
     setPayMensual: () => setPayFrequency("mensual"),

@@ -649,26 +649,39 @@ function renderApp() {
     const cloudCards = cloudCreditCards();
     if (cloudCards.length > 0) {
       html += '<div class="panel"><h2>' + t("tarjetasNubeTitle") + '</h2><p class="hint">' + t("tarjetasNubeHint") + '</p>';
-      cloudCards.forEach((c) => {
+      const ccGrads = [
+        "linear-gradient(135deg,#1d2b4f 0%,#0e1428 100%)",
+        "linear-gradient(135deg,#33333d 0%,#0f0f14 100%)",
+        "linear-gradient(135deg,#0f3d3e 0%,#071e1f 100%)",
+        "linear-gradient(135deg,#4a1526 0%,#220810 100%)",
+        "linear-gradient(135deg,#2c2a6b 0%,#141238 100%)"
+      ];
+      html += '<div class="cc-stack">';
+      cloudCards.forEach((c, ccIdx) => {
         const saldo = toNum(c.balance_current);
         const limite = toNum(c.balance_limit);
         const uso = limite > 0 ? Math.min((saldo / limite) * 100, 100) : null;
         const usoNivel = uso === null ? "verde" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
         const liab = c.liab_apr != null || c.liab_pago_minimo != null ? { apr: c.liab_apr, pago_minimo: c.liab_pago_minimo, fecha_limite: c.liab_fecha_limite } : null;
-        html += '<div class="card-entry">';
-        html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(c.name || t("cardNombrePh")) + (c.mask ? " ****" + esc(c.mask) : "") + '</span>' + (uso !== null ? '<span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span>' : "") + '</div>';
-        html += '<div class="card-collapsed-balance"><span class="field-label">' + t("debesAhoraLbl") + ' ' + sym() + '</span><span class="locked-amount" style="font-size:19px;">' + sym() + fmt0(saldo) + '</span></div>';
-        if (limite > 0) html += utilBarHtml(uso, usoNivel);
-        if (liab) {
-          html += '<div class="opt-row-sub" style="margin-top:6px;">';
-          if (liab.apr) html += t("cardAprLbl") + ': ' + liab.apr + '% \u00b7 ';
-          if (liab.pago_minimo != null) html += t("cardMinimoLbl") + ': ' + sym() + fmt0(toNum(liab.pago_minimo));
-          html += '</div>';
-          if (liab.fecha_limite) html += '<div class="opt-row-sub">' + t("proximoPago") + ': ' + esc(liab.fecha_limite) + '</div>';
+        const exp = state.cardNubeExpandida === c.account_id;
+        html += '<button type="button" class="cc-card' + (exp ? " expanded" : "") + '" data-action="toggleCardNube" data-id="' + esc(c.account_id) + '" style="background:' + ccGrads[ccIdx % ccGrads.length] + ';" aria-expanded="' + (exp ? "true" : "false") + '">';
+        html += '<div class="cc-top"><span class="cc-bank">' + esc(c.name || t("cardNombrePh")) + '</span>' + (uso !== null ? '<span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span>' : "") + '</div>';
+        html += '<div class="cc-mid"><span class="cc-chip"></span><svg class="cc-wave" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7a7 7 0 0 1 0 6M9 5a10 10 0 0 1 0 10M13 3a13.5 13.5 0 0 1 0 14"/></svg></div>';
+        html += '<div class="cc-number">\u2022\u2022\u2022\u2022&nbsp;&nbsp;\u2022\u2022\u2022\u2022&nbsp;&nbsp;\u2022\u2022\u2022\u2022&nbsp;&nbsp;' + (c.mask ? esc(c.mask) : "\u2022\u2022\u2022\u2022") + '</div>';
+        html += '<div class="cc-bottom"><span class="cc-label">' + t("debesAhoraLbl") + '</span><span class="cc-balance">' + sym() + fmt0(saldo) + '</span></div>';
+        html += '<div class="cc-detail">';
+        if (limite > 0) {
+          html += utilBarHtml(uso, usoNivel);
+          html += '<div class="cc-line"><span>' + sym() + fmt0(saldo) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(limite) + '</span></div>';
         }
-        html += '</div>';
+        if (liab) {
+          if (liab.apr) html += '<div class="cc-line"><span>' + t("cardAprLbl") + '</span><span>' + liab.apr + '%</span></div>';
+          if (liab.pago_minimo != null) html += '<div class="cc-line"><span>' + t("cardMinimoLbl") + '</span><span>' + sym() + fmt0(toNum(liab.pago_minimo)) + '</span></div>';
+          if (liab.fecha_limite) html += '<div class="cc-line"><span>' + t("proximoPago") + '</span><span>' + esc(liab.fecha_limite) + '</span></div>';
+        }
+        html += '</div></button>';
       });
-      html += '</div>';
+      html += '</div></div>';
     }
   }
 

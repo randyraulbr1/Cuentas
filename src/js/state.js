@@ -57,7 +57,7 @@ const state = {
   profiles: loadProfiles(),
   activeProfileId: null,
   confirmDeleteProfileId: null,
-  theme: settingsInit.theme || "light", textSize: settingsInit.textSize || "normal", cardSeleccionadaId: null,
+  theme: settingsInit.theme || "light", textSize: settingsInit.textSize || "normal", cardSeleccionadaId: null, cardNubeExpandida: null,
   showConfirmarAhorro: false, montoConfirmarAhorro: "", debtStrategy: "avalancha", extraPagoDeuda: "",
   lang: settingsInit.lang || "es",
   currency: settingsInit.currency || "usd",

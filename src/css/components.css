@@ -101,3 +101,29 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .flash { text-align: center; color: #34C759; font-size: 13px; font-weight: 600; margin: -8px 0 14px; display: flex; align-items: center; justify-content: center; }
 .empty-state { text-align: center; color: var(--text-muted); font-size: 12.5px; padding: 10px 0; }
 .save-note { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 24px; }
+
+/* Tarjetas del banco: pila estilo billetera */
+.cc-stack { display: flex; flex-direction: column; margin-top: 10px; }
+.cc-card { position: relative; width: 100%; border: none; border-radius: 18px; padding: 16px 18px; color: #fff; text-align: left; cursor: pointer; font-family: inherit; box-shadow: 0 8px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12); overflow: hidden; transition: margin 0.35s ease, transform 0.35s ease, box-shadow 0.35s ease; }
+.cc-card::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 85% -10%, rgba(255,255,255,0.14), transparent 55%); pointer-events: none; }
+.cc-card + .cc-card { margin-top: -118px; }
+.cc-card.expanded, .cc-card.expanded + .cc-card { margin-top: 12px; }
+.cc-stack .cc-card:first-child.expanded { margin-top: 0; }
+.cc-card.expanded { transform: scale(1.02); box-shadow: 0 14px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16); z-index: 2; }
+.cc-card:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.cc-bank { font-weight: 700; font-size: 15px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-mid { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.cc-chip { width: 38px; height: 28px; border-radius: 6px; background: linear-gradient(135deg, #e8c877, #b8913f); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25); position: relative; }
+.cc-chip::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0,0,0,0.3); }
+.cc-chip::after { content: ""; position: absolute; top: 4px; bottom: 4px; left: 50%; width: 1px; background: rgba(0,0,0,0.3); }
+.cc-wave { width: 22px; height: 22px; opacity: 0.75; }
+.cc-number { margin-top: 12px; font-size: 15px; letter-spacing: 0.14em; font-variant-numeric: tabular-nums; opacity: 0.9; }
+.cc-bottom { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; }
+.cc-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; }
+.cc-balance { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.cc-detail { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.35s ease; margin-top: 0; }
+.cc-card.expanded .cc-detail { max-height: 220px; opacity: 1; margin-top: 12px; }
+.cc-detail .util-bar-track { background: rgba(255,255,255,0.22); }
+.cc-line { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin-top: 8px; opacity: 0.92; }
+@media (prefers-reduced-motion: reduce) { .cc-card, .cc-detail { transition: none; } }
