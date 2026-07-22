@@ -321,9 +321,9 @@ function renderPagoBlock(type, item, saldoActual) {
 function renderTabBar() {
   const tabs = [
     { id: "inicio", icon: "home", label: t("tabInicio") },
-    { id: "historial", icon: "receipt", label: t("tabHistorial") },
+    { id: "cuentas", icon: "receipt", label: t("tabCuentas") },
     { id: "insights", icon: "chart", label: t("tabInsights") },
-    { id: "cuentas", icon: "wallet", label: t("tabCuentas") },
+    { id: "historial", icon: "clock", label: t("tabHistorial") },
     { id: "opciones", icon: "gear", label: t("optionsTitle") },
   ];
   let h = '<div class="tab-bar">';
