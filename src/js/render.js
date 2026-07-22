@@ -98,27 +98,26 @@ function renderTxDetalleSheet() {
   }
   h += '<div class="goal-field" style="margin-top:12px;"><label>' + t("notaDetalleLbl") + '</label><input type="text" placeholder="' + t("notaDetallePh") + '" id="tx-nota-input" data-scope="txNota" data-id="' + tx.id + '" value="' + esc(state.notasTransacciones[tx.id] || "") + '" style="width:100%;"></div>';
   if (toNum(tx.monto) < 0) {
-    h += '<div class="pay-config" style="margin-top:14px;"><label>' + t("marcarSuscripcionLbl") + '</label>';
+    h += '<div class="tx-actions">';
     if (state.txDetalleFlash) {
-      h += '<div class="flash" style="margin-top:8px;">' + icon("check") + ' ' + esc(state.txDetalleFlash) + '</div>';
+      h += '<div class="flash">' + icon("check") + ' ' + esc(state.txDetalleFlash) + '</div>';
+    } else if (state.showMarcarGastoFijo) {
+      h += '<p class="tx-actions-title">' + t("nombreGastoFijoLbl") + '</p>';
+      h += '<input type="text" placeholder="' + t("nombreGastoFijoPh") + '" id="nombre-gasto-fijo-input" data-scope="nombreGastoFijoTemp" value="' + esc(state.nombreGastoFijoTemp) + '" style="width:100%;">';
+      h += '<div class="tx-btn-row" style="margin-top:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmarGastoFijo">' + t("guardarBtn") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelarMarcarGastoFijo">' + t("cancel") + '</button></div>';
     } else {
-      h += '<div class="seg" style="width:100%;flex-wrap:wrap;margin-top:8px;">';
+      h += '<p class="tx-actions-title">' + t("marcarSuscripcionLbl") + '</p>';
+      h += '<div class="tx-freq-grid">';
       [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["mensual", "payMensual"], ["anual", "freqAnual"]].forEach((f) => {
-        h += '<button style="flex:1 1 45%;" data-action="marcarComoSuscripcion" data-id="' + tx.id + '" data-freq="' + f[0] + '">' + t(f[1]) + '</button>';
+        h += '<button class="tx-freq-btn" data-action="marcarComoSuscripcion" data-id="' + tx.id + '" data-freq="' + f[0] + '">' + t(f[1]) + '</button>';
       });
+      h += '</div>';
+      h += '<div class="tx-btn-row" style="margin-top:10px;">';
+      h += '<button class="tx-action-btn" data-action="abrirMarcarGastoFijo">' + icon("receipt") + '<span>' + t("marcarGastoFijoCorto") + '</span></button>';
+      h += '<button class="tx-action-btn" data-action="marcarComoPlazo" data-id="' + tx.id + '">' + icon("scale") + '<span>' + t("marcarPlazoLbl") + '</span></button>';
       h += '</div>';
     }
     h += '</div>';
-  }
-  if (toNum(tx.monto) < 0) {
-    if (state.showMarcarGastoFijo) {
-      h += '<div class="pay-config" style="margin-top:10px;"><label>' + t("nombreGastoFijoLbl") + '</label>';
-      h += '<input type="text" placeholder="' + t("nombreGastoFijoPh") + '" id="nombre-gasto-fijo-input" data-scope="nombreGastoFijoTemp" value="' + esc(state.nombreGastoFijoTemp) + '" style="width:100%;">';
-      h += '<div style="display:flex;gap:8px;margin-top:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmarGastoFijo">' + t("guardarBtn") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelarMarcarGastoFijo">' + t("cancel") + '</button></div>';
-      h += '</div>';
-    } else {
-      h += '<button class="delete-link" style="display:block;margin-top:10px;" data-action="abrirMarcarGastoFijo">' + t("marcarGastoFijoLbl") + '</button>';
-    }
   }
   h += '</div></div>';
   return h;

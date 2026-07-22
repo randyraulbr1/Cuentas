@@ -321,6 +321,7 @@ root.addEventListener("click", (e) => {
     toggleSuscripcionCancelada: () => toggleSuscripcionCancelada(id),
     verDetalleTx: () => verDetalleTx(id), cerrarDetalleTx: cerrarDetalleTx,
     marcarComoSuscripcion: () => marcarComoSuscripcion(id, freq),
+    marcarComoPlazo: () => marcarComoPlazo(id),
     abrirMarcarGastoFijo: abrirMarcarGastoFijo, cancelarMarcarGastoFijo: cancelarMarcarGastoFijo, confirmarGastoFijo: confirmarGastoFijo,
     removeGastoFijoReconocido: () => removeGastoFijoReconocido(id),
     setFrecuenciaAuto: () => setFrecuenciaAuto(id, freq),

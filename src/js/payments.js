@@ -320,3 +320,21 @@ function confirmarAhorroMes() {
   scheduleSave();
   render();
 }
+
+
+/* Convierte una compra del banco en un pago a plazo (prestamo) */
+function marcarComoPlazo(txId) {
+  const tx = state.cloudTransactions.find((t) => t.id === txId);
+  if (!tx) return;
+  pushUndo();
+  const monto = Math.abs(toNum(tx.monto));
+  state.loans.push({
+    id: uid(), nombre: tx.merchant_name || tx.descripcion || t("cat_otros"),
+    saldoTotal: String(monto), montoOriginal: String(monto), montoPago: "", tasa: "",
+    frecuencia: "mensual", ultimoPago: String(tx.fecha).slice(0, 10), automatico: false, fuenteAutomatica: "debito",
+  });
+  scheduleSave();
+  state.txDetalleFlash = t("marcadoComoPlazoMsg");
+  render();
+  setTimeout(() => { state.txDetalleFlash = ""; state.showTxDetalle = null; state.activeTab = "cuentas"; render(); }, 1400);
+}
