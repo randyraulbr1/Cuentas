@@ -9,7 +9,7 @@ function renderBancoNubePanel(compact) {
   if (state.cloudFlash) html += '<div class="flash">' + icon("check") + ' ' + esc(state.cloudFlash) + '</div>';
 
   if (!state.authUser) {
-    html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
+    html += '<button class="pay-trigger" style="background:var(--accent);" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
     html += '<button class="delete-link" style="display:block;margin:8px auto 0;" data-action="resetConexionNube">' + t("restablecerConexionBtn") + '</button>';
     html += '</div>';
     return html;
@@ -26,7 +26,7 @@ function renderBancoNubePanel(compact) {
     }
   });
 
-  html += '<button class="pay-trigger" style="background:#3D5AFE;" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
+  html += '<button class="pay-trigger" style="background:var(--accent);" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
   if (state.cloudLastSync) html += '<p class="opt-row-sub" style="text-align:center;margin-top:8px;">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(state.cloudLastSync).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
 
   if (state.cloudAccounts.length > 0 && !compact) {
@@ -52,7 +52,7 @@ function renderSelector() {
 
   if (state.cloudBusy) html += '<p class="opt-row-sub" style="text-align:left;margin:0 0 8px;">' + t("esperaServidorMsg") + '</p>';
   html += renderBancoNubePanel();
-  html += '<p class="opt-row-sub" style="text-align:center;margin:6px 0 -4px;">v' + APP_VERSION.replace("v", "") + ' \u00b7 <button data-action="actualizar" style="background:none;border:none;color:#3D5AFE;font:inherit;padding:0;cursor:pointer;">' + t("update") + '</button></p>';
+  html += '<p class="opt-row-sub" style="text-align:center;margin:6px 0 -4px;">v' + APP_VERSION.replace("v", "") + ' \u00b7 <button data-action="actualizar" style="background:none;border:none;color:var(--accent);font:inherit;padding:0;cursor:pointer;">' + t("update") + '</button></p>';
   state.profiles.forEach((p) => {
     const initial = (p.nombre || "?").trim().charAt(0).toUpperCase();
     if (state.confirmDeleteProfileId === p.id) {
@@ -132,7 +132,7 @@ function renderConsentimientoSheet() {
   h += '<ul style="margin:0 0 12px;padding-left:18px;font-size:13px;line-height:1.6;color:var(--text);">';
   [t("consentItem1"), t("consentItem2"), t("consentItem3"), t("consentItem4")].forEach((it) => { h += "<li>" + esc(it) + "</li>"; });
   h += "</ul>";
-  h += '<p class="opt-row-sub" style="margin-bottom:12px;">' + t("consentPoliza") + ' <a href="privacy.html" style="color:#3D5AFE;" target="_blank" rel="noopener">' + t("consentPolizaLink") + "</a></p>";
+  h += '<p class="opt-row-sub" style="margin-bottom:12px;">' + t("consentPoliza") + ' <a href="privacy.html" style="color:var(--accent);" target="_blank" rel="noopener">' + t("consentPolizaLink") + "</a></p>";
   h += '<div style="display:flex;gap:8px;">';
   h += '<button class="pill-btn confirm" style="flex:1;" data-action="aceptarConsentimiento">' + t("consentAceptar") + "</button>";
   h += '<button class="pill-btn" style="flex:1;" data-action="cancelarConsentimiento">' + t("cancel") + "</button>";
@@ -280,7 +280,7 @@ function renderBarChart(items, height, clickAction) {
     const barH = Math.max((it.valor / max) * (height - 18), 2);
     const attrs = clickAction ? ' data-action="' + clickAction + '" data-id="' + esc(it.monthKey || "") + '" style="cursor:pointer;"' : '';
     h += '<div' + attrs + ' style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;' + (clickAction ? "cursor:pointer;" : "") + '">';
-    h += '<div style="width:100%;max-width:28px;height:' + barH + 'px;background:#3D5AFE;border-radius:4px 4px 0 0;"></div>';
+    h += '<div style="width:100%;max-width:28px;height:' + barH + 'px;background:var(--accent);border-radius:4px 4px 0 0;"></div>';
     h += '<div style="font-size:9.5px;color:var(--text-muted);margin-top:4px;white-space:nowrap;">' + esc(it.etiqueta) + '</div>';
     h += '</div>';
   });
@@ -380,12 +380,22 @@ function renderApp() {
       html += '</div>';
     }
     html += '<div class="summary">';
-    html += '<div class="sum-card"><div class="sum-label">' + t("cashLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.cash)) + '</div></div>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("debitoLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito) + cloudNoCredit) + '</div></div>';
+    html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("cashLbl") + ' ' + icon("pencil") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.cash)) + '</div></button>';
+    html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("debitoLbl") + ' ' + icon("pencil") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito) + cloudNoCredit) + '</div></button>';
     html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></div>';
+    html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("ahorradoActual") + ' ' + icon("pencil") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></button>';
     html += '</div>';
 
+    if (state.editingSaldosInicio) {
+      html += '<div class="panel"><h2>' + t("saldosManualesTitle") + '</h2>';
+      html += '<div class="goal-grid">';
+      html += '<div class="goal-field"><label>' + t("cashLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="cash-input" data-scope="cash" value="' + esc(state.cash) + '"></div>';
+      html += '<div class="goal-field"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '"></div>';
+      html += '</div>';
+      html += '<div class="goal-field" style="margin-top:10px;"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '" style="width:100%;"></div>';
+      html += '<button class="pill-btn confirm" style="width:100%;margin-top:10px;" data-action="toggleSaldosInicio">' + t("listoBtn") + '</button>';
+      html += '</div>';
+    }
     html += '<div class="summary">';
     html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
     if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
@@ -449,7 +459,7 @@ function renderApp() {
     if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) {
       const todasTarjetas = [];
       t2.cardsConLimite.forEach((c) => {
-        todasTarjetas.push({ id: "m-" + c.id, nombre: c.nombre || t("cardNombrePh"), saldo: toNum(c.saldo), limite: toNum(c.limite), apr: toNum(c.apr), color: "#3D5AFE" });
+        todasTarjetas.push({ id: "m-" + c.id, nombre: c.nombre || t("cardNombrePh"), saldo: toNum(c.saldo), limite: toNum(c.limite), apr: toNum(c.apr), color: "var(--accent)" });
       });
       t2.cloudCardsConLimite.forEach((c) => {
         todasTarjetas.push({ id: "c-" + c.account_id, nombre: (c.name || t("cardNombrePh")) + (c.mask ? " ****" + c.mask : ""), saldo: toNum(c.balance_current), limite: toNum(c.balance_limit), apr: toNum(c.liab_apr), color: "#5C6BC0" });
@@ -523,7 +533,7 @@ function renderApp() {
     if (presetsDisponibles.length > 0) {
       html += '<p class="opt-section-title" style="margin-top:2px;">' + t("presetsTitle") + '</p>';
       html += '<div class="preset-row">';
-      presetsDisponibles.forEach((p) => { html += '<button class="preset-chip" data-action="addSubPreset" data-id="' + p.key + '"><span class="preset-ico">' + CATEGORY_ICON[p.cat] + '</span><span>' + t("preset_" + p.key) + '</span></button>'; });
+      presetsDisponibles.forEach((p) => { html += '<button class="preset-chip" data-action="addSubPreset" data-id="' + p.key + '"><span class="preset-ico">' + icon(CATEGORY_ICON[p.cat]) + '</span><span>' + t("preset_" + p.key) + '</span></button>'; });
       html += '</div>';
     }
     state.subs.forEach((s) => {
@@ -535,7 +545,7 @@ function renderApp() {
         html += '<input type="text" inputmode="decimal" placeholder="' + sym() + '" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '">';
         html += '<button class="icon-del" data-action="askDeleteSub" data-id="' + s.id + '">' + icon("close") + '</button>';
         html += '<select data-scope="sub" data-id="' + s.id + '" data-field="categoria" style="grid-column:1/3;">';
-        CATEGORIES.forEach((c) => { html += '<option value="' + c + '"' + (s.categoria === c ? " selected" : "") + '>' + CATEGORY_ICON[c] + ' ' + t("cat_" + c) + '</option>'; });
+        CATEGORIES.forEach((c) => { html += '<option value="' + c + '"' + (s.categoria === c ? " selected" : "") + '>' + t("cat_" + c) + '</option>'; });
         html += '</select>';
         html += '</div>';
       } else {
@@ -555,7 +565,7 @@ function renderApp() {
           html += '<button class="pill-btn" style="flex:1;" data-action="cancelPagoSub">' + t("cancel") + '</button>';
           html += '</div></div>';
         } else {
-          html += '<div class="sub-row-locked"><span class="locked-name" style="display:flex;align-items:center;gap:8px;"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + s.id + '">' + (pagado ? icon("check") : "") + '</button>' + (CATEGORY_ICON[s.categoria] || CATEGORY_ICON.otro) + ' ' + esc(s.nombre || t("subNombrePh")) + '</span><span class="locked-amount"' + (pagado ? ' style="text-decoration:line-through;opacity:0.5;"' : '') + '>' + sym() + fmt0(toNum(s.monto)) + '</span></div>';
+          html += '<div class="sub-row-locked"><span class="locked-name" style="display:flex;align-items:center;gap:8px;"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + s.id + '">' + (pagado ? icon("check") : "") + '</button><span class="cat-ico">' + icon(CATEGORY_ICON[s.categoria] || CATEGORY_ICON.otro) + '</span> ' + esc(s.nombre || t("subNombrePh")) + '</span><span class="locked-amount"' + (pagado ? ' style="text-decoration:line-through;opacity:0.5;"' : '') + '>' + sym() + fmt0(toNum(s.monto)) + '</span></div>';
         }
       }
     });

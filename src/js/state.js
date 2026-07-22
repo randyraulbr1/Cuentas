@@ -18,7 +18,7 @@ const CURRENCY = { usd: "$", eur: "€" };
 
 const CATEGORIES = ["renta", "luz", "agua", "gas", "wifi", "telefono", "carro", "seguro", "gym", "streaming", "entretenimiento", "salud", "otro"];
 
-const CATEGORY_ICON = { renta: "\ud83c\udfe0", wifi: "\ud83d\udce1", telefono: "\ud83d\udcf1", carro: "\ud83d\ude97", seguro: "\ud83d\udee1\ufe0f", luz: "\ud83d\udca1", agua: "\ud83d\udca7", gas: "\ud83d\udd25", gym: "\ud83c\udfcb\ufe0f", streaming: "\ud83d\udcfa", entretenimiento: "\ud83c\udfac", salud: "\ud83e\ude7a", otro: "\ud83d\udd16" };
+const CATEGORY_ICON = { renta: "home", luz: "bulb", agua: "droplet", gas: "flame", wifi: "wifi", telefono: "phone", carro: "car", seguro: "shield", gym: "dumbbell", streaming: "clapper", entretenimiento: "clapper", salud: "medcross", otro: "tag" };
 
 const SUB_PRESETS = [
   { key: "renta", cat: "renta" }, { key: "luz", cat: "luz" }, { key: "agua", cat: "agua" }, { key: "gas", cat: "gas" },
@@ -83,7 +83,7 @@ const state = {
   authMode: "login", authEmail: "", authPassword: "", authFormError: "",
   cloudAccounts: [], cloudTransactions: [], cloudInstitutions: [], cloudLastSync: "", cloudLiabilities: {},
 
-  goals: [], editingGoals: false, confirmDeleteGoalId: null,
+  goals: [], editingGoals: false, confirmDeleteGoalId: null, editingSaldosInicio: false,
   historialSearch: "", historialCategoriaFiltro: "", showTxDetalle: null, notasTransacciones: {},
   historialMesesVisibles: 3, pagosMesesVisibles: 3, historialMesAbierto: null, historialVista: "compras", txDetalleFlash: "",
   cloudErrorMsg: "", cloudBusy: false, cloudFlash: "", confirmDisconnectId: null,

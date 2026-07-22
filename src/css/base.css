@@ -5,9 +5,16 @@ button:active { transform: scale(0.96); opacity: 0.9; }
 button:disabled:active { transform: none; opacity: 1; }
 html, body { margin:0; padding:0; }
 :root {
-  --bg: #F2F2F7; --card-bg: #FFFFFF; --card-bg-2: #FAFAFB; --text: #1C1C1E; --text-muted: #8E8E93;
-  --border: #F0F0F2; --input-bg: #F7F7F9; --input-border: #E5E5EA; --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04); --pill-bg: #E9E9EB;
+  --bg: #F3F5F4; --card-bg: #FFFFFF; --card-bg-2: #FAFBFA; --text: #17211D; --text-muted: #77857F;
+  --border: #ECEFED; --input-bg: #F5F7F6; --input-border: #E2E7E4; --shadow: 0 1px 2px rgba(15,30,24,0.04), 0 4px 14px rgba(15,30,24,0.05); --pill-bg: #E7EBE9;
+  --accent: #0E7C66; --accent-strong: #0A5F4E; --accent-soft: #E2F2EE;
 }
+[data-theme="dark"] {
+  --bg: #0E1311; --card-bg: #171D1A; --card-bg-2: #1B2220; --text: #E7EDEA; --text-muted: #8DA19A;
+  --border: #232B28; --input-bg: #1B2220; --input-border: #2B3531; --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.35); --pill-bg: #222B27;
+  --accent: #35C9A6; --accent-strong: #4ADBB9; --accent-soft: #12332B;
+}
+[data-theme="dark"] body { background: var(--bg); color: var(--text); }
 :root { --tabbar-h: 62px; }
 .tab-bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card-bg); border-top: 1px solid var(--border); display: flex; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); z-index: 30; box-shadow: 0 -1px 6px rgba(0,0,0,0.06); }
 .tab-btn { flex: 1; min-width: 0; background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 1px; border-radius: 10px; cursor: pointer; font-family: inherit; }
@@ -20,8 +27,8 @@ html, body { margin:0; padding:0; }
 .pay-trigger .ic svg { width: 16px; height: 16px; }
 .flash .ic { margin-right: 5px; }
 .flash .ic svg { width: 14px; height: 14px; }
-.tab-btn.active { color: #3D5AFE; }
-[data-theme="dark"] .tab-btn.active { color: #8C99FF; }
+.tab-btn.active { color: var(--accent); }
+
 .tab-icon { font-size: 17px; line-height: 1; }
 .tab-label { font-size: 9.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .app-header { margin-bottom: 16px; }

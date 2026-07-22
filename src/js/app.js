@@ -356,6 +356,7 @@ root.addEventListener("click", (e) => {
     setThemeDark: () => { if (state.theme !== "dark") toggleTheme(); },
     setTextSizeChico: () => setTextSize("pequeno"), setTextSizeNormal: () => setTextSize("normal"), setTextSizeGrande: () => setTextSize("grande"),
     seleccionarTarjeta: () => { state.cardSeleccionadaId = id; render(); },
+    toggleSaldosInicio: () => { state.editingSaldosInicio = !state.editingSaldosInicio; render(); if (state.editingSaldosInicio) setTimeout(() => { const i = document.getElementById("cash-input"); if (i) i.focus(); }, 50); },
     toggleCardNube: () => { state.cardNubeExpandida = state.cardNubeExpandida === id ? null : id; render(); },
     abrirConfirmarAhorro: abrirConfirmarAhorro, cancelarConfirmarAhorro: cancelarConfirmarAhorro, confirmarAhorroMes: confirmarAhorroMes,
     setDebtAvalancha: () => { state.debtStrategy = "avalancha"; render(); }, setDebtBolaNieve: () => { state.debtStrategy = "bola_nieve"; render(); },
