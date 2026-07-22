@@ -224,6 +224,7 @@ root.addEventListener("input", (e) => {
     scheduleSave(); rerenderPreservingFocus(); return;
   }
   if (scope === "nombreGastoFijoTemp") { state.nombreGastoFijoTemp = el.value; rerenderPreservingFocus(); return; }
+  if (scope === "montoConfirmarAhorro") { state.montoConfirmarAhorro = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "payFormMonto") { state.payFormMonto = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "metaAhorro") { state.metaAhorro = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "savingsRate") { state.savingsRate = Number(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
@@ -354,6 +355,7 @@ root.addEventListener("click", (e) => {
     setThemeDark: () => { if (state.theme !== "dark") toggleTheme(); },
     setTextSizeChico: () => setTextSize("pequeno"), setTextSizeNormal: () => setTextSize("normal"), setTextSizeGrande: () => setTextSize("grande"),
     seleccionarTarjeta: () => { state.cardSeleccionadaId = id; render(); },
+    abrirConfirmarAhorro: abrirConfirmarAhorro, cancelarConfirmarAhorro: cancelarConfirmarAhorro, confirmarAhorroMes: confirmarAhorroMes,
     setPayMensual: () => setPayFrequency("mensual"),
     setPayQuincenal: () => setPayFrequency("quincenal"),
     setPaySemanal: () => setPayFrequency("semanal"),

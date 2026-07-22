@@ -6,7 +6,7 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v59";
+const APP_VERSION = "v60";
 
 let uidCounter = 1;
 
@@ -58,6 +58,7 @@ const state = {
   activeProfileId: null,
   confirmDeleteProfileId: null,
   theme: settingsInit.theme || "light", textSize: settingsInit.textSize || "normal", cardSeleccionadaId: null,
+  showConfirmarAhorro: false, montoConfirmarAhorro: "",
   lang: settingsInit.lang || "es",
   currency: settingsInit.currency || "usd",
   objetivo: settingsInit.objetivo || "equilibrado",

@@ -304,3 +304,16 @@ function gastoFijoPagadoEsteMes(gf) {
   const mk = monthKey();
   return state.cloudTransactions.some((tx) => merchantKey(tx.descripcion) === gf.merchantKey && String(tx.fecha).slice(0, 7) === mk);
 }
+
+function abrirConfirmarAhorro() { state.showConfirmarAhorro = true; state.montoConfirmarAhorro = ""; render(); }
+function cancelarConfirmarAhorro() { state.showConfirmarAhorro = false; render(); }
+function confirmarAhorroMes() {
+  const monto = toNum(state.montoConfirmarAhorro);
+  if (monto <= 0) return;
+  pushUndo();
+  state.ahorroActual = toNum(state.ahorroActual) + monto;
+  state.showConfirmarAhorro = false;
+  state.montoConfirmarAhorro = "";
+  scheduleSave();
+  render();
+}

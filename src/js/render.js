@@ -385,10 +385,21 @@ function renderApp() {
       const suscripcionesEsteMes = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0 && String(tx.fecha).slice(0, 7) === mkActual && (tx.categoria === "suscripciones" || tx.categoria === "streaming")).reduce((a, tx) => a + Math.abs(toNum(tx.monto)), 0);
       const gastadoGustos = Math.max(insGustos.totalActual - fijosPagadosEsteMes - suscripcionesEsteMes, 0);
       html += '<div class="panel"><h2>' + t("esteMesSugerenciasTitle") + '</h2>';
-      html += '<div class="mini-total"><span>' + t("gastadoGustosLbl") + '</span><b>' + sym() + fmt0(gastadoGustos) + '</b></div>';
-      html += '<div class="mini-total"><span>' + t("sugGustosLbl") + '</span><b>' + sym() + fmt0(sugGustos) + '</b></div>';
-      html += '<p class="opt-row-sub" style="margin-top:4px;margin-bottom:10px;">' + t("sugGustosHint") + '</p>';
+      const pctGustos = sugGustos > 0 ? Math.min((gastadoGustos / sugGustos) * 100, 100) : 0;
+      const gustosNivel = gastadoGustos > sugGustos ? "rojo" : pctGustos < 60 ? "verde" : "amarillo";
+      html += '<div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + t("gastadoGustosLbl") + '</span><span class="locked-amount">' + sym() + fmt0(gastadoGustos) + ' / ' + sym() + fmt0(sugGustos) + '</span></div>';
+      html += utilBarHtml(pctGustos, gustosNivel);
+      if (gastadoGustos > sugGustos) html += '<p class="opt-row-sub" style="color:#FF3B30;margin-top:4px;">' + t("gustosPasadoMsg") + '</p>';
+      html += '<p class="opt-row-sub" style="margin-top:6px;margin-bottom:10px;">' + t("sugGustosHint") + '</p>';
+
       html += '<div class="mini-total"><span>' + t("sugAhorroLbl") + '</span><b>' + sym() + fmt0(sugAhorro) + '</b></div>';
+      if (!state.showConfirmarAhorro) {
+        html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="abrirConfirmarAhorro">' + t("confirmarAhorroBtn") + '</button>';
+      } else {
+        html += '<div class="goal-field" style="margin-top:8px;"><label>' + t("montoAhorradoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="confirmar-ahorro-input" placeholder="0" data-scope="montoConfirmarAhorro" value="' + esc(state.montoConfirmarAhorro) + '" style="width:100%;"></div>';
+        html += '<div style="display:flex;gap:8px;margin-top:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmarAhorroMes">' + t("guardarBtn") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelarConfirmarAhorro">' + t("cancel") + '</button></div>';
+      }
+
       const historialAhorro = state.history.slice().sort((a, b) => (a.month < b.month ? 1 : -1)).slice(0, 6);
       if (historialAhorro.length > 0) {
         html += '<p class="opt-section-title" style="margin-top:14px;">' + t("historialAhorroTitle") + '</p>';
@@ -397,6 +408,14 @@ function renderApp() {
         });
       }
       html += '</div>';
+
+      const resultadoConsejos = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
+      const consejosHome = buildSugerencias(t2, resultadoConsejos);
+      if (consejosHome.length > 0) {
+        html += '<div class="panel"><h2>' + t("consejosTitle") + '</h2>';
+        consejosHome.forEach((c) => { html += '<p class="opt-row-sub" style="margin-bottom:8px;">\u2022 ' + esc(c) + '</p>'; });
+        html += '</div>';
+      }
     }
 
     const pagosProximos = proximosPagos();
@@ -438,6 +457,11 @@ function renderApp() {
       html += '<div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(seleccionada.nombre) + '</span><span class="status-pill ' + usoNivel + '">' + Math.round(seleccionada.uso) + '%</span></div>';
       html += '<div class="opt-row-sub" style="margin-bottom:4px;">' + sym() + fmt0(seleccionada.saldo) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(seleccionada.limite) + (seleccionada.apr > 0 ? ' \u00b7 ' + t("cardAprLbl") + ' ' + seleccionada.apr + '%' : '') + '</div>';
       html += utilBarHtml(seleccionada.uso, usoNivel);
+      if (seleccionada.uso > 30 && seleccionada.limite > 0) {
+        const objetivoSaldo = seleccionada.limite * 0.3;
+        const aPagar = seleccionada.saldo - objetivoSaldo;
+        if (aPagar > 0) html += '<p class="opt-row-sub" style="margin-top:6px;">' + t("sugerenciaCreditoMsg")(sym() + fmt0(aPagar)) + '</p>';
+      }
       html += '</div>';
     }
 
@@ -673,14 +697,7 @@ function renderApp() {
       html += '</div>';
     }
 
-    const resultado2 = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
-    const consejos = buildSugerencias(t2, resultado2);
-    if (consejos.length > 0) {
-      html += '<div class="panel"><h2>' + t("consejosTitle") + '</h2>';
-      consejos.forEach((c) => { html += '<p class="opt-row-sub" style="margin-bottom:8px;">\u2022 ' + esc(c) + '</p>'; });
-      html += '</div>';
-    }
-    if (ins.suscripcionesDetectadas.length === 0 && consejos.length === 0 && !ins.topCategoria) {
+    if (ins.suscripcionesDetectadas.length === 0 && !ins.topCategoria) {
       html += '<div class="empty-state">' + t("insightsEmpty") + '</div>';
     }
   }
