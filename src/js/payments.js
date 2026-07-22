@@ -57,8 +57,11 @@ function toggleEditCards() { state.editingCards = !state.editingCards; state.con
 function addSubPreset(key) {
   const preset = SUB_PRESETS.find((p) => p.key === key);
   if (!preset) return;
-  state.subs.push({ id: uid(), nombre: t("preset_" + key), monto: "", categoria: preset.cat });
+  const nuevo = { id: uid(), nombre: t("preset_" + key), monto: "", categoria: preset.cat };
+  state.subs.push(nuevo);
+  state.editingSubs = true;
   scheduleSave(); rerenderPreservingFocus();
+  setTimeout(() => { const inp = document.getElementById("sub-monto-" + nuevo.id); if (inp) inp.focus(); }, 50);
 }
 
 function toggleEditLoans() { state.editingLoans = !state.editingLoans; state.confirmDeleteLoanId = null; render(); }

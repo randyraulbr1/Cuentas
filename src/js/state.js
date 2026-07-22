@@ -16,12 +16,14 @@ const PROFILES_KEY = "cuentas-claras:perfiles";
 
 const CURRENCY = { usd: "$", eur: "€" };
 
-const CATEGORIES = ["renta", "wifi", "telefono", "carro", "seguro", "entretenimiento", "salud", "otro"];
+const CATEGORIES = ["renta", "luz", "agua", "gas", "wifi", "telefono", "carro", "seguro", "gym", "streaming", "entretenimiento", "salud", "otro"];
 
-const CATEGORY_ICON = { renta: "\ud83c\udfe0", wifi: "\ud83d\udce1", telefono: "\ud83d\udcf1", carro: "\ud83d\ude97", seguro: "\ud83d\udee1\ufe0f", entretenimiento: "\ud83c\udfac", salud: "\ud83e\ude7a", otro: "\ud83d\udd16" };
+const CATEGORY_ICON = { renta: "\ud83c\udfe0", wifi: "\ud83d\udce1", telefono: "\ud83d\udcf1", carro: "\ud83d\ude97", seguro: "\ud83d\udee1\ufe0f", luz: "\ud83d\udca1", agua: "\ud83d\udca7", gas: "\ud83d\udd25", gym: "\ud83c\udfcb\ufe0f", streaming: "\ud83d\udcfa", entretenimiento: "\ud83c\udfac", salud: "\ud83e\ude7a", otro: "\ud83d\udd16" };
 
 const SUB_PRESETS = [
-  { key: "renta", cat: "renta" }, { key: "wifi", cat: "wifi" }, { key: "telefono", cat: "telefono" }, { key: "seguro", cat: "seguro" },
+  { key: "renta", cat: "renta" }, { key: "luz", cat: "luz" }, { key: "agua", cat: "agua" }, { key: "gas", cat: "gas" },
+  { key: "wifi", cat: "wifi" }, { key: "telefono", cat: "telefono" }, { key: "carro", cat: "carro" }, { key: "seguro", cat: "seguro" },
+  { key: "gym", cat: "gym" }, { key: "streaming", cat: "streaming" },
 ];
 
 function sym() { return CURRENCY[state.currency] || "$"; }

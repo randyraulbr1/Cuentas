@@ -501,9 +501,11 @@ function renderApp() {
       html += '<div class="flash">' + t("autoPagoAplicado")(state.autoPagoNotif.join(", ")) + '</div>';
     }
     html += '<div class="panel"><div class="panel-head-row"><div><p class="hint" style="margin-bottom:0;">' + t("subsHint") + '</p></div><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? icon("check") : icon("pencil")) + '</button></div>';
-    if (state.editingSubs) {
+    const presetsDisponibles = SUB_PRESETS.filter((p) => !state.subs.some((s) => s.categoria === p.cat && (s.nombre || "").toLowerCase() === t("preset_" + p.key).toLowerCase()));
+    if (presetsDisponibles.length > 0) {
+      html += '<p class="opt-section-title" style="margin-top:2px;">' + t("presetsTitle") + '</p>';
       html += '<div class="preset-row">';
-      SUB_PRESETS.forEach((p) => { html += '<button class="preset-chip" data-action="addSubPreset" data-id="' + p.key + '">' + CATEGORY_ICON[p.cat] + ' ' + t("preset_" + p.key) + '</button>'; });
+      presetsDisponibles.forEach((p) => { html += '<button class="preset-chip" data-action="addSubPreset" data-id="' + p.key + '"><span class="preset-ico">' + CATEGORY_ICON[p.cat] + '</span><span>' + t("preset_" + p.key) + '</span></button>'; });
       html += '</div>';
     }
     state.subs.forEach((s) => {
