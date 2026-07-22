@@ -165,3 +165,37 @@ function computeTopAction(t2, resultado) {
   }
   return null;
 }
+
+
+function computeResumenSemanal() {
+  if (!state.cloudTransactions || state.cloudTransactions.length === 0) return null;
+  const hoy = new Date();
+  const dia = (hoy.getDay() + 6) % 7; // lunes = 0
+  const iniSemana = new Date(hoy); iniSemana.setDate(hoy.getDate() - dia); iniSemana.setHours(0, 0, 0, 0);
+  const iniPrev = new Date(iniSemana); iniPrev.setDate(iniSemana.getDate() - 7);
+  const key = (d) => d.toISOString().slice(0, 10);
+  const kIni = key(iniSemana), kPrev = key(iniPrev);
+  const dias = [0, 0, 0, 0, 0, 0, 0];
+  let total = 0, prev = 0;
+  const porCat = {};
+  state.cloudTransactions.forEach((tx) => {
+    const m = toNum(tx.monto);
+    if (m >= 0) return;
+    const f = String(tx.fecha).slice(0, 10);
+    if (f >= kIni) {
+      const gasto = Math.abs(m);
+      total += gasto;
+      const d = new Date(f + "T12:00:00");
+      dias[(d.getDay() + 6) % 7] += gasto;
+      const c = tx.categoria || "otros";
+      porCat[c] = (porCat[c] || 0) + gasto;
+    } else if (f >= kPrev) {
+      prev += Math.abs(m);
+    }
+  });
+  if (total === 0 && prev === 0) return null;
+  let topCat = null, topMonto = 0;
+  Object.keys(porCat).forEach((c) => { if (porCat[c] > topMonto) { topCat = c; topMonto = porCat[c]; } });
+  const cambioPct = prev > 0 ? ((total - prev) / prev) * 100 : null;
+  return { total, prev, cambioPct, topCat, topMonto, dias, diaHoy: dia };
+}

@@ -361,6 +361,24 @@ function renderApp() {
     html += '<p class="hint" style="margin-bottom:2px;">' + t("patrimonioNetoLbl") + '</p>';
     html += '<div style="font-size:32px;font-weight:800;letter-spacing:-0.01em;color:' + (patrimonioNeto >= 0 ? "var(--text)" : "#FF3B30") + ';">' + (patrimonioNeto < 0 ? "-" : "") + sym() + fmt0(Math.abs(patrimonioNeto)) + '</div>';
     html += '</div>';
+    const rs = computeResumenSemanal();
+    if (rs) {
+      html += '<div class="panel"><h2>' + t("semanaTitle") + '</h2>';
+      html += '<div class="mini-total"><span>' + t("semanaGastadoLbl") + '</span><b class="locked-amount">' + sym() + fmt0(rs.total) + '</b></div>';
+      if (rs.cambioPct !== null) {
+        const subio = rs.cambioPct > 0;
+        html += '<p class="opt-row-sub" style="color:' + (subio ? "#FF3B30" : "#34C759") + ';margin-top:6px;">' + t(subio ? "semanaMasMsg" : "semanaMenosMsg")(Math.round(Math.abs(rs.cambioPct))) + '</p>';
+      }
+      const maxDia = Math.max.apply(null, rs.dias.concat([1]));
+      html += '<div class="week-bars">';
+      rs.dias.forEach((v, i) => {
+        const activo = i <= rs.diaHoy;
+        html += '<div class="week-day"><div class="week-bar-track"><div class="week-bar-fill' + (i === rs.diaHoy ? " hoy" : "") + '" style="height:' + Math.max((v / maxDia) * 100, v > 0 ? 6 : 2) + '%;opacity:' + (activo ? 1 : 0.25) + ';"></div></div><span class="week-day-lbl' + (i === rs.diaHoy ? " hoy" : "") + '">' + t("semanaDias")[i] + '</span></div>';
+      });
+      html += '</div>';
+      if (rs.topCat) html += '<p class="opt-row-sub" style="margin-top:8px;">' + t("semanaTopMsg")(t("cat_" + rs.topCat), sym() + fmt0(rs.topMonto)) + '</p>';
+      html += '</div>';
+    }
     html += '<div class="summary">';
     html += '<div class="sum-card"><div class="sum-label">' + t("cashLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.cash)) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("debitoLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito) + cloudNoCredit) + '</div></div>';
