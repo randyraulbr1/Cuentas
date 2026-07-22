@@ -446,9 +446,8 @@ function renderApp() {
       html += '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;">';
       todasTarjetas.forEach((c) => {
         const activa = c.id === state.cardSeleccionadaId;
-        html += '<button data-action="seleccionarTarjeta" data-id="' + c.id + '" style="flex-shrink:0;width:84px;height:54px;border-radius:12px;border:' + (activa ? "2px solid " + c.color : "1px solid var(--border)") + ';background:' + (activa ? c.color : "var(--card-bg)") + ';color:' + (activa ? "#fff" : "var(--text)") + ';display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:8px;cursor:pointer;font-family:inherit;">';
-        html += '<span style="font-size:9.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">' + esc(c.nombre) + '</span>';
-        html += '<span style="font-size:13px;font-weight:800;margin-top:2px;">' + Math.round(c.uso) + '%</span>';
+        html += '<button data-action="seleccionarTarjeta" data-id="' + c.id + '" style="flex-shrink:0;width:84px;height:54px;border-radius:12px;border:' + (activa ? "2px solid " + c.color : "1px solid var(--border)") + ';background:' + (activa ? c.color : "var(--card-bg)") + ';color:' + (activa ? "#fff" : "var(--text)") + ';display:flex;align-items:center;justify-content:center;padding:8px;cursor:pointer;font-family:inherit;text-align:center;">';
+        html += '<span style="font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">' + esc(c.nombre) + '</span>';
         html += '</button>';
       });
       html += '</div>';
