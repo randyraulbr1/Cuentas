@@ -528,7 +528,7 @@ function renderApp() {
     if (state.autoPagoNotif && state.autoPagoNotif.length > 0) {
       html += '<div class="flash">' + t("autoPagoAplicado")(state.autoPagoNotif.join(", ")) + '</div>';
     }
-    html += '<div class="panel"><div class="panel-head-row"><div><p class="hint" style="margin-bottom:0;">' + t("subsHint") + '</p></div><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? icon("check") : icon("pencil")) + '</button></div>';
+    html += '<div class="panel"><div class="panel-head-row"><div><h2 style="margin-bottom:0;">' + t("subsTitle") + '</h2></div><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? icon("check") : icon("pencil")) + '</button></div>';
     const presetsDisponibles = SUB_PRESETS.filter((p) => !state.subs.some((s) => s.categoria === p.cat && (s.nombre || "").toLowerCase() === t("preset_" + p.key).toLowerCase()));
     if (presetsDisponibles.length > 0) {
       html += '<p class="opt-section-title" style="margin-top:2px;">' + t("presetsTitle") + '</p>';
@@ -678,7 +678,7 @@ function renderApp() {
 
     const cloudCards = cloudCreditCards();
     if (cloudCards.length > 0) {
-      html += '<div class="panel"><h2>' + t("tarjetasNubeTitle") + '</h2><p class="hint">' + t("tarjetasNubeHint") + '</p>';
+      html += '<div class="panel"><div class="panel-head-row"><h2 style="margin-bottom:0;">' + t("tarjetasNubeTitle") + '</h2><span class="sync-badge">' + icon("bank") + t("sincronizadoLbl") + '</span></div>';
       const ccGrads = [
         "linear-gradient(135deg,#1d2b4f 0%,#0e1428 100%)",
         "linear-gradient(135deg,#33333d 0%,#0f0f14 100%)",
@@ -800,10 +800,8 @@ function renderApp() {
       const listaBase = state.historialVista === "recibidos" ? recibidosBase : comprasBase;
       const categoriasPresentes = Array.from(new Set(listaBase.map((tx) => tx.categoria || "otros")));
       if (state.historialVista === "recibidos") {
-        html += '<p class="hint">' + t("pagosRecibidosBancoHint") + '</p>';
-      } else {
-        html += '<p class="hint">' + t("comprasHint") + '</p>';
-      }
+              } else {
+              }
       html += '<input type="text" placeholder="' + t("buscarPh") + '" id="historial-search" data-scope="historialSearch" value="' + esc(state.historialSearch) + '" style="width:100%;margin-bottom:8px;">';
       html += '<div class="preset-row">';
       html += '<button class="preset-chip' + (!state.historialCategoriaFiltro ? " active-chip" : "") + '" data-action="setHistorialFiltro" data-id="">' + t("todasLbl") + '</button>';
