@@ -356,6 +356,7 @@ root.addEventListener("click", (e) => {
     setThemeLight: () => { if (state.theme !== "light") toggleTheme(); },
     setThemeDark: () => { if (state.theme !== "dark") toggleTheme(); },
     setTextSizeChico: () => setTextSize("pequeno"), setTextSizeNormal: () => setTextSize("normal"), setTextSizeGrande: () => setTextSize("grande"),
+    aplicarSugerenciaExtra: () => { state.extraPagoDeuda = String(id); scheduleSave(); render(); },
     pedirSumarAhorro: () => { state.confirmSumarAhorro = true; render(); },
     cancelSumarAhorro: () => { state.confirmSumarAhorro = false; render(); },
     sumarAhorro100: () => { pushUndo(); state.ahorroActual = String(toNum(state.ahorroActual) + 100); state.confirmSumarAhorro = false; scheduleSave(); render(); },

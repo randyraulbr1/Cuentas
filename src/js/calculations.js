@@ -211,3 +211,47 @@ function computeResultado(t2) {
   const ahorroFinal = Math.round((ahorro + restante) / 10) * 10;
   return { insuficiente: false, ahorro: ahorroFinal, asignaciones };
 }
+
+/* Calculadora de deudas: compara pagar solo minimos vs con extra y sugiere cuanto agregar */
+function computeComparativaDeuda(strategy, extra) {
+  const base = computePlanDePago(strategy, 0);
+  const conExtra = computePlanDePago(strategy, extra);
+  if (!base || !conExtra) return null;
+  const deudas = listaDeudas();
+  const totalSaldo = deudas.reduce((a, d) => a + d.saldo, 0);
+  const sinApr = deudas.filter((d) => !d.apr || d.apr <= 0).length;
+
+  // Sugerencia de cuanto extra conviene poner
+  let sugerencia = null;
+  const nuncaTermina = !base.mesesTotales;
+  const objetivo = nuncaTermina ? 36 : Math.max(Math.round(base.mesesTotales * 0.6), 3);
+  if (nuncaTermina || base.mesesTotales > 6) {
+    for (let e = 25; e <= 2000; e += 25) {
+      const p = computePlanDePago(strategy, e);
+      if (p && p.mesesTotales && p.mesesTotales <= objetivo) {
+        sugerencia = { extra: e, meses: p.mesesTotales, ahorro: nuncaTermina ? 0 : base.totalInteresPagado - p.totalInteresPagado };
+        break;
+      }
+    }
+  }
+  return {
+    totalSaldo, sinApr, nuncaTermina,
+    baseMeses: base.mesesTotales, baseInteres: base.totalInteresPagado,
+    meses: conExtra.mesesTotales, interes: conExtra.totalInteresPagado,
+    totalAPagar: totalSaldo + conExtra.totalInteresPagado,
+    mesesAhorrados: base.mesesTotales && conExtra.mesesTotales ? base.mesesTotales - conExtra.mesesTotales : 0,
+    interesAhorrado: base.totalInteresPagado - conExtra.totalInteresPagado,
+    pagoMensual: conExtra.totalMinimos + toNum(extra),
+    orden: conExtra.orden,
+    sugerencia,
+  };
+}
+
+/* Fecha en que quedaria libre de deudas, a partir de hoy + N meses */
+function fechaLibre(meses) {
+  if (!meses) return null;
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + meses);
+  return d.toLocaleDateString(LANG === "es" ? "es-ES" : "en-US", { month: "long", year: "numeric" });
+}

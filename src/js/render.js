@@ -749,21 +749,47 @@ function renderApp() {
 
     const deudasPlan = listaDeudas();
     if (deudasPlan.length > 0) {
+      const comp = computeComparativaDeuda(state.debtStrategy, toNum(state.extraPagoDeuda));
       html += '<div class="panel"><h2>' + t("planDeudaTitle") + '</h2><p class="hint">' + t("planDeudaHint") + '</p>';
       html += '<div class="seg" style="width:100%;margin-top:8px;"><button style="flex:1;" class="' + (state.debtStrategy === "avalancha" ? "active" : "") + '" data-action="setDebtAvalancha">' + t("estrategiaAvalancha") + '</button><button style="flex:1;" class="' + (state.debtStrategy === "bola_nieve" ? "active" : "") + '" data-action="setDebtBolaNieve">' + t("estrategiaBolaNieve") + '</button></div>';
-      html += '<div class="goal-field" style="margin-top:10px;"><label>' + t("extraPagoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="extra-pago-deuda-input" placeholder="0" data-scope="extraPagoDeuda" value="' + esc(state.extraPagoDeuda) + '" style="width:100%;"></div>';
+      html += '<p class="opt-row-sub" style="margin-top:6px;">' + t(state.debtStrategy === "avalancha" ? "avalanchaExplica" : "bolaNieveExplica") + '</p>';
+      html += '<div class="goal-field" style="margin-top:12px;"><label>' + t("extraPagoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="extra-pago-deuda-input" placeholder="0" data-scope="extraPagoDeuda" value="' + esc(state.extraPagoDeuda) + '" style="width:100%;"></div>';
 
-      const plan = computePlanDePago(state.debtStrategy, toNum(state.extraPagoDeuda));
-      if (plan) {
-        html += '<div class="mini-total" style="margin-top:10px;"><span>' + t("librePagoLbl") + '</span><b>' + (plan.mesesTotales ? t("enMesesMsg")(plan.mesesTotales) : t("noAlcanzaMsg")) + '</b></div>';
-        if (plan.mesesTotales) html += '<div class="mini-total"><span>' + t("interesTotalLbl") + '</span><b>' + sym() + fmt0(plan.totalInteresPagado) + '</b></div>';
-        html += '<p class="opt-section-title" style="margin-top:14px;">' + t("ordenAtaqueTitle") + '</p>';
-        const ordenMostrar = state.debtStrategy === "avalancha" ? plan.orden.slice().sort((a, b) => b.apr - a.apr) : plan.orden.slice().sort((a, b) => a.saldo - b.saldo);
+      if (comp) {
+        html += '<div class="debt-result">';
+        html += '<div class="debt-big"><span class="debt-big-lbl">' + t("librePagoLbl") + '</span><b class="debt-big-val">' + (comp.meses ? esc(fechaLibre(comp.meses)) : t("noAlcanzaMsg")) + '</b>';
+        if (comp.meses) html += '<span class="debt-big-sub">' + t("enMesesMsg")(comp.meses) + '</span>';
+        html += '</div>';
+        html += '<div class="debt-grid">';
+        html += '<div class="debt-cell"><span>' + t("pagasAlMesLbl") + '</span><b>' + sym() + fmt0(comp.pagoMensual) + '</b></div>';
+        html += '<div class="debt-cell"><span>' + t("interesTotalLbl") + '</span><b class="rojo">' + sym() + fmt0(comp.interes) + '</b></div>';
+        html += '<div class="debt-cell"><span>' + t("deudaHoyLbl") + '</span><b>' + sym() + fmt0(comp.totalSaldo) + '</b></div>';
+        html += '<div class="debt-cell"><span>' + t("totalPagarasLbl") + '</span><b>' + sym() + fmt0(comp.totalAPagar) + '</b></div>';
+        html += '</div>';
+        if (toNum(state.extraPagoDeuda) > 0 && comp.mesesAhorrados > 0) {
+          html += '<div class="debt-win">' + icon("check") + '<span>' + t("ahorrasConExtraMsg")(comp.mesesAhorrados, sym() + fmt0(comp.interesAhorrado)) + '</span></div>';
+        }
+        if (comp.nuncaTermina && toNum(state.extraPagoDeuda) <= 0) {
+          html += '<div class="debt-warn">' + t("soloMinimosNuncaMsg") + '</div>';
+        }
+        if (comp.sugerencia) {
+          const txtSug = comp.sugerencia.ahorro > 0
+            ? t("sugerenciaExtraMsg")(sym() + fmt0(comp.sugerencia.extra), comp.sugerencia.meses, sym() + fmt0(comp.sugerencia.ahorro))
+            : t("sugerenciaExtraSimpleMsg")(sym() + fmt0(comp.sugerencia.extra), comp.sugerencia.meses);
+          html += '<div class="debt-tip"><span class="debt-tip-lbl">' + t("sugerenciaLbl") + '</span><p>' + txtSug + '</p>';
+          html += '<button class="pill-btn confirm" data-action="aplicarSugerenciaExtra" data-id="' + comp.sugerencia.extra + '">' + t("aplicarSugerenciaBtn")(sym() + fmt0(comp.sugerencia.extra)) + '</button></div>';
+        }
+        if (comp.sinApr > 0) html += '<p class="opt-row-sub" style="margin-top:10px;">' + t("faltaAprMsg")(comp.sinApr) + '</p>';
+
+        html += '<p class="opt-section-title" style="margin-top:16px;">' + t("ordenAtaqueTitle") + '</p>';
+        const ordenMostrar = state.debtStrategy === "avalancha" ? comp.orden.slice().sort((a, b) => b.apr - a.apr) : comp.orden.slice().sort((a, b) => a.saldo - b.saldo);
         ordenMostrar.forEach((d, idx) => {
-          html += '<div class="sub-row-locked"><span class="locked-name">' + (idx + 1) + '. ' + esc(d.nombre) + (d.apr > 0 ? ' \u00b7 ' + d.apr + '%' : '') + '</span><span class="locked-amount">' + sym() + fmt0(d.saldo) + (d.mesesParaPagar ? ' \u00b7 ' + t("enMesesCortoMsg")(d.mesesParaPagar) : '') + '</span></div>';
+          html += '<div class="debt-row"><span class="debt-num">' + (idx + 1) + '</span>';
+          html += '<div class="debt-row-mid"><span class="debt-row-name">' + esc(d.nombre) + '</span><span class="debt-row-sub">' + (d.apr > 0 ? d.apr + "% APR" : t("sinAprLbl")) + (d.mesesParaPagar ? " \u00b7 " + t("enMesesCortoMsg")(d.mesesParaPagar) : "") + '</span></div>';
+          html += '<span class="debt-row-amt">' + sym() + fmt0(d.saldo) + '</span></div>';
         });
       }
-      html += '</div>';
+      html += '</div></div>';
     }
   }
 
