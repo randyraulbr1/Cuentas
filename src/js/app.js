@@ -1,6 +1,8 @@
 "use strict";
 
 function applyTheme() { document.documentElement.setAttribute("data-theme", state.theme); }
+function applyTextSize() { document.documentElement.setAttribute("data-textsize", state.textSize); }
+function setTextSize(v) { state.textSize = v; applyTextSize(); saveSettings(); render(); }
 
 async function enterProfile(id) {
   if (saveTimeout) { clearTimeout(saveTimeout); saveUserDataNow(); }
@@ -350,6 +352,8 @@ root.addEventListener("click", (e) => {
     setCurEur: () => { if (state.currency !== "eur") toggleCurrency(); },
     setThemeLight: () => { if (state.theme !== "light") toggleTheme(); },
     setThemeDark: () => { if (state.theme !== "dark") toggleTheme(); },
+    setTextSizeChico: () => setTextSize("pequeno"), setTextSizeNormal: () => setTextSize("normal"), setTextSizeGrande: () => setTextSize("grande"),
+    seleccionarTarjeta: () => { state.cardSeleccionadaId = id; render(); },
     setPayMensual: () => setPayFrequency("mensual"),
     setPayQuincenal: () => setPayFrequency("quincenal"),
     setPaySemanal: () => setPayFrequency("semanal"),
@@ -369,7 +373,23 @@ root.addEventListener("click", (e) => {
 
 (async function boot() {
   try { history.replaceState({ ccTab: "inicio", ccOverlay: null }, ""); } catch (e) {}
-  applyTheme();
+  applyTheme(); applyTextSize();
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (!reg) return;
+      reg.addEventListener("updatefound", () => {
+        const nuevo = reg.installing;
+        if (!nuevo) return;
+        nuevo.addEventListener("statechange", () => {
+          if (nuevo.state === "installed" && navigator.serviceWorker.controller) {
+            reg.waiting && reg.waiting.postMessage("SKIP_WAITING");
+            navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
+          }
+        });
+      });
+      reg.update().catch(() => {});
+    }).catch(() => {});
+  }
   await ensureMigrated();
   const session = await loadAuthSession();
   if (session && session.token) {

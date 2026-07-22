@@ -247,8 +247,9 @@ function marcarComoSuscripcion(txId, frecuencia) {
   pushUndo();
   state.suscripcionesManuales.push({ id: uid(), nombre: tx.descripcion, monto: Math.abs(toNum(tx.monto)), frecuencia: frecuencia, ultimaFecha: String(tx.fecha).slice(0, 10) });
   scheduleSave();
-  state.showTxDetalle = null;
+  state.txDetalleFlash = t("marcadoComoSuscripcionMsg")(t(frecuencia === "anual" ? "freqAnual" : frecuencia === "mensual" ? "payMensual" : frecuencia === "quincenal" ? "payQuincenal" : "paySemanal"));
   render();
+  setTimeout(() => { state.txDetalleFlash = ""; render(); }, 2200);
 }
 function setFrecuenciaAuto(key, frecuencia) {
   state.suscripcionesFrecuencia[key] = frecuencia;

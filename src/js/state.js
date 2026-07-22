@@ -6,7 +6,7 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v58";
+const APP_VERSION = "v59";
 
 let uidCounter = 1;
 
@@ -57,7 +57,7 @@ const state = {
   profiles: loadProfiles(),
   activeProfileId: null,
   confirmDeleteProfileId: null,
-  theme: settingsInit.theme || "light",
+  theme: settingsInit.theme || "light", textSize: settingsInit.textSize || "normal", cardSeleccionadaId: null,
   lang: settingsInit.lang || "es",
   currency: settingsInit.currency || "usd",
   objetivo: settingsInit.objetivo || "equilibrado",
@@ -82,7 +82,7 @@ const state = {
 
   goals: [], editingGoals: false, confirmDeleteGoalId: null,
   historialSearch: "", historialCategoriaFiltro: "", showTxDetalle: null, notasTransacciones: {},
-  historialMesesVisibles: 3, pagosMesesVisibles: 3, historialMesAbierto: null, historialVista: "compras",
+  historialMesesVisibles: 3, pagosMesesVisibles: 3, historialMesAbierto: null, historialVista: "compras", txDetalleFlash: "",
   cloudErrorMsg: "", cloudBusy: false, cloudFlash: "", confirmDisconnectId: null,
   payFrequency: "mensual", ultimoPago: "", proximoPagoAjuste: "", ingresosLog: [], loans: [],
   job: { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false },

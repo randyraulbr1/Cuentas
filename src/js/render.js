@@ -98,12 +98,17 @@ function renderTxDetalleSheet() {
   }
   h += '<div class="goal-field" style="margin-top:12px;"><label>' + t("notaDetalleLbl") + '</label><input type="text" placeholder="' + t("notaDetallePh") + '" id="tx-nota-input" data-scope="txNota" data-id="' + tx.id + '" value="' + esc(state.notasTransacciones[tx.id] || "") + '" style="width:100%;"></div>';
   if (toNum(tx.monto) < 0) {
-    h += '<div class="pay-config" style="margin-top:10px;"><label>' + t("marcarSuscripcionLbl") + '</label>';
-    h += '<div class="seg" style="width:100%;flex-wrap:wrap;">';
-    [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["mensual", "payMensual"], ["anual", "freqAnual"]].forEach((f) => {
-      h += '<button style="flex:1 1 45%;" data-action="marcarComoSuscripcion" data-id="' + tx.id + '" data-freq="' + f[0] + '">' + t(f[1]) + '</button>';
-    });
-    h += '</div></div>';
+    h += '<div class="pay-config" style="margin-top:14px;"><label>' + t("marcarSuscripcionLbl") + '</label>';
+    if (state.txDetalleFlash) {
+      h += '<div class="flash" style="margin-top:8px;">' + icon("check") + ' ' + esc(state.txDetalleFlash) + '</div>';
+    } else {
+      h += '<div class="seg" style="width:100%;flex-wrap:wrap;margin-top:8px;">';
+      [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["mensual", "payMensual"], ["anual", "freqAnual"]].forEach((f) => {
+        h += '<button style="flex:1 1 45%;" data-action="marcarComoSuscripcion" data-id="' + tx.id + '" data-freq="' + f[0] + '">' + t(f[1]) + '</button>';
+      });
+      h += '</div>';
+    }
+    h += '</div>';
   }
   if (toNum(tx.monto) < 0) {
     if (state.showMarcarGastoFijo) {
@@ -193,7 +198,8 @@ function renderOpcionesTab() {
 
   h += '<div class="panel"><p class="opt-section-title">' + t("secPreferencias") + '</p><div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div>';
   h += '<div class="opt-row"><span class="opt-row-label">' + t("secMoneda") + '</span><div class="seg"><button class="' + (state.currency === "usd" ? "active" : "") + '" data-action="setCurUsd">$</button><button class="' + (state.currency === "eur" ? "active" : "") + '" data-action="setCurEur">€</button></div></div>';
-  h += '<div class="opt-row"><span class="opt-row-label">' + t("secTema") + '</span><div class="seg"><button class="' + (state.theme === "light" ? "active" : "") + '" data-action="setThemeLight">' + icon("sun") + '</button><button class="' + (state.theme === "dark" ? "active" : "") + '" data-action="setThemeDark">' + icon("moon") + '</button></div></div></div>';
+  h += '<div class="opt-row"><span class="opt-row-label">' + t("secTema") + '</span><div class="seg"><button class="' + (state.theme === "light" ? "active" : "") + '" data-action="setThemeLight">' + icon("sun") + '</button><button class="' + (state.theme === "dark" ? "active" : "") + '" data-action="setThemeDark">' + icon("moon") + '</button></div></div>';
+  h += '<div class="opt-row"><span class="opt-row-label">' + t("secTamanoTexto") + '</span><div class="seg"><button class="' + (state.textSize === "pequeno" ? "active" : "") + '" data-action="setTextSizeChico">' + t("textoChico") + '</button><button class="' + (state.textSize === "normal" ? "active" : "") + '" data-action="setTextSizeNormal">' + t("textoNormal") + '</button><button class="' + (state.textSize === "grande" ? "active" : "") + '" data-action="setTextSizeGrande">' + t("textoGrande") + '</button></div></div></div>';
 
   h += '<div class="panel"><p class="opt-section-title">' + t("secCredito") + '</p>';
   h += '<p class="opt-row-sub" style="margin-bottom:6px;">' + t("objetivoHint") + '</p>';
@@ -404,29 +410,40 @@ function renderApp() {
     }
 
     if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) {
-      html += '<div class="panel"><h2>' + t("saludCreditoTitle") + '</h2><p class="hint">' + t("saludCreditoHint") + '</p>';
+      const todasTarjetas = [];
       t2.cardsConLimite.forEach((c) => {
-        const uso = Math.min((toNum(c.saldo) / toNum(c.limite)) * 100, 100);
-        const usoNivel = uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
-        html += '<div style="margin-bottom:14px;"><div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(c.nombre || t("cardNombrePh")) + '</span><span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span></div>';
-        html += '<div class="opt-row-sub" style="margin-bottom:4px;">' + sym() + fmt0(toNum(c.saldo)) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(toNum(c.limite)) + (toNum(c.apr) > 0 ? ' \u00b7 ' + t("cardAprLbl") + ' ' + c.apr + '%' : '') + '</div>';
-        html += utilBarHtml(uso, usoNivel) + '</div>';
+        todasTarjetas.push({ id: "m-" + c.id, nombre: c.nombre || t("cardNombrePh"), saldo: toNum(c.saldo), limite: toNum(c.limite), apr: toNum(c.apr), color: "#3D5AFE" });
       });
       t2.cloudCardsConLimite.forEach((c) => {
-        const saldo = toNum(c.balance_current);
-        const limite = toNum(c.balance_limit);
-        const uso = Math.min((saldo / limite) * 100, 100);
-        const usoNivel = uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
-        const liab = c.liab_apr != null || c.liab_pago_minimo != null ? { apr: c.liab_apr, pago_minimo: c.liab_pago_minimo, fecha_limite: c.liab_fecha_limite } : null;
-        html += '<div style="margin-bottom:14px;"><div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(c.name || t("cardNombrePh")) + (c.mask ? " ****" + esc(c.mask) : "") + '</span><span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span></div>';
-        html += '<div class="opt-row-sub" style="margin-bottom:4px;">' + sym() + fmt0(saldo) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(limite) + (liab && liab.apr ? ' \u00b7 ' + t("cardAprLbl") + ' ' + liab.apr + '%' : '') + '</div>';
-        html += utilBarHtml(uso, usoNivel) + '</div>';
+        todasTarjetas.push({ id: "c-" + c.account_id, nombre: (c.name || t("cardNombrePh")) + (c.mask ? " ****" + c.mask : ""), saldo: toNum(c.balance_current), limite: toNum(c.balance_limit), apr: toNum(c.liab_apr), color: "#5C6BC0" });
       });
+      todasTarjetas.forEach((c) => { c.uso = c.limite > 0 ? Math.min((c.saldo / c.limite) * 100, 100) : 0; });
+      todasTarjetas.sort((a, b) => b.uso - a.uso);
+
+      if (!state.cardSeleccionadaId || !todasTarjetas.some((c) => c.id === state.cardSeleccionadaId)) state.cardSeleccionadaId = todasTarjetas[0].id;
+      const seleccionada = todasTarjetas.find((c) => c.id === state.cardSeleccionadaId) || todasTarjetas[0];
+
+      html += '<div class="panel"><h2>' + t("saludCreditoTitle") + '</h2><p class="hint">' + t("saludCreditoHint") + '</p>';
+      html += '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;">';
+      todasTarjetas.forEach((c) => {
+        const activa = c.id === state.cardSeleccionadaId;
+        html += '<button data-action="seleccionarTarjeta" data-id="' + c.id + '" style="flex-shrink:0;width:84px;height:54px;border-radius:12px;border:' + (activa ? "2px solid " + c.color : "1px solid var(--border)") + ';background:' + (activa ? c.color : "var(--card-bg)") + ';color:' + (activa ? "#fff" : "var(--text)") + ';display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:8px;cursor:pointer;font-family:inherit;">';
+        html += '<span style="font-size:9.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">' + esc(c.nombre) + '</span>';
+        html += '<span style="font-size:13px;font-weight:800;margin-top:2px;">' + Math.round(c.uso) + '%</span>';
+        html += '</button>';
+      });
+      html += '</div>';
+
+      const usoNivel = seleccionada.uso < 30 ? "verde" : seleccionada.uso < 70 ? "amarillo" : "rojo";
+      html += '<div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(seleccionada.nombre) + '</span><span class="status-pill ' + usoNivel + '">' + Math.round(seleccionada.uso) + '%</span></div>';
+      html += '<div class="opt-row-sub" style="margin-bottom:4px;">' + sym() + fmt0(seleccionada.saldo) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(seleccionada.limite) + (seleccionada.apr > 0 ? ' \u00b7 ' + t("cardAprLbl") + ' ' + seleccionada.apr + '%' : '') + '</div>';
+      html += utilBarHtml(seleccionada.uso, usoNivel);
       html += '</div>';
     }
 
-    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("objetivosTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("objetivosHint") + '</p></div><button class="icon-pencil' + (state.editingGoals ? " done" : "") + '" data-action="toggleEditGoals">' + (state.editingGoals ? icon("check") : icon("pencil")) + '</button></div>';
-    state.goals.forEach((g) => {
+    if (state.goals.length > 0 || state.editingGoals) {
+      html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("objetivosTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("objetivosHint") + '</p></div><button class="icon-pencil' + (state.editingGoals ? " done" : "") + '" data-action="toggleEditGoals">' + (state.editingGoals ? icon("check") : icon("pencil")) + '</button></div>';
+      state.goals.forEach((g) => {
       const objetivo = toNum(g.montoObjetivo);
       const actual = toNum(g.montoActual);
       const pct = objetivo > 0 ? Math.min((actual / objetivo) * 100, 100) : 0;
@@ -439,18 +456,20 @@ function renderApp() {
         html += '<div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(g.nombre || t("goalNombrePh")) + '</span><span class="opt-row-sub">' + sym() + fmt0(actual) + ' / ' + sym() + fmt0(objetivo) + '</span></div>';
         html += '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>';
       } else {
-        html += '<div class="goal-grid" style="margin-bottom:6px;"><input type="text" placeholder="' + t("goalNombrePh") + '" data-scope="goal" data-id="' + g.id + '" data-field="nombre" value="' + esc(g.nombre) + '"><button class="icon-del" data-action="askDeleteGoal" data-id="' + g.id + '">' + icon("close") + '</button></div>';
+        html += '<div class="goal-grid" style="margin-bottom:6px;"><input type="text" id="goal-nombre-' + g.id + '" placeholder="' + t("goalNombrePh") + '" data-scope="goal" data-id="' + g.id + '" data-field="nombre" value="' + esc(g.nombre) + '"><button class="icon-del" data-action="askDeleteGoal" data-id="' + g.id + '">' + icon("close") + '</button></div>';
         html += '<div class="goal-grid">';
-        html += '<div class="goal-field"><label>' + t("goalActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" data-scope="goal" data-id="' + g.id + '" data-field="montoActual" value="' + esc(g.montoActual) + '"></div>';
-        html += '<div class="goal-field"><label>' + t("goalObjetivoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" data-scope="goal" data-id="' + g.id + '" data-field="montoObjetivo" value="' + esc(g.montoObjetivo) + '"></div>';
+        html += '<div class="goal-field"><label>' + t("goalActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="goal-actual-' + g.id + '" placeholder="0" data-scope="goal" data-id="' + g.id + '" data-field="montoActual" value="' + esc(g.montoActual) + '"></div>';
+        html += '<div class="goal-field"><label>' + t("goalObjetivoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="goal-objetivo-' + g.id + '" placeholder="0" data-scope="goal" data-id="' + g.id + '" data-field="montoObjetivo" value="' + esc(g.montoObjetivo) + '"></div>';
         html += '</div>';
         html += '<div class="progress-track" style="margin-top:6px;"><div class="progress-fill" style="width:' + pct + '%"></div></div>';
       }
       html += '</div>';
-    });
-    if (state.goals.length === 0) html += '<div class="empty-state">' + t("objetivosEmpty") + '</div>';
-    if (state.editingGoals) html += '<button class="add-btn" data-action="addGoal">' + t("addGoal") + '</button>';
-    html += '</div>';
+      });
+      if (state.editingGoals) html += '<button class="add-btn" data-action="addGoal">' + t("addGoal") + '</button>';
+      html += '</div>';
+    } else {
+      html += '<button class="fab-add" data-action="addGoal">+ ' + t("addGoal") + '</button>';
+    }
 
   }
 
