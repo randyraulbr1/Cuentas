@@ -379,22 +379,6 @@ root.addEventListener("click", (e) => {
 (async function boot() {
   try { history.replaceState({ ccTab: "inicio", ccOverlay: null }, ""); } catch (e) {}
   applyTheme(); applyTextSize();
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistration().then((reg) => {
-      if (!reg) return;
-      reg.addEventListener("updatefound", () => {
-        const nuevo = reg.installing;
-        if (!nuevo) return;
-        nuevo.addEventListener("statechange", () => {
-          if (nuevo.state === "installed" && navigator.serviceWorker.controller) {
-            reg.waiting && reg.waiting.postMessage("SKIP_WAITING");
-            navigator.serviceWorker.addEventListener("controllerchange", () => location.reload());
-          }
-        });
-      });
-      reg.update().catch(() => {});
-    }).catch(() => {});
-  }
   await ensureMigrated();
   const session = await loadAuthSession();
   if (session && session.token) {
@@ -430,15 +414,20 @@ root.addEventListener("click", (e) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").then((reg) => {
-      if (reg.waiting) { UPDATE_AVAILABLE = true; render(); }
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => {
+      const activarNuevo = (w) => { if (w) w.postMessage("SKIP_WAITING"); };
+      if (reg.waiting) { UPDATE_AVAILABLE = true; activarNuevo(reg.waiting); render(); }
       reg.addEventListener("updatefound", () => {
         const nw = reg.installing;
         if (!nw) return;
         nw.addEventListener("statechange", () => {
-          if (nw.state === "installed" && navigator.serviceWorker.controller) { UPDATE_AVAILABLE = true; render(); }
+          if (nw.state === "installed" && navigator.serviceWorker.controller) { UPDATE_AVAILABLE = true; activarNuevo(nw); render(); }
         });
       });
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+      reg.update().catch(() => {});
     }).catch(() => {});
+    let ccReloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (ccReloaded) return; ccReloaded = true; location.reload(); });
   });
 }

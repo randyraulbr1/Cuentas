@@ -1,4 +1,4 @@
-const CACHE = "cuentas-claras-v64";
+const CACHE = "cuentas-claras-v65";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,25 +9,25 @@ const ASSETS = [
   "./data-policy.html",
   "./terms.html",
   "./contact.html",
-  "./src/css/base.css?v=v64",
-  "./src/css/components.css?v=v64",
-  "./src/css/pages.css?v=v64",
-  "./src/js/icons.js?v=v64",
-  "./src/js/i18n.js?v=v64",
-  "./src/js/storage.js?v=v64",
-  "./src/js/migrations.js?v=v64",
-  "./src/js/state.js?v=v64",
-  "./src/js/calculations.js?v=v64",
-  "./src/js/categories.js?v=v64",
-  "./src/js/work.js?v=v64",
-  "./src/js/payments.js?v=v64",
-  "./src/js/bank.js?v=v64",
-  "./src/js/api.js?v=v64",
-  "./src/js/plaid-link.js?v=v64",
-  "./src/js/history.js?v=v64",
-  "./src/js/recommendations.js?v=v64",
-  "./src/js/render.js?v=v64",
-  "./src/js/app.js?v=v64",
+  "./src/css/base.css?v=v65",
+  "./src/css/components.css?v=v65",
+  "./src/css/pages.css?v=v65",
+  "./src/js/icons.js?v=v65",
+  "./src/js/i18n.js?v=v65",
+  "./src/js/storage.js?v=v65",
+  "./src/js/migrations.js?v=v65",
+  "./src/js/state.js?v=v65",
+  "./src/js/calculations.js?v=v65",
+  "./src/js/categories.js?v=v65",
+  "./src/js/work.js?v=v65",
+  "./src/js/payments.js?v=v65",
+  "./src/js/bank.js?v=v65",
+  "./src/js/api.js?v=v65",
+  "./src/js/plaid-link.js?v=v65",
+  "./src/js/history.js?v=v65",
+  "./src/js/recommendations.js?v=v65",
+  "./src/js/render.js?v=v65",
+  "./src/js/app.js?v=v65",
 ];
 
 self.addEventListener("message", (event) => {
@@ -55,7 +55,7 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
 
   event.respondWith(
-    fetch(req)
+    (req.mode === "navigate" ? fetch(req.url, { cache: "no-cache" }) : fetch(req))
       .then((res) => {
         // guarda copia fresca de los recursos propios de la app
         if (req.url.startsWith(self.location.origin)) {
