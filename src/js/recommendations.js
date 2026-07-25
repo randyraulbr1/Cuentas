@@ -226,3 +226,49 @@ function computeTopComercios(limite) {
   });
   return Object.keys(mapa).map((k) => mapa[k]).sort((a, b) => b.total - a.total).slice(0, limite || 5);
 }
+
+/* Grupo 50/30/20: a que grupo pertenece cada categoria bancaria y manual.
+   Basado en la regla 50/30/20 (necesidades / deseos / ahorro-deuda), el metodo
+   de presupuesto mas usado en educacion financiera. */
+const GRUPO_5030 = {
+  hipoteca_renta: "necesidad", electricidad: "necesidad", agua: "necesidad", internet: "necesidad",
+  telefono: "necesidad", seguros: "necesidad", supermercado: "necesidad", farmacia: "necesidad",
+  transporte: "necesidad", gasolina: "necesidad", tarjeta_credito: "deuda",
+  renta: "necesidad", luz: "necesidad", gas: "necesidad", wifi: "necesidad", carro: "necesidad", seguro: "necesidad", salud: "necesidad",
+  restaurantes: "deseo", amazon: "deseo", walmart: "necesidad", costco: "necesidad", target: "deseo",
+  streaming: "deseo", suscripciones: "deseo", compras: "deseo", entretenimiento: "deseo", gym: "deseo", otro: "deseo", otros: "deseo",
+};
+
+/* Compara el gasto real del mes contra la regla 50/30/20 (50% necesidades, 30% deseos, 20% ahorro/deuda) */
+function compute503020() {
+  const ingreso = ingresoActivo();
+  if (!ingreso || ingreso <= 0) return null;
+  const mesActual = new Date().toISOString().slice(0, 7);
+  let necesidad = 0, deseo = 0;
+  (state.cloudTransactions || []).forEach((tx) => {
+    const m = toNum(tx.monto);
+    if (m >= 0) return;
+    if (String(tx.fecha).slice(0, 7) !== mesActual) return;
+    const grupo = GRUPO_5030[tx.categoria] || "deseo";
+    if (grupo === "necesidad") necesidad += Math.abs(m);
+    else if (grupo === "deseo") deseo += Math.abs(m);
+  });
+  state.subs.forEach((s) => { necesidad += toNum(s.monto); });
+  const ahorroMes = Math.max(ingreso - necesidad - deseo, 0);
+  const pctNecesidad = (necesidad / ingreso) * 100;
+  const pctDeseo = (deseo / ingreso) * 100;
+  const pctAhorro = (ahorroMes / ingreso) * 100;
+  return { ingreso, necesidad, deseo, ahorroMes, pctNecesidad, pctDeseo, pctAhorro };
+}
+
+/* Fondo de emergencia: estandar de 3 a 6 meses de gastos esenciales cubiertos en efectivo/ahorro liquido */
+function computeFondoEmergencia() {
+  const r = compute503020();
+  const gastoEsencialMensual = r ? r.necesidad : null;
+  if (!gastoEsencialMensual || gastoEsencialMensual <= 0) return null;
+  const liquido = toNum(state.ahorroActual) + toNum(state.cash);
+  const mesesCubiertos = liquido / gastoEsencialMensual;
+  const metaMeses = 6;
+  const metaMonto = gastoEsencialMensual * metaMeses;
+  return { liquido, gastoEsencialMensual, mesesCubiertos, metaMeses, metaMonto, faltante: Math.max(metaMonto - liquido, 0) };
+}

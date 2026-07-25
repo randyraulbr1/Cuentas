@@ -316,9 +316,11 @@ function renderApp() {
     const cloudNoCredit = state.cloudAccounts.filter((a) => a.type !== "credit").reduce((a, c) => a + toNum(c.balance_current), 0);
     const deudaPrestamos = state.loans.reduce((a, l) => a + Math.max(toNum(l.saldoTotal), 0), 0);
     const patrimonioNeto = toNum(state.ahorroActual) + toNum(state.cash) + toNum(state.debito) + cloudNoCredit - t2.totalDeuda - deudaPrestamos;
-    html += '<div class="panel" style="text-align:center;">';
-    html += '<p class="hint" style="margin-bottom:2px;">' + t("patrimonioNetoLbl") + '</p>';
-    html += '<div style="font-size:32px;font-weight:800;letter-spacing:-0.01em;color:' + (patrimonioNeto >= 0 ? "var(--text)" : "#FF3B30") + ';">' + (patrimonioNeto < 0 ? "-" : "") + sym() + fmt0(Math.abs(patrimonioNeto)) + '</div>';
+    const disponibleHoy = toNum(state.cash) + toNum(state.debito) + cloudNoCredit;
+    html += '<div class="hero-card">';
+    html += '<span class="hero-lbl">' + t("patrimonioNetoLbl") + '</span>';
+    html += '<div class="hero-val' + (patrimonioNeto < 0 ? " neg" : "") + '">' + (patrimonioNeto < 0 ? "\u2212" : "") + sym() + fmt0(Math.abs(patrimonioNeto)) + '</div>';
+    html += '<div class="hero-sub"><span>' + t("disponibleHoyLbl") + '</span><b>' + sym() + fmt0(disponibleHoy) + '</b></div>';
     html += '</div>';
     const rs = computeResumenSemanal();
     if (rs) {
@@ -732,6 +734,36 @@ function renderApp() {
       html += '<div class="empty-state">' + t("insightsEmpty") + '</div>';
     }
 
+    const r5030 = compute503020();
+    if (r5030) {
+      const necOk = r5030.pctNecesidad <= 55;
+      const desOk = r5030.pctDeseo <= 35;
+      const ahoOk = r5030.pctAhorro >= 15;
+      html += '<div class="panel"><h2>' + t("regla503020Title") + '</h2><p class="hint">' + t("regla503020Hint") + '</p>';
+      html += '<div class="rule-bar"><div class="rule-seg nec" style="width:' + Math.min(r5030.pctNecesidad, 100) + '%;"></div><div class="rule-seg des" style="width:' + Math.min(r5030.pctDeseo, 100 - Math.min(r5030.pctNecesidad, 100)) + '%;"></div><div class="rule-seg aho" style="width:' + Math.max(100 - Math.min(r5030.pctNecesidad, 100) - Math.min(r5030.pctDeseo, 100), 0) + '%;"></div></div>';
+      html += '<div class="rule-legend">';
+      html += '<div class="rule-item"><span class="rule-dot nec"></span><div><b>' + Math.round(r5030.pctNecesidad) + '%</b><span>' + t("necesidadesLbl") + ' \u00b7 ' + t("metaLbl") + ' 50%</span></div></div>';
+      html += '<div class="rule-item"><span class="rule-dot des"></span><div><b>' + Math.round(r5030.pctDeseo) + '%</b><span>' + t("deseosLbl") + ' \u00b7 ' + t("metaLbl") + ' 30%</span></div></div>';
+      html += '<div class="rule-item"><span class="rule-dot aho"></span><div><b>' + Math.round(r5030.pctAhorro) + '%</b><span>' + t("ahorroLbl") + ' \u00b7 ' + t("metaLbl") + ' 20%</span></div></div>';
+      html += '</div>';
+      let msg, tono;
+      if (necOk && desOk && ahoOk) { msg = t("msg503020Bien"); tono = "bien"; }
+      else if (!necOk) { msg = t("msg503020Necesidad")(Math.round(r5030.pctNecesidad)); tono = "mal"; }
+      else if (!ahoOk) { msg = t("msg503020Ahorro")(Math.round(r5030.pctAhorro)); tono = "alerta"; }
+      else { msg = t("msg503020Deseo")(Math.round(r5030.pctDeseo)); tono = "alerta"; }
+      html += '<div class="rule-msg ' + tono + '">' + msg + '</div>';
+      html += '</div>';
+    }
+    const fe = computeFondoEmergencia();
+    if (fe) {
+      const pct = Math.min((fe.mesesCubiertos / fe.metaMeses) * 100, 100);
+      html += '<div class="panel"><h2>' + t("fondoEmergenciaTitle") + '</h2><p class="hint">' + t("fondoEmergenciaHint") + '</p>';
+      html += '<div class="fund-row"><b>' + fe.mesesCubiertos.toFixed(1) + '</b><span>' + t("deLosMesesLbl")(fe.metaMeses) + '</span></div>';
+      html += utilBarHtml(pct, pct >= 100 ? "verde" : pct >= 50 ? "amarillo" : "rojo");
+      if (fe.faltante > 0) html += '<p class="opt-row-sub" style="margin-top:8px;">' + t("faltanParaMetaMsg")(sym() + fmt0(fe.faltante), sym() + fmt0(fe.metaMonto)) + '</p>';
+      else html += '<p class="opt-row-sub" style="margin-top:8px;color:var(--accent);font-weight:600;">' + t("fondoCompletoMsg") + '</p>';
+      html += '</div>';
+    }
     const comercios = computeTopComercios(5);
     if (comercios.length > 0) {
       const maxCom = comercios[0].total || 1;
