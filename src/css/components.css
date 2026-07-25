@@ -104,14 +104,17 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .empty-state { text-align: center; color: var(--text-muted); font-size: 12.5px; padding: 10px 0; }
 .save-note { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 24px; }
 
-/* Tarjetas del banco: pila estilo billetera */
-.cc-stack { display: flex; flex-direction: column; margin-top: 10px; }
-.cc-card { position: relative; width: 100%; border: none; border-radius: 18px; padding: 16px 18px; color: #fff; text-align: left; cursor: pointer; font-family: inherit; box-shadow: 0 8px 20px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12); overflow: hidden; transition: margin 0.35s ease, transform 0.35s ease, box-shadow 0.35s ease; }
+/* Tarjetas del banco: pila estilo Apple Wallet, con resorte y profundidad */
+.cc-stack { display: flex; flex-direction: column; margin-top: 10px; perspective: 900px; }
+.cc-card { position: relative; width: 100%; border: none; border-radius: 18px; padding: 16px 18px; color: #fff; text-align: left; cursor: pointer; font-family: inherit; box-shadow: 0 8px 20px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.12); overflow: hidden;
+  transition: margin-top 0.42s cubic-bezier(0.34, 1.28, 0.64, 1), transform 0.42s cubic-bezier(0.34, 1.28, 0.64, 1), box-shadow 0.35s ease, filter 0.3s ease; transform-origin: center top; }
 .cc-card::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 90% at 85% -10%, rgba(255,255,255,0.14), transparent 55%); pointer-events: none; }
 .cc-card + .cc-card { margin-top: -118px; }
 .cc-card.expanded, .cc-card.expanded + .cc-card { margin-top: 12px; }
 .cc-stack .cc-card:first-child.expanded { margin-top: 0; }
-.cc-card.expanded { transform: scale(1.02); box-shadow: 0 14px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16); z-index: 2; }
+.cc-card.expanded { transform: scale(1.015) translateZ(0); box-shadow: 0 18px 38px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.16); }
+.cc-card.dimmed { transform: scale(0.965); filter: brightness(0.72) saturate(0.85); box-shadow: 0 4px 12px rgba(0,0,0,0.22); }
+.cc-card.dimmed:active { transform: scale(0.94); }
 .cc-card:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .cc-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .cc-bank { font-weight: 700; font-size: 15px; letter-spacing: 0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -123,7 +126,7 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .cc-number { margin-top: 12px; font-size: 15px; letter-spacing: 0.14em; font-variant-numeric: tabular-nums; opacity: 0.9; }
 .cc-bottom { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; }
 .cc-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.7; }
-.cc-balance { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.cc-balance { font-family: "Manrope", sans-serif; font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .cc-detail { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.35s ease, opacity 0.3s ease, margin-top 0.35s ease; margin-top: 0; }
 .cc-card.expanded .cc-detail { max-height: 220px; opacity: 1; margin-top: 12px; }
 .cc-detail .util-bar-track { background: rgba(255,255,255,0.22); }

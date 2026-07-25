@@ -368,7 +368,6 @@ root.addEventListener("click", (e) => {
       const sub = state.subs.find((x) => x.id === partes[0]);
       if (sub) { sub.icono = partes[1]; state.iconPickerSubId = null; scheduleSave(); render(); }
     },
-    seleccionarTarjeta: () => { state.cardSeleccionadaId = id; render(); },
     toggleSaldosInicio: () => { state.editingSaldosInicio = !state.editingSaldosInicio; render(); if (state.editingSaldosInicio) setTimeout(() => { const i = document.getElementById("cash-input"); if (i) i.focus(); }, 50); },
     toggleCardNube: () => { state.cardNubeExpandida = state.cardNubeExpandida === id ? null : id; render(); },
     abrirConfirmarAhorro: abrirConfirmarAhorro, cancelarConfirmarAhorro: cancelarConfirmarAhorro, confirmarAhorroMes: confirmarAhorroMes,

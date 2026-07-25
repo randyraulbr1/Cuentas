@@ -430,42 +430,6 @@ function renderApp() {
       html += '</div>';
     }
 
-    if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) {
-      const todasTarjetas = [];
-      t2.cardsConLimite.forEach((c) => {
-        todasTarjetas.push({ id: "m-" + c.id, nombre: c.nombre || t("cardNombrePh"), saldo: toNum(c.saldo), limite: toNum(c.limite), apr: toNum(c.apr), color: "var(--accent)" });
-      });
-      t2.cloudCardsConLimite.forEach((c) => {
-        todasTarjetas.push({ id: "c-" + c.account_id, nombre: (c.name || t("cardNombrePh")) + (c.mask ? " ****" + c.mask : ""), saldo: toNum(c.balance_current), limite: toNum(c.balance_limit), apr: toNum(c.liab_apr), color: "#5C6BC0" });
-      });
-      todasTarjetas.forEach((c) => { c.uso = c.limite > 0 ? Math.min((c.saldo / c.limite) * 100, 100) : 0; });
-      todasTarjetas.sort((a, b) => b.uso - a.uso);
-
-      if (!state.cardSeleccionadaId || !todasTarjetas.some((c) => c.id === state.cardSeleccionadaId)) state.cardSeleccionadaId = todasTarjetas[0].id;
-      const seleccionada = todasTarjetas.find((c) => c.id === state.cardSeleccionadaId) || todasTarjetas[0];
-
-      html += '<div class="panel"><h2>' + t("saludCreditoTitle") + '</h2><p class="hint">' + t("saludCreditoHint") + '</p>';
-      html += '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;">';
-      todasTarjetas.forEach((c) => {
-        const activa = c.id === state.cardSeleccionadaId;
-        html += '<button data-action="seleccionarTarjeta" data-id="' + c.id + '" style="flex-shrink:0;width:84px;height:54px;border-radius:12px;border:' + (activa ? "2px solid " + c.color : "1px solid var(--border)") + ';background:' + (activa ? c.color : "var(--card-bg)") + ';color:' + (activa ? "#fff" : "var(--text)") + ';display:flex;align-items:center;justify-content:center;padding:8px;cursor:pointer;font-family:inherit;text-align:center;">';
-        html += '<span style="font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">' + esc(c.nombre) + '</span>';
-        html += '</button>';
-      });
-      html += '</div>';
-
-      const usoNivel = seleccionada.uso < 30 ? "verde" : seleccionada.uso < 70 ? "amarillo" : "rojo";
-      html += '<div class="history-top" style="margin-bottom:4px;"><span class="history-month" style="text-transform:none;">' + esc(seleccionada.nombre) + '</span><span class="status-pill ' + usoNivel + '">' + Math.round(seleccionada.uso) + '%</span></div>';
-      html += '<div class="opt-row-sub" style="margin-bottom:4px;">' + sym() + fmt0(seleccionada.saldo) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(seleccionada.limite) + (seleccionada.apr > 0 ? ' \u00b7 ' + t("cardAprLbl") + ' ' + seleccionada.apr + '%' : '') + '</div>';
-      html += utilBarHtml(seleccionada.uso, usoNivel);
-      if (seleccionada.uso > 30 && seleccionada.limite > 0) {
-        const objetivoSaldo = seleccionada.limite * 0.3;
-        const aPagar = seleccionada.saldo - objetivoSaldo;
-        if (aPagar > 0) html += '<p class="opt-row-sub" style="margin-top:6px;">' + t("sugerenciaCreditoMsg")(sym() + fmt0(aPagar)) + '</p>';
-      }
-      html += '</div>';
-    }
-
     if (state.goals.length > 0 || state.editingGoals) {
       html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("objetivosTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("objetivosHint") + '</p></div><button class="icon-pencil' + (state.editingGoals ? " done" : "") + '" data-action="toggleEditGoals">' + (state.editingGoals ? icon("check") : icon("pencil")) + '</button></div>';
       state.goals.forEach((g) => {
@@ -679,6 +643,7 @@ function renderApp() {
         "linear-gradient(140deg,#5B3A9E 0%,#3A2468 55%,#22143F 100%)"
       ];
       html += '<div class="cc-stack">';
+      const hayExpandida = !!state.cardNubeExpandida;
       cloudCards.forEach((c, ccIdx) => {
         const saldo = toNum(c.balance_current);
         const limite = toNum(c.balance_limit);
@@ -686,7 +651,8 @@ function renderApp() {
         const usoNivel = uso === null ? "verde" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
         const liab = c.liab_apr != null || c.liab_pago_minimo != null ? { apr: c.liab_apr, pago_minimo: c.liab_pago_minimo, fecha_limite: c.liab_fecha_limite } : null;
         const exp = state.cardNubeExpandida === c.account_id;
-        html += '<button type="button" class="cc-card' + (exp ? " expanded" : "") + '" data-action="toggleCardNube" data-id="' + esc(c.account_id) + '" style="background:' + ccGrads[ccIdx % ccGrads.length] + ';" aria-expanded="' + (exp ? "true" : "false") + '">';
+        const dim = hayExpandida && !exp;
+        html += '<button type="button" class="cc-card' + (exp ? " expanded" : "") + (dim ? " dimmed" : "") + '" data-action="toggleCardNube" data-id="' + esc(c.account_id) + '" style="background:' + ccGrads[ccIdx % ccGrads.length] + ';z-index:' + (exp ? 9 : cloudCards.length - ccIdx) + ';" aria-expanded="' + (exp ? "true" : "false") + '">';
         html += '<div class="cc-top"><span class="cc-bank">' + esc(c.name || t("cardNombrePh")) + '</span>' + (uso !== null ? '<span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span>' : "") + '</div>';
         html += '<div class="cc-mid"><span class="cc-chip"></span><svg class="cc-wave" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7a7 7 0 0 1 0 6M9 5a10 10 0 0 1 0 10M13 3a13.5 13.5 0 0 1 0 14"/></svg></div>';
         html += '<div class="cc-number">\u2022\u2022\u2022\u2022&nbsp;&nbsp;\u2022\u2022\u2022\u2022&nbsp;&nbsp;\u2022\u2022\u2022\u2022&nbsp;&nbsp;' + (c.mask ? esc(c.mask) : "\u2022\u2022\u2022\u2022") + '</div>';
