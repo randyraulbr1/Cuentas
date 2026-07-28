@@ -21,21 +21,21 @@ select { background: var(--input-bg); border: 1px solid var(--input-border); bor
 .pay-config { margin-top: 8px; }
 .pay-config label { font-size: 11px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
 .pay-config input { width: 100%; }
-.pill-btn { background: var(--pill-bg); color: var(--text); border: none; border-radius: 18px; padding: 8px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.pill-btn { background: var(--pill-bg); color: var(--text); border: none; border-radius: 3px; padding: 9px 14px; font-size: 12.5px; font-weight: 700; letter-spacing: 0.01em; cursor: pointer; font-family: inherit; }
 .pill-btn:disabled { opacity: 0.4; cursor: default; }
 .pill-btn.danger { color: #FF3B30; }
-.pill-btn.confirm { background: #FF3B30; color: #fff; }
-.pill-btn.update { background: #EAF3FF; color: var(--accent); position: relative; }
+.pill-btn.confirm { background: var(--accent); color: var(--accent-contrast); }
+.pill-btn.update { background: var(--accent); color: var(--accent-contrast); position: relative; }
 [data-theme="dark"] .pill-btn.update { background: #0A2A4A; }
 .pill-btn.update .dot { position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: #FF3B30; border: 2px solid var(--card-bg); }
 .pill-btn.wide { width: 100%; justify-content: center; display: flex; }
 .status-pill { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 10px; }
-.status-pill.verde { background: #E3F8E9; color: #248A3D; }
-.status-pill.amarillo { background: #FFF3DE; color: #B25E00; }
-.status-pill.rojo { background: #FFE5E3; color: #D70015; }
-[data-theme="dark"] .status-pill.verde { background: #123822; color: #4ADE80; }
-[data-theme="dark"] .status-pill.amarillo { background: #3A2A0A; color: #FFB84D; }
-[data-theme="dark"] .status-pill.rojo { background: #3A1210; color: #FF6B60; }
+.status-pill.verde { background: var(--accent); color: var(--accent-contrast); }
+.status-pill.amarillo { background: var(--pill-bg); color: var(--text); border: 1px solid var(--text-muted); }
+.status-pill.rojo { background: #1a1a1a; color: #fff; }
+[data-theme="dark"] .status-pill.verde { background: var(--accent); color: var(--accent-contrast); }
+[data-theme="dark"] .status-pill.amarillo { background: var(--pill-bg); color: var(--text); border: 1px solid var(--text-muted); }
+[data-theme="dark"] .status-pill.rojo { background: #fff; color: #000; }
 .panel { background: var(--card-bg); border-radius: var(--radius); padding: 18px 17px 15px; margin-bottom: 14px; box-shadow: var(--shadow); border: 1px solid var(--border); }
 .panel h2 { font-size: 15.5px; letter-spacing: -0.01em; }
 .panel h2 { font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 2px; }
@@ -85,9 +85,9 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .card-fields input { width: 100%; }
 .util-bar-track { position: relative; height: 6px; background: var(--border); border-radius: 4px; margin-top: 10px; overflow: visible; }
 .util-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
-.util-bar-fill.verde { background: #34C759; }
-.util-bar-fill.amarillo { background: #FF9500; }
-.util-bar-fill.rojo { background: #FF3B30; }
+.util-bar-fill.verde { background: var(--accent); }
+.util-bar-fill.amarillo { background: var(--text-muted); }
+.util-bar-fill.rojo { background: #D70015; }
 .util-bar-fill.blink { animation: blinkBar 1s infinite; }
 .util-bar-marker { position: absolute; top: -3px; bottom: -3px; left: 30%; width: 2px; background: var(--text-muted); border-radius: 1px; }
 .util-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }

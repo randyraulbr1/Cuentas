@@ -5,17 +5,19 @@ button:active { transform: scale(0.96); opacity: 0.9; }
 button:disabled:active { transform: none; opacity: 1; }
 html, body { margin:0; padding:0; }
 :root {
-  --bg: #F3F5F4; --card-bg: #FFFFFF; --card-bg-2: #FAFBFA; --text: #17211D; --text-muted: #77857F;
-  --border: #ECEFED; --input-bg: #F5F7F6; --input-border: #E2E7E4; --shadow: 0 1px 2px rgba(15,30,24,0.04), 0 4px 14px rgba(15,30,24,0.05); --pill-bg: #E7EBE9;
-  --accent: #0E7C66; --accent-strong: #0A5F4E; --accent-soft: #E2F2EE;
-  --radius: 18px; --radius-sm: 12px;
-  --shadow-lift: 0 2px 6px rgba(15,30,24,0.05), 0 10px 24px rgba(15,30,24,0.07);
+  --bg: #F5F5F5; --card-bg: #FFFFFF; --card-bg-2: #FAFAFA; --text: #0A0A0A; --text-muted: #6B6B6B;
+  --border: #E2E2E2; --input-bg: #F0F0F0; --input-border: #D8D8D8; --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 14px rgba(0,0,0,0.05); --pill-bg: #E5E5E5;
+  --accent: #0A0A0A; --accent-strong: #000000; --accent-soft: #EDEDED;
+  --accent-contrast: #FFFFFF;
+  --radius: 4px; --radius-sm: 3px;
+  --shadow-lift: 0 4px 10px rgba(0,0,0,0.1), 0 16px 32px rgba(0,0,0,0.14);
 }
 [data-theme="dark"] {
-  --bg: #0E1311; --card-bg: #171D1A; --card-bg-2: #1B2220; --text: #E7EDEA; --text-muted: #8DA19A;
-  --border: #232B28; --input-bg: #1B2220; --input-border: #2B3531; --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.35); --pill-bg: #222B27;
-  --accent: #35C9A6; --accent-strong: #4ADBB9; --accent-soft: #12332B;
-  --shadow-lift: 0 2px 6px rgba(0,0,0,0.28), 0 10px 26px rgba(0,0,0,0.32);
+  --bg: #050505; --card-bg: #121212; --card-bg-2: #171717; --text: #F2F2F2; --text-muted: #8A8A8A;
+  --border: #262626; --input-bg: #1A1A1A; --input-border: #2C2C2C; --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 4px 14px rgba(0,0,0,0.45); --pill-bg: #202020;
+  --accent: #FFFFFF; --accent-strong: #FFFFFF; --accent-soft: #1E1E1E;
+  --accent-contrast: #0A0A0A;
+  --shadow-lift: 0 4px 10px rgba(0,0,0,0.35), 0 16px 34px rgba(0,0,0,0.4);
 }
 [data-theme="dark"] body { background: var(--bg); color: var(--text); }
 :root { --tabbar-h: 62px; }
@@ -38,7 +40,8 @@ html, body { margin:0; padding:0; }
 .profile-line { color: var(--text-muted); font-size: 12.5px; margin: 0; font-weight: 600; letter-spacing: 0.01em; }
 @keyframes blinkBar { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 /* Barra inferior: pestana activa con fondo suave, mas legible */
-.tab-btn.active { color: var(--accent); }
-.tab-btn.active .tab-icon { background: var(--accent-soft); border-radius: 10px; padding: 3px 12px; }
-.tab-btn .tab-icon { padding: 3px 12px; transition: background 0.2s ease; }
-.tab-label { font-size: 10px; }
+.tab-btn.active { color: var(--text); }
+.tab-btn.active .tab-icon { background: var(--accent); color: var(--accent-contrast); border-radius: 4px; padding: 3px 12px; }
+.tab-btn .tab-icon { padding: 3px 12px; transition: background 0.2s ease, color 0.2s ease; }
+.tab-label { font-size: 10px; font-weight: 600; letter-spacing: 0.01em; }
+.tab-btn.active .tab-label { font-weight: 800; }

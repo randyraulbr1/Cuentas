@@ -7,14 +7,17 @@ Referencia rápida para que cada cambio nuevo se vea coherente con el resto de l
 - Números grandes y títulos (`h1`, `h2`, montos): **Manrope** (más geométrica, look "banca premium")
 - Cargadas desde Google Fonts en `index.html`; fallback a system-ui si no cargan.
 
-## Color
-Tokens en `src/css/base.css`, dentro de `:root` (claro) y `[data-theme="dark"]`.
-- `--accent` / `--accent-strong` / `--accent-soft`: verde-teal, color de marca. Nunca usar azul/morado como acento principal.
-- `--bg`, `--card-bg`, `--card-bg-2`: fondos.
-- `--text`, `--text-muted`: texto.
-- `--border`, `--input-bg`, `--input-border`: líneas y campos.
-- Semáforo de estado (uso de tarjeta, fondo de emergencia, etc.): verde `#34C759` / amarillo `#FF9500` / rojo `#FF3B30`.
-- Tarjetas de crédito (`.cc-card`): gradientes fijos que imitan bancos reales (azul, rojo, gris, verde, morado) — ver `render.js`, array `ccGrads`.
+## Color — blanco y negro (estilo "1%")
+Paleta monocromática, inspirada en los videos de motivación/disciplina en blanco y negro. Tokens en `src/css/base.css`, dentro de `:root` (claro) y `[data-theme="dark"]`.
+- `--accent`: negro puro en tema claro, blanco puro en tema oscuro (siempre el máximo contraste posible). `--accent-contrast` es el color de texto que va sobre `--accent` (blanco sobre negro, negro sobre blanco).
+- `--accent-soft`: gris muy claro/oscuro para fondos suaves (placas de icono, sellos).
+- `--bg`, `--card-bg`, `--card-bg-2`: grises neutros, sin tinte de color.
+- `--text`, `--text-muted`: negro/gris oscuro (claro) o blanco/gris claro (oscuro).
+- **Un solo color de acento permitido fuera de la escala de grises: rojo, y solo para alertas reales** (deuda que nunca se paga, gasto sobre el límite, saldo negativo). Nunca usar rojo decorativo.
+- Nada de verde, azul, morado o dorado decorativos. Antes existían para "estado bien/mal"; ahora ese contraste se logra con negro sólido (bien) vs. gris con borde (alerta) vs. rojo (grave) — ver `.status-pill`, `.rule-msg`, `.top-action`.
+- `--radius` bajó a 4px / `--radius-sm` a 3px: bordes casi rectos, look editorial, no "burbuja".
+- Tarjetas de crédito (`.cc-card`): son la única superficie con color — gradientes que imitan bancos reales (azul, rojo, gris, verde, morado), porque representan datos reales del banco, no la marca de la app. Ver `render.js`, array `ccGrads`.
+- `.hero-card` (patrimonio neto en Inicio): bloque sólido negro (blanco en tema oscuro) — la pieza más dramática de la app.
 
 ## Formas
 - `--radius` (18px): tarjetas y paneles.
