@@ -281,7 +281,7 @@ function renderTabBar() {
   const tabs = [
     { id: "inicio", icon: "home", label: t("tabInicio") },
     { id: "cuentas", icon: "receipt", label: t("tabCuentas") },
-    { id: "trabajo", icon: "briefcase", label: t("tabTrabajo") },
+    { id: "trabajo", icon: "clockmoney", label: t("tabTrabajo") },
     { id: "insights", icon: "chart", label: t("tabInsights") },
     { id: "historial", icon: "clock", label: t("tabHistorial") },
     { id: "opciones", icon: "gear", label: t("optionsTitle") },
@@ -460,6 +460,16 @@ function renderApp() {
     } else {
       html += '<button class="fab-add" data-action="addGoal">+ ' + t("addGoal") + '</button>';
     }
+
+    // resumen de Trabajo (para tener todo en un solo vistazo en Inicio)
+    html += '<div class="panel" style="cursor:pointer;" data-action="goTab" data-id="trabajo">';
+    html += '<div class="panel-head-row"><h2>' + icon("clockmoney") + ' ' + t("tabTrabajo") + '</h2>' + icon("chevron") + '</div>';
+    if (state.turnoActivo) {
+      const enBreak = !!state.turnoActivo.breakActivo;
+      html += '<div class="mini-total"><span>' + t(enBreak ? "enBreakLbl" : "trabajandoAhoraLbl") + '</span><b class="locked-amount" style="color:' + (enBreak ? "#FF9F0A" : "#34C759") + ';">\u25cf</b></div>';
+    }
+    html += '<div class="mini-total"><span>' + t("ganadoEsteMesLbl") + '</span><b>' + sym() + fmt0(ganadoEsteMes()) + '</b></div>';
+    html += '</div>';
 
   }
 
