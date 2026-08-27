@@ -282,7 +282,6 @@ function renderTabBar() {
     { id: "inicio", icon: "home", label: t("tabInicio") },
     { id: "cuentas", icon: "receipt", label: t("tabCuentas") },
     { id: "trabajo", icon: "clockmoney", label: t("tabTrabajo") },
-    { id: "insights", icon: "chart", label: t("tabInsights") },
     { id: "historial", icon: "clock", label: t("tabHistorial") },
     { id: "opciones", icon: "gear", label: t("optionsTitle") },
   ];
@@ -349,10 +348,7 @@ function renderApp() {
     html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("cashLbl") + ' ' + icon("pencil") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.cash)) + '</div></button>';
     html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("debitoLbl") + ' ' + icon("pencil") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito) + cloudNoCredit) + '</div></button>';
     html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
-    const ahorroMetas = state.goals.reduce((a, g) => a + toNum(g.montoActual), 0);
-    const ahorroTotal = toNum(state.ahorroActual) + ahorroMetas;
-    html += '<div class="sum-card"><button class="sum-card-inner" data-action="toggleSaldosInicio"><div class="sum-label">' + t("ahorradoActual") + ' ' + icon("pencil") + '</div><div class="sum-val green">' + sym() + fmt0(ahorroTotal) + '</div></button>';
-    if (ahorroMetas > 0) html += '<div class="sum-sub">' + t("incluyeMetasMsg")(sym() + fmt0(ahorroMetas)) + '</div>';
+    html += '<div class="sum-card"><button class="sum-card-inner" data-action="toggleSaldosInicio"><div class="sum-label">' + t("ahorradoActual") + ' ' + icon("pencil") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></button>';
     if (state.confirmSumarAhorro) {
       html += '<div class="quick-confirm"><span>' + t("confirmSumar100Msg")(sym()) + '</span><div class="quick-confirm-btns"><button class="pill-btn confirm" data-action="sumarAhorro100">' + t("siSumar") + '</button><button class="pill-btn" data-action="cancelSumarAhorro">' + t("cancel") + '</button></div></div>';
     } else {
@@ -834,7 +830,8 @@ function renderApp() {
     }
   }
 
-  if (tab === "insights") {
+  if (tab === "insights" || tab === "cuentas") {
+    if (tab === "cuentas") html += '<div class="section-title-divider"><h2>' + t("tabInsights") + '</h2></div>';
     const ins = computeInsights();
     html += '<div class="panel">';
     html += '<h2>' + t("gastoMesTitle") + '</h2>';
