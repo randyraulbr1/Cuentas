@@ -4,7 +4,7 @@ let timerHandle = null;
 
 function startTimerLoop() {
   if (timerHandle) return;
-  timerHandle = setInterval(() => { if (state.activeTab === "trabajo") render(); }, 1000);
+  timerHandle = setInterval(() => { checkBreakAlerts(); if (state.activeTab === "trabajo") render(); }, 1000);
 }
 
 function stopTimerLoop() {
@@ -43,6 +43,64 @@ function fmtCronometro(ms) {
   return hh + ":" + mm + ":" + ss;
 }
 
+function fmtBreakMS(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+}
+
+/* ---------- Alertas de límite de descanso ---------- */
+let breakWarned80 = false, breakWarned100 = false, breakLastRepeat = 0;
+
+function resetBreakAlerts() { breakWarned80 = false; breakWarned100 = false; breakLastRepeat = 0; }
+
+function requestWorkNotifPermission() {
+  try { if ("Notification" in window) Notification.requestPermission(); } catch (e) {}
+}
+
+function playWorkBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.18].forEach((delay) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = 880;
+      o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.0001, ctx.currentTime + delay);
+      g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + delay + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + delay + 0.16);
+      o.start(ctx.currentTime + delay); o.stop(ctx.currentTime + delay + 0.18);
+    });
+  } catch (e) {}
+}
+
+function notifyBreak(title, body) {
+  if (state.workNotifBanner) clearTimeout(state.workNotifBanner._t);
+  state.workNotifBanner = { title: title, body: body };
+  render();
+  playWorkBeep();
+  try { if ("Notification" in window && Notification.permission === "granted") new Notification(title, { body: body }); } catch (e) {}
+  clearTimeout(notifyBreak._t);
+  notifyBreak._t = setTimeout(() => { state.workNotifBanner = null; render(); }, 5000);
+}
+
+function checkBreakAlerts() {
+  const turno = state.turnoActivo;
+  if (!turno || !turno.breakActivo) return;
+  const limiteMin = toNum(state.job.limiteAlmuerzo) || 30;
+  const limiteMs = limiteMin * 60000;
+  const elapsedMs = breakDurationMs(turno.breakActivo);
+  if (!breakWarned80 && elapsedMs >= limiteMs * 0.8 && elapsedMs < limiteMs) {
+    breakWarned80 = true;
+    notifyBreak(t("breakWarnTitle"), t("breakWarnBody")(Math.ceil((limiteMs - elapsedMs) / 60000)));
+  }
+  if (!breakWarned100 && elapsedMs >= limiteMs) {
+    breakWarned100 = true; breakLastRepeat = elapsedMs;
+    notifyBreak(t("breakLimitTitle"), t("breakLimitBody")(limiteMin));
+  } else if (breakWarned100 && (elapsedMs - breakLastRepeat) >= 120000) {
+    breakLastRepeat = elapsedMs;
+    notifyBreak(t("breakStillTitle"), t("breakStillBody")(fmtBreakMS(elapsedMs)));
+  }
+}
+
 function updateJobField(field, value) {
   state.job[field] = value;
   scheduleSave(); rerenderPreservingFocus();
@@ -58,6 +116,7 @@ function empezarTrabajo() {
 function empezarBreak() {
   if (!state.turnoActivo || state.turnoActivo.breakActivo) return;
   state.turnoActivo.breakActivo = { inicio: new Date().toISOString() };
+  resetBreakAlerts();
   scheduleSave(); render();
 }
 

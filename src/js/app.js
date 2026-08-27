@@ -40,7 +40,9 @@ async function enterProfile(id) {
   state.proximoPagoAjuste = d.proximoPagoAjuste || "";
   state.ingresosLog = d.ingresosLog || [];
   state.loans = d.loans || [];
-  state.job = d.job || { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false };
+  state.job = Object.assign({ nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false, limiteAlmuerzo: "30" }, d.job || {});
+  if (!state.job.pagoHora) state.job.pagoHora = "18";
+  if (!state.job.limiteAlmuerzo) state.job.limiteAlmuerzo = "30";
   state.turnos = d.turnos || [];
   state.turnoActivo = d.turnoActivo || null;
   state.pagosTrabajo = d.pagosTrabajo || [];
@@ -332,6 +334,7 @@ root.addEventListener("click", (e) => {
     aceptarConsentimiento: aceptarConsentimiento, cancelarConsentimiento: cancelarConsentimiento,
     askDeleteBankTx: () => askDeleteBankTx(id), cancelDeleteBankTx: cancelDeleteBankTx, removeBankTx: () => removeBankTx(id),
     toggleEditJob: toggleEditJob,
+    requestWorkNotifPermission: requestWorkNotifPermission,
     setJobFrecuencia: () => updateJobField("frecuenciaPago", freq),
     setDescansoPagadoOn: () => updateJobField("descansoPagado", true),
     setDescansoPagadoOff: () => updateJobField("descansoPagado", false),

@@ -1,4 +1,10 @@
 .top-action { border-radius: 12px; padding: 11px 14px; font-size: 13.5px; font-weight: 700; letter-spacing: -0.005em; text-align: center; margin-bottom: 12px; }
+.break-ring-wrap { position: relative; width: 132px; height: 132px; margin: 4px auto; }
+.break-ring-wrap svg { display: block; }
+.break-ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.break-ring-time { font-family: monospace; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; color: var(--text); }
+.break-ring-limit { font-size: 10.5px; color: var(--text-muted); font-weight: 600; margin-top: 2px; text-align: center; }
+
 .top-action.rojo { background: #1a1a1a; color: #fff; }
 .top-action.amarillo { background: var(--input-bg); color: var(--text); border: 1.5px solid var(--text); }
 [data-theme="dark"] .top-action.rojo { background: #fff; color: #000; }
