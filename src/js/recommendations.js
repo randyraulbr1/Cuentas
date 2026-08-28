@@ -15,7 +15,8 @@ function buildCashflowBuckets(period, monthOffset) {
   function sumaRango(start, end) {
     let ingresos = 0, gastos = 0;
     state.cloudTransactions.forEach((tx) => {
-      const d = new Date(String(tx.fecha) + "T00:00:00");
+      const fechaKey = String(tx.fecha || "").slice(0, 10);
+      const d = new Date(fechaKey + "T00:00:00");
       if (d >= start && d < end) {
         const m = toNum(tx.monto);
         if (m >= 0) ingresos += m; else gastos += Math.abs(m);
