@@ -133,6 +133,20 @@ async function unlockPin() {
   state.pinBusy = false; render();
 }
 
+function addPinDigit(digit) {
+  if (state.pinBusy || state.pinInput.length >= 6) return;
+  state.pinInput = (state.pinInput + String(digit).replace(/\D/g, "")).slice(0, 6);
+  state.pinError = "";
+  if (state.pinInput.length === 6) unlockPin(); else render();
+}
+
+function deletePinDigit() {
+  if (state.pinBusy) return;
+  state.pinInput = state.pinInput.slice(0, -1);
+  state.pinError = "";
+  render();
+}
+
 function switchUser() {
   if (saveTimeout) { clearTimeout(saveTimeout); saveUserDataNow(); }
   state.activeProfileId = null;
@@ -496,7 +510,7 @@ root.addEventListener("click", (e) => {
     startPago: () => startPago(payType, id), cancelPago: cancelPago, confirmPago: confirmPago,
     setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito, setPagoSourceCash: setPagoSourceCash, setPagoSourceNinguno: setPagoSourceNinguno,
     guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
-    savePin: savePin, lockApp: lockApp, unlockPin: unlockPin,
+    savePin: savePin, lockApp: lockApp, unlockPin: unlockPin, pinDigit: () => addPinDigit(id), pinDelete: deletePinDigit,
     toggleTheme: toggleTheme, toggleLang: toggleLang, toggleCurrency: toggleCurrency,
     setObjEquilibrado: () => setObjetivo("equilibrado"), setObjCredito: () => setObjetivo("credito"), setObjAhorro: () => setObjetivo("ahorro"),
     setLangEs: () => { if (state.lang !== "es") toggleLang(); },
