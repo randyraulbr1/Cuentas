@@ -45,3 +45,9 @@ html, body { margin:0; padding:0; }
 .tab-btn .tab-icon { padding: 3px 12px; transition: background 0.2s ease, color 0.2s ease; }
 .tab-label { font-size: 10px; font-weight: 600; letter-spacing: 0.01em; }
 .tab-btn.active .tab-label { font-weight: 800; }
+
+html[data-theme="dark"]{--bg:#070510;--surface:#11101B;--surface-2:#171522;--text:#F4F2FA;--text-muted:#9692A6;--border:#292638;--input-bg:#171522;--input-border:#343045;--shadow:0 10px 28px rgba(0,0,0,.34)}
+html[data-theme="dark"] body{background:#070510;color:#F4F2FA}
+html[data-theme="dark"] .panel{background:#11101B;border-color:#292638;box-shadow:none}
+html[data-theme="dark"] .bottom-nav{background:#171522;border-color:#2E2A3C}
+html[data-theme="dark"] input,html[data-theme="dark"] select{background:#171522;color:#F4F2FA;border-color:#343045}
