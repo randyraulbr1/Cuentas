@@ -340,6 +340,7 @@ function renderTabBar() {
     { id: "cuentas", icon: "receipt", label: t("tabCuentas") },
     { id: "trabajo", icon: "clockmoney", label: t("tabTrabajo") },
     { id: "inicio", icon: "home", label: t("tabInicio") },
+    { id: "tarjetas", icon: "card", label: LANG === "es" ? "Tarjetas" : "Cards" },
     { id: "opciones", icon: "gear", label: t("optionsTitle") },
   ];
   let h = '<div class="tab-bar">';
@@ -366,7 +367,7 @@ function renderApp() {
   html += '</div>';
 
   if (tab !== "inicio") {
-    html += '<div class="tab-subheader"><h2>' + t(tab === "cuentas" ? "tabCuentas" : tab === "insights" ? "tabInsights" : tab === "opciones" ? "optionsTitle" : tab === "trabajo" ? "tabTrabajo" : "tabHistorial") + '</h2></div>';
+    html += '<div class="tab-subheader"><h2>' + t(tab === "cuentas" ? "tabCuentas" : tab === "insights" ? "tabInsights" : tab === "opciones" ? "optionsTitle" : tab === "tarjetas" ? (LANG === "es" ? "Tarjetas" : "Cards") : tab === "trabajo" ? "tabTrabajo" : "tabHistorial") + '</h2></div>';
   }
 
   if (tab === "inicio") {
@@ -686,10 +687,75 @@ function renderApp() {
   }
 
 
-  if (tab === "cuentas") {
+  if (tab === "tarjetas") {
     if (state.payFlash) html += '<div class="flash">' + icon("check") + ' ' + t("pagoRegistrado") + '</div>';
 
     const cloudCards = cloudCreditCards();
+    const cardStats = cloudCards.map((card) => {
+      const balance = Math.max(toNum(card.balance_current), 0);
+      const limit = Math.max(toNum(card.balance_limit), 0);
+      const apr = Math.max(toNum(card.liab_apr), 0);
+      const minimum = Math.max(toNum(card.liab_pago_minimo), 0);
+      const utilization = limit > 0 ? balance / limit * 100 : null;
+      const monthlyInterest = apr > 0 ? balance * apr / 1200 : 0;
+      return { card, balance, limit, apr, minimum, utilization, monthlyInterest };
+    });
+    const totalCardBalance = cardStats.reduce((sum, item) => sum + item.balance, 0);
+    const totalCardLimit = cardStats.reduce((sum, item) => sum + item.limit, 0);
+    const totalMinimum = cardStats.reduce((sum, item) => sum + item.minimum, 0);
+    const totalInterestMonth = cardStats.reduce((sum, item) => sum + item.monthlyInterest, 0);
+    const overallUtilization = totalCardLimit > 0 ? totalCardBalance / totalCardLimit * 100 : null;
+    const unpaidBills = state.subs.filter((sub) => sub.pagadoMes !== monthKey()).reduce((sum, sub) => sum + Math.max(toNum(sub.monto), 0), 0);
+    const safeExtra = Math.max(toNum(state.debito) + toNum(state.ahorroActual) - unpaidBills - 300, 0);
+    const rankedCards = cardStats.slice().sort((a, b) => {
+      const aHigh = a.utilization != null && a.utilization > 30 ? 1 : 0;
+      const bHigh = b.utilization != null && b.utilization > 30 ? 1 : 0;
+      if (aHigh !== bHigh) return bHigh - aHigh;
+      if (aHigh) return b.utilization - a.utilization;
+      return b.apr - a.apr;
+    });
+    const priorityCard = rankedCards.find((item) => item.balance > 0) || null;
+
+    html += '<div class="panel cards-dashboard">';
+    html += '<div class="panel-head-row"><div><h2>' + (LANG === "es" ? "Estadísticas de tus tarjetas" : "Your card statistics") + '</h2><p class="hint">' + (LANG === "es" ? "Análisis calculado con saldos, límites e intereses disponibles." : "Analysis based on available balances, limits and interest rates.") + '</p></div></div>';
+    if (cloudCards.length === 0) {
+      html += '<div class="empty-state">' + (LANG === "es" ? "Conecta una tarjeta bancaria para ver su análisis." : "Connect a bank card to see its analysis.") + '</div>';
+    } else {
+      html += '<div class="card-stat-grid">';
+      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Deuda total" : "Total debt") + '</span><b>' + sym() + fmt0(totalCardBalance) + '</b></div>';
+      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Utilización total" : "Total utilization") + '</span><b class="' + (overallUtilization != null && overallUtilization >= 50 ? "bad" : overallUtilization != null && overallUtilization >= 30 ? "warn" : "good") + '">' + (overallUtilization == null ? "—" : Math.round(overallUtilization) + "%") + '</b></div>';
+      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Mínimos del mes" : "Monthly minimums") + '</span><b>' + sym() + fmt0(totalMinimum) + '</b></div>';
+      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Interés mensual estimado" : "Estimated monthly interest") + '</span><b class="bad">' + sym() + fmt0(totalInterestMonth) + '</b></div>';
+      html += '</div>';
+
+      if (priorityCard) {
+        const target30 = priorityCard.limit > 0 ? Math.max(priorityCard.balance - priorityCard.limit * 0.30, 0) : 0;
+        const normalPayment = Math.max(priorityCard.minimum, priorityCard.monthlyInterest + priorityCard.balance / 36, priorityCard.balance * 0.03);
+        const suggestedExtra = Math.min(safeExtra, target30 > 0 ? target30 : normalPayment);
+        html += '<div class="card-priority"><div class="card-priority-title">' + icon("alert") + '<span>' + (LANG === "es" ? "Primera prioridad" : "First priority") + '</span></div>';
+        html += '<h3>' + esc(priorityCard.card.name || (LANG === "es" ? "Tarjeta" : "Card")) + '</h3>';
+        if (priorityCard.utilization != null && priorityCard.utilization > 30) {
+          html += '<p>' + (LANG === "es" ? "Está usando " + Math.round(priorityCard.utilization) + "% del límite. Para llegar a 30%, reduce aproximadamente " : "It is using " + Math.round(priorityCard.utilization) + "% of its limit. To reach 30%, reduce it by about ") + '<b>' + sym() + fmt0(target30) + '</b>.</p>';
+        } else if (priorityCard.apr > 0) {
+          html += '<p>' + (LANG === "es" ? "Es la tarjeta con mayor APR disponible (" : "It has the highest available APR (") + priorityCard.apr + '%). ' + (LANG === "es" ? "Después de pagar todos los mínimos, dirige aquí el dinero extra." : "After all minimums, direct extra money here.") + '</p>';
+        }
+        html += '<div class="card-action-amount"><span>' + (LANG === "es" ? "Pago sugerido ahora sin usar el dinero reservado para el mes" : "Suggested payment now without using reserved monthly money") + '</span><b>' + sym() + fmt0(suggestedExtra) + '</b></div>';
+        if (suggestedExtra <= 0) html += '<p class="hint">' + (LANG === "es" ? "Primero cubre tus pagos pendientes. No se recomienda quedarte sin dinero para bajar la tarjeta." : "Cover pending bills first. Do not run out of cash to lower a card balance.") + '</p>';
+        html += '</div>';
+      }
+
+      html += '<div class="card-level-list">';
+      rankedCards.forEach((item, index) => {
+        const level = item.utilization == null ? "unknown" : item.utilization < 10 ? "excellent" : item.utilization < 30 ? "good" : item.utilization < 50 ? "warn" : "bad";
+        const label = level === "excellent" ? (LANG === "es" ? "Excelente" : "Excellent") : level === "good" ? (LANG === "es" ? "Bien" : "Good") : level === "warn" ? (LANG === "es" ? "Alta" : "High") : level === "bad" ? (LANG === "es" ? "Crítica" : "Critical") : (LANG === "es" ? "Sin límite disponible" : "No limit available");
+        const toThirty = item.limit > 0 ? Math.max(item.balance - item.limit * 0.30, 0) : 0;
+        html += '<div class="card-level-row"><span class="card-rank">' + (index + 1) + '</span><div><b>' + esc(item.card.name || (LANG === "es" ? "Tarjeta" : "Card")) + '</b><small>' + (item.apr ? item.apr + "% APR · " : "") + (LANG === "es" ? "Mínimo " : "Minimum ") + sym() + fmt0(item.minimum) + '</small></div><div class="card-level-right"><span class="card-level ' + level + '">' + label + '</span><b>' + (item.utilization == null ? "—" : Math.round(item.utilization) + "%") + '</b></div></div>';
+        if (toThirty > 0) html += '<p class="card-level-tip">' + (LANG === "es" ? "Baja " : "Reduce by ") + sym() + fmt0(toThirty) + (LANG === "es" ? " para llegar a 30%." : " to reach 30%.") + '</p>';
+      });
+      html += '</div>';
+      html += '<div class="credit-help"><h3>' + (LANG === "es" ? "Orden recomendado" : "Recommended order") + '</h3><ol><li>' + (LANG === "es" ? "Paga al menos el mínimo de todas antes de la fecha límite." : "Pay at least every minimum before its due date.") + '</li><li>' + (LANG === "es" ? "Baja primero cualquier tarjeta sobre 30%, empezando por la de mayor utilización." : "First lower cards above 30%, starting with the highest utilization.") + '</li><li>' + (LANG === "es" ? "Cuando estén debajo de 30%, dirige el extra a la de mayor APR." : "Once below 30%, direct extra money to the highest APR.") + '</li><li>' + (LANG === "es" ? "Evita cerrar tarjetas antiguas sin revisar antes su impacto en el límite total." : "Avoid closing older cards without checking the impact on total available credit.") + '</li></ol></div>';
+    }
+    html += '</div>';
     if (cloudCards.length > 0) {
       html += '<div class="panel"><div class="panel-head-row"><h2 style="margin-bottom:0;">' + t("tarjetasNubeTitle") + '</h2><span class="sync-badge">' + icon("bank") + t("sincronizadoLbl") + '</span></div>';
       const ccGrads = [
