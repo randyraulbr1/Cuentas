@@ -20,14 +20,14 @@ function renderBancoNubePanel(compact) {
       html += '<div class="confirm-row"><span>' + esc(t("confirmDesconectarMsg")(inst.institution_name || "")) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="confirmDisconnectBank" data-id="' + inst.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDisconnectBank">' + t("cancel") + '</button></div></div>';
     } else {
       html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(inst.institution_name || t("bancoDesconocido")) + '</span><span class="status-pill ' + (inst.status === "active" ? "verde" : "rojo") + '">' + (inst.status === "active" ? t("estadoActivo") : t("estadoDesconectado")) + '</span></div>';
-      if (inst.last_synced_at) html += '<p class="opt-row-sub">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(inst.last_synced_at).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
+
       if (inst.status === "active") html += '<button class="delete-link" data-action="askDisconnectBank" data-id="' + inst.id + '">' + t("desconectarBancoBtn") + '</button>';
       html += '</div>';
     }
   });
 
-  html += '<button class="pay-trigger" style="background:var(--accent);" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
-  if (state.cloudLastSync) html += '<p class="opt-row-sub" style="text-align:center;margin-top:8px;">' + t("ultimaActualizacionLbl") + ': ' + esc(new Date(state.cloudLastSync).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + '</p>';
+  if (!state.cloudInstitutions.some((inst) => inst.status === "active")) html += '<button class="pay-trigger" style="background:var(--accent);" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
+
 
   if (state.cloudAccounts.length > 0 && !compact) {
     html += '<div class="mini-total" style="margin-top:10px;"><span>' + t("cuentasConectadasLbl") + '</span></div>';
@@ -168,8 +168,7 @@ function renderExportSheet() {
 }
 
 function renderOpcionesTab() {
-  let h = '<p class="opt-row-sub" style="text-align:center;margin:-4px 0 12px;">' + t("optionsTitle") + ' \u00b7 v' + APP_VERSION.replace("v", "") + ' \u00b7 ' + BUILD_DATE + '</p>';
-    h += renderBancoNubePanel(true);
+  let h = renderBancoNubePanel(true);
 
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
   h += '<div class="panel"><p class="opt-section-title">' + t("secPerfil") + '</p>';
@@ -201,6 +200,7 @@ function renderOpcionesTab() {
   h += '<button class="pill-btn wide update" data-action="actualizar">' + t("update") + (UPDATE_AVAILABLE ? '<span class="dot"></span>' : '') + '</button>';
   h += '</div></div>';
 
+  h += '<p class="options-footer-meta">' + (state.cloudLastSync ? t("ultimaActualizacionLbl") + ': ' + esc(new Date(state.cloudLastSync).toLocaleString(LANG === "es" ? "es-ES" : "en-US")) + ' · ' : "") + 'v' + APP_VERSION.replace("v", "") + ' · ' + BUILD_DATE + '</p>';
   return h;
 }
 
@@ -232,82 +232,18 @@ function renderDonutChart(items) {
 }
 
 function renderCashflowChart(buckets) {
-  const width = 720, height = 270;
-  const left = 18, right = 70, top = 26, bottom = 38;
-  const plotW = width - left - right;
-  const plotH = height - top - bottom;
-  const baseline = top + plotH / 2;
-  const maxVal = Math.max.apply(null, buckets.map((b) => Math.max(toNum(b.ingresos), toNum(b.gastos))).concat([1]));
-  const totalIncome = buckets.reduce((a, b) => a + toNum(b.ingresos), 0);
-  const totalExpense = buckets.reduce((a, b) => a + toNum(b.gastos), 0);
-  const step = plotW / Math.max(buckets.length, 1);
-  const candleW = Math.max(Math.min(step * 0.25, 12), 4);
-  const scaleH = (v) => Math.max((toNum(v) / maxVal) * (plotH / 2 - 12), toNum(v) > 0 ? 3 : 0);
-  const moneyShort = (n) => {
-    n = Math.abs(toNum(n));
-    if (n >= 1000000) return (n / 1000000).toFixed(n >= 10000000 ? 0 : 1) + "M";
-    if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k";
-    return fmt0(n);
-  };
-
-  let h = '<div class="trading-chart-shell">';
-  h += '<div class="trading-chart-head"><div><span class="trading-symbol">305 CASH FLOW</span><span class="trading-live"><i></i>' + ((totalIncome === 0 && totalExpense === 0) ? (LANG === "es" ? "Esperando movimientos del banco" : "Waiting for bank transactions") : (LANG === "es" ? "Datos reales" : "Live data")) + '</span></div>';
-  h += '<div class="trading-net ' + (totalIncome - totalExpense >= 0 ? "positive" : "negative") + '">' +
-    (totalIncome - totalExpense >= 0 ? "+" : "\u2212") + sym() + fmt0(Math.abs(totalIncome - totalExpense)) + '</div></div>';
-  h += '<div class="trading-totals"><span class="positive-text">▲ ' + (LANG === "es" ? "Ingresos" : "Income") + ' ' + sym() + fmt0(totalIncome) + '</span>';
-  h += '<span class="negative-text">▼ ' + (LANG === "es" ? "Gastos" : "Expenses") + ' ' + sym() + fmt0(totalExpense) + '</span></div>';
-  h += '<svg class="trading-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + (LANG === "es" ? "Gráfico de velas de ingresos y gastos" : "Income and expense candlestick chart") + '">';
-
-  // Cuadricula profesional y eje central.
-  [0, .25, .5, .75, 1].forEach((p) => {
-    const y = top + plotH * p;
-    h += '<line class="trading-grid" x1="' + left + '" y1="' + y + '" x2="' + (width - right) + '" y2="' + y + '"></line>';
-  });
-  buckets.forEach((b, i) => {
-    if (i % Math.max(Math.ceil(buckets.length / 7), 1) === 0) {
-      const x = left + step * (i + .5);
-      h += '<line class="trading-grid vertical" x1="' + x + '" y1="' + top + '" x2="' + x + '" y2="' + (top + plotH) + '"></line>';
-    }
-  });
-  h += '<line class="trading-zero-line" x1="' + left + '" y1="' + baseline + '" x2="' + (width - right) + '" y2="' + baseline + '"></line>';
-
-  buckets.forEach((b, i) => {
-    const center = left + step * (i + .5);
-    const incomeH = scaleH(b.ingresos);
-    const expenseH = scaleH(b.gastos);
-    const incomeX = center - candleW - 2;
-    const expenseX = center + 2;
-    const incomeTop = baseline - incomeH;
-    const expenseBottom = baseline + expenseH;
-    const incomeBodyH = Math.max(incomeH * .58, b.ingresos > 0 ? 3 : 0);
-    const expenseBodyH = Math.max(expenseH * .58, b.gastos > 0 ? 3 : 0);
-
-    if (b.ingresos > 0) {
-      h += '<g class="trade-candle income"><title>' + esc(b.etiqueta + " · " + (LANG === "es" ? "Ingresos " : "Income ") + sym() + fmt0(b.ingresos)) + '</title>';
-      h += '<line x1="' + (incomeX + candleW / 2) + '" y1="' + incomeTop + '" x2="' + (incomeX + candleW / 2) + '" y2="' + baseline + '"></line>';
-      h += '<rect x="' + incomeX + '" y="' + (baseline - incomeBodyH - incomeH * .16) + '" width="' + candleW + '" height="' + incomeBodyH + '" rx="1.5"></rect></g>';
-    } else {
-      h += '<line class="trade-doji" x1="' + incomeX + '" y1="' + baseline + '" x2="' + (incomeX + candleW) + '" y2="' + baseline + '"></line>';
-    }
-    if (b.gastos > 0) {
-      h += '<g class="trade-candle expense"><title>' + esc(b.etiqueta + " · " + (LANG === "es" ? "Gastos " : "Expenses ") + sym() + fmt0(b.gastos)) + '</title>';
-      h += '<line x1="' + (expenseX + candleW / 2) + '" y1="' + baseline + '" x2="' + (expenseX + candleW / 2) + '" y2="' + expenseBottom + '"></line>';
-      h += '<rect x="' + expenseX + '" y="' + (baseline + expenseH * .16) + '" width="' + candleW + '" height="' + expenseBodyH + '" rx="1.5"></rect></g>';
-    } else {
-      h += '<line class="trade-doji" x1="' + expenseX + '" y1="' + baseline + '" x2="' + (expenseX + candleW) + '" y2="' + baseline + '"></line>';
-    }
-    if (i % Math.max(Math.ceil(buckets.length / 7), 1) === 0 || i === buckets.length - 1) {
-      h += '<text class="trading-axis-label date" x="' + center + '" y="' + (height - 10) + '" text-anchor="middle">' + esc(b.etiqueta) + '</text>';
-    }
-  });
-
-  h += '<text class="trading-axis-label" x="' + (width - 7) + '" y="' + (top + 4) + '" text-anchor="end">+' + sym() + moneyShort(maxVal) + '</text>';
-  h += '<text class="trading-axis-label zero" x="' + (width - 7) + '" y="' + (baseline + 4) + '" text-anchor="end">' + sym() + '0</text>';
-  h += '<text class="trading-axis-label" x="' + (width - 7) + '" y="' + (top + plotH + 4) + '" text-anchor="end">\u2212' + sym() + moneyShort(maxVal) + '</text>';
-  h += '</svg>';
-  h += '<div class="trading-chart-foot"><span><i class="income-box"></i>' + (LANG === "es" ? "Pagos e ingresos" : "Payments and income") + '</span><span><i class="expense-box"></i>' + (LANG === "es" ? "Compras y gastos" : "Purchases and expenses") + '</span></div>';
-  h += '</div>';
-  return h;
+  const width=720,height=300,left=20,right=72,top=24,bottom=42,plotW=width-left-right,plotH=height-top-bottom;
+  const totalIncome=buckets.reduce((sum,item)=>sum+toNum(item.ingresos),0),totalExpense=buckets.reduce((sum,item)=>sum+toNum(item.gastos),0);
+  const values=buckets.reduce((all,item)=>all.concat([toNum(item.open),toNum(item.close)]),[0]);let minValue=Math.min.apply(null,values),maxValue=Math.max.apply(null,values);
+  if(minValue===maxValue){minValue-=1;maxValue+=1;}const padding=Math.max((maxValue-minValue)*.12,1);minValue-=padding;maxValue+=padding;
+  const scaleY=(value)=>top+((maxValue-value)/(maxValue-minValue))*plotH,step=plotW/Math.max(buckets.length,1),candleW=Math.max(Math.min(step*.62,13),2.5);
+  const moneyShort=(value)=>{const n=Math.abs(toNum(value));return n>=1000?(n/1000).toFixed(n>=10000?0:1)+"k":fmt0(n);};
+  let h='<div class="trading-chart-shell real-candle-chart"><div class="trading-chart-head"><div><span class="trading-symbol">305 CASH FLOW</span><span class="trading-live"><i></i>'+(buckets.length?(LANG==="es"?"Movimientos reales":"Real transactions"):(LANG==="es"?"Sin actividad":"No activity"))+'</span></div>';
+  h+='<div class="trading-net '+(totalIncome-totalExpense>=0?"positive":"negative")+'">'+(totalIncome-totalExpense>=0?"+":"−")+sym()+fmt0(Math.abs(totalIncome-totalExpense))+'</div></div><div class="trading-totals"><span class="positive-text">▲ '+(LANG==="es"?"Pagos":"Income")+' '+sym()+fmt0(totalIncome)+'</span><span class="negative-text">▼ '+(LANG==="es"?"Compras":"Purchases")+' '+sym()+fmt0(totalExpense)+'</span></div><svg class="trading-svg" viewBox="0 0 '+width+' '+height+'" role="img">';
+  [0,.25,.5,.75,1].forEach((ratio)=>{const y=top+plotH*ratio,value=maxValue-(maxValue-minValue)*ratio;h+='<line class="trading-grid" x1="'+left+'" y1="'+y+'" x2="'+(width-right)+'" y2="'+y+'"></line><text class="trading-axis-label" x="'+(width-7)+'" y="'+(y+4)+'" text-anchor="end">'+(value<0?"−":"")+sym()+moneyShort(value)+'</text>';});
+  if(!buckets.length)h+='<text class="trading-empty-label" x="'+(left+plotW/2)+'" y="'+(top+plotH/2)+'" text-anchor="middle">'+(LANG==="es"?"No hubo movimientos en este período":"No transactions in this period")+'</text>';
+  buckets.forEach((item,index)=>{const x=left+step*(index+.5),yOpen=scaleY(item.open),yClose=scaleY(item.close),bodyTop=Math.min(yOpen,yClose),bodyHeight=Math.max(Math.abs(yClose-yOpen),3),cssClass=item.tipo==="income"?"income":"expense";h+='<g class="trade-candle '+cssClass+'"><title>'+esc(item.etiqueta+" · "+item.descripcion+" · "+sym()+fmt0(item.valor))+'</title><line x1="'+x+'" y1="'+Math.min(yOpen,yClose)+'" x2="'+x+'" y2="'+Math.max(yOpen,yClose)+'"></line><rect x="'+(x-candleW/2)+'" y="'+bodyTop+'" width="'+candleW+'" height="'+bodyHeight+'" rx="1.5"></rect></g>';if(index%Math.max(Math.ceil(buckets.length/7),1)===0||index===buckets.length-1)h+='<text class="trading-axis-label date" x="'+x+'" y="'+(height-11)+'" text-anchor="middle">'+esc(item.etiqueta)+'</text>';});
+  h+='</svg><div class="trading-chart-foot"><span><i class="income-box"></i>'+(LANG==="es"?"Pagos e ingresos":"Payments and income")+'</span><span><i class="expense-box"></i>'+(LANG==="es"?"Compras y gastos":"Purchases and expenses")+'</span></div></div>';return h;
 }
 
 function renderBarChart(items, height, clickAction) {
@@ -398,6 +334,12 @@ function renderApp() {
     html += '<div class="hero-val' + (patrimonioNeto < 0 ? " neg" : "") + '">' + (patrimonioNeto < 0 ? "\u2212" : "") + sym() + fmt0(Math.abs(patrimonioNeto)) + '</div>';
     html += '<div class="hero-sub"><span>' + t("disponibleHoyLbl") + '</span><b>' + sym() + fmt0(disponibleHoy) + '</b></div>';
     html += '</div>';
+    const smartAdvice = computeSmartAdvice();
+    if (smartAdvice.length) {
+      html += '<div class="panel smart-advice-panel"><div class="panel-head-row"><h2>' + (LANG === "es" ? "Sugerencias para ti" : "Suggestions for you") + '</h2><span class="smart-goal">' + esc(t(state.objetivo === "credito" ? "objCredito" : state.objetivo === "ahorro" ? "objAhorro" : "objEquilibrado")) + '</span></div>';
+      smartAdvice.forEach((tip) => { html += '<div class="smart-advice ' + tip.level + '">' + icon(tip.level === "urgent" ? "alert" : tip.level === "credit" ? "card" : tip.level === "save" ? "bills" : "check") + '<span>' + esc(tip.text) + '</span></div>'; });
+      html += '</div>';
+    }
     const rs = computeResumenSemanal();
     if (rs) {
       html += '<div class="panel"><h2>' + t("semanaTitle") + '</h2>';
@@ -697,19 +639,6 @@ function renderApp() {
 
     const cloudCards = cloudCreditCards();
     if (cloudCards.length > 0) {
-      const creditTotalBalance = cloudCards.reduce((sum, card) => sum + Math.max(toNum(card.balance_current), 0), 0);
-      const creditTotalLimit = cloudCards.reduce((sum, card) => sum + Math.max(toNum(card.balance_limit), 0), 0);
-      const creditAvailable = Math.max(creditTotalLimit - creditTotalBalance, 0);
-      const creditUse = creditTotalLimit > 0 ? Math.min((creditTotalBalance / creditTotalLimit) * 100, 100) : null;
-      const creditLevel = creditUse === null || creditUse < 30 ? "good" : creditUse < 70 ? "medium" : "high";
-      html += '<div class="panel real-credit-panel">';
-      html += '<div class="real-credit-head"><span class="real-credit-icon">' + icon("card") + '</span><div><h2>Crédito real</h2><p>Datos de tus tarjetas conectadas</p></div><span class="sync-badge">' + icon("bank") + t("sincronizadoLbl") + '</span></div>';
-      html += '<div class="real-credit-main"><div><span>Utilización total</span><strong class="' + creditLevel + '">' + (creditUse === null ? "—" : Math.round(creditUse) + "%") + '</strong></div><div class="real-credit-meter"><i class="' + creditLevel + '" style="width:' + (creditUse === null ? 0 : creditUse) + '%"></i></div></div>';
-      html += '<div class="real-credit-stats"><div><span>Saldo utilizado</span><b>' + sym() + fmt0(creditTotalBalance) + '</b></div><div><span>Crédito disponible</span><b>' + (creditTotalLimit > 0 ? sym() + fmt0(creditAvailable) : "No informado") + '</b></div><div><span>Límite total</span><b>' + (creditTotalLimit > 0 ? sym() + fmt0(creditTotalLimit) : "No informado") + '</b></div></div>';
-      html += '<p class="real-credit-disclaimer">Solo muestra datos reales recibidos del banco. No es un puntaje FICO porque Plaid no proporciona ese puntaje en esta conexión.</p>';
-      html += '</div>';
-    }
-    if (cloudCards.length > 0) {
       html += '<div class="panel"><div class="panel-head-row"><h2 style="margin-bottom:0;">' + t("tarjetasNubeTitle") + '</h2><span class="sync-badge">' + icon("bank") + t("sincronizadoLbl") + '</span></div>';
       const ccGrads = [
         "linear-gradient(140deg,#1B4E8C 0%,#0C2C52 55%,#081E39 100%)",
@@ -719,15 +648,15 @@ function renderApp() {
         "linear-gradient(140deg,#5B3A9E 0%,#3A2468 55%,#22143F 100%)"
       ];
       html += '<div class="cc-stack">';
-      const hayExpandida = !!state.cardNubeExpandida;
+      const expandedCloudCards = state.expandedCloudCardIds || {};
       cloudCards.forEach((c, ccIdx) => {
         const saldo = toNum(c.balance_current);
         const limite = toNum(c.balance_limit);
         const uso = limite > 0 ? Math.min((saldo / limite) * 100, 100) : null;
         const usoNivel = uso === null ? "verde" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
         const liab = c.liab_apr != null || c.liab_pago_minimo != null ? { apr: c.liab_apr, pago_minimo: c.liab_pago_minimo, fecha_limite: c.liab_fecha_limite } : null;
-        const exp = state.cardNubeExpandida === c.account_id;
-        const dim = hayExpandida && !exp;
+        const exp = !!expandedCloudCards[c.account_id];
+        const dim = false;
         html += '<button type="button" class="cc-card' + (exp ? " expanded" : "") + (dim ? " dimmed" : "") + '" data-action="toggleCardNube" data-id="' + esc(c.account_id) + '" style="background:' + ccGrads[ccIdx % ccGrads.length] + ';z-index:' + (exp ? 9 : cloudCards.length - ccIdx) + ';" aria-expanded="' + (exp ? "true" : "false") + '">';
         html += '<div class="cc-top"><span class="cc-bank">' + esc(c.name || t("cardNombrePh")) + '</span>' + (uso !== null ? '<span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span>' : "") + '</div>';
         html += '<div class="cc-mid"><span class="cc-chip"></span><svg class="cc-wave" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7a7 7 0 0 1 0 6M9 5a10 10 0 0 1 0 10M13 3a13.5 13.5 0 0 1 0 14"/></svg></div>';
@@ -741,6 +670,12 @@ function renderApp() {
         if (liab) {
           if (liab.apr) html += '<div class="cc-line"><span>' + t("cardAprLbl") + '</span><span>' + liab.apr + '%</span></div>';
           if (liab.pago_minimo != null) html += '<div class="cc-line"><span>' + t("cardMinimoLbl") + '</span><span>' + sym() + fmt0(toNum(liab.pago_minimo)) + '</span></div>';
+          if (liab.apr && saldo > 0) {
+            const monthlyInterest = saldo * toNum(liab.apr) / 1200;
+            const recommendedPayment = Math.max(toNum(liab.pago_minimo), monthlyInterest + saldo / 36, saldo * 0.03);
+            html += '<div class="cc-line"><span>' + (LANG === "es" ? "Interés estimado al mes" : "Estimated monthly interest") + '</span><span>' + sym() + fmt0(monthlyInterest) + '</span></div>';
+            html += '<div class="cc-line"><span>' + (LANG === "es" ? "Pago mensual recomendado" : "Recommended monthly payment") + '</span><span>' + sym() + fmt0(recommendedPayment) + '</span></div>';
+          }
           if (liab.fecha_limite) html += '<div class="cc-line"><span>' + t("proximoPago") + '</span><span>' + esc(liab.fecha_limite) + '</span></div>';
         }
         html += '</div></button>';
@@ -1015,77 +950,6 @@ function renderApp() {
     html += '<div style="display:flex;gap:14px;font-size:11.5px;color:var(--text-muted);margin-bottom:4px;"><span>\ud83d\udfe2 ' + t("legendIngreso") + '</span><span>\ud83d\udd34 ' + t("legendGasto") + '</span></div>';
     html += '<p class="hint" style="margin-bottom:0;">' + t("flujoCajaHint") + '</p>';
     html += '</div>';
-
-    const ins = computeInsights();
-    html += '<div class="panel">';
-    html += '<h2>' + t("gastoMesTitle") + '</h2>';
-    html += '<div class="mini-total"><span>' + t("esteMesLbl") + '</span><b class="locked-amount">' + sym() + fmt0(ins.totalActual) + '</b></div>';
-    if (ins.cambioPct !== null) {
-      const subio = ins.cambioPct > 0;
-      html += '<p class="opt-row-sub" style="color:' + (subio ? "#FF3B30" : "#34C759") + ';margin-top:6px;">' + t(subio ? "gastasteMasMsg" : "gastasteMenosMsg")(Math.round(Math.abs(ins.cambioPct))) + '</p>';
-    }
-    if (ins.topCategoria) html += '<p class="opt-row-sub" style="margin-top:4px;">' + t("mayorGastoMsg")(t("cat_" + ins.topCategoria), sym() + fmt0(ins.topMonto)) + '</p>';
-    html += '</div>';
-
-    if (ins.tendenciaMeses.some((m) => m.valor > 0)) {
-      html += '<div class="panel"><h2>' + t("tendenciaMensualTitle") + '</h2>';
-      html += renderBarChart(ins.tendenciaMeses, 90, "verMesTendencia");
-      html += '</div>';
-    }
-    if (ins.categoriasOrdenadas.length > 0) {
-      html += '<div class="panel"><h2>' + t("gastoPorCategoriaTitle") + '</h2>';
-      html += renderBarChart(ins.categoriasOrdenadas, 110);
-      html += '</div>';
-    }
-
-    if (ins.suscripcionesDetectadas.length === 0 && !ins.topCategoria) {
-      html += '<div class="empty-state">' + t("insightsEmpty") + '</div>';
-    }
-
-    const r5030 = compute503020();
-    if (r5030) {
-      const necOk = r5030.pctNecesidad <= 55;
-      const desOk = r5030.pctDeseo <= 35;
-      const ahoOk = r5030.pctAhorro >= 15;
-      html += '<div class="panel"><h2>' + t("regla503020Title") + '</h2><p class="hint">' + t("regla503020Hint") + '</p>';
-      html += '<div class="rule-bar"><div class="rule-seg nec" style="width:' + Math.min(r5030.pctNecesidad, 100) + '%;"></div><div class="rule-seg des" style="width:' + Math.min(r5030.pctDeseo, 100 - Math.min(r5030.pctNecesidad, 100)) + '%;"></div><div class="rule-seg aho" style="width:' + Math.max(100 - Math.min(r5030.pctNecesidad, 100) - Math.min(r5030.pctDeseo, 100), 0) + '%;"></div></div>';
-      html += '<div class="rule-legend">';
-      html += '<div class="rule-item"><span class="rule-dot nec"></span><div><b>' + Math.round(r5030.pctNecesidad) + '%</b><span>' + t("necesidadesLbl") + ' \u00b7 ' + t("metaLbl") + ' 50%</span></div></div>';
-      html += '<div class="rule-item"><span class="rule-dot des"></span><div><b>' + Math.round(r5030.pctDeseo) + '%</b><span>' + t("deseosLbl") + ' \u00b7 ' + t("metaLbl") + ' 30%</span></div></div>';
-      html += '<div class="rule-item"><span class="rule-dot aho"></span><div><b>' + Math.round(r5030.pctAhorro) + '%</b><span>' + t("ahorroLbl") + ' \u00b7 ' + t("metaLbl") + ' 20%</span></div></div>';
-      html += '</div>';
-      let msg, tono;
-      if (necOk && desOk && ahoOk) { msg = t("msg503020Bien"); tono = "bien"; }
-      else if (!necOk) { msg = t("msg503020Necesidad")(Math.round(r5030.pctNecesidad)); tono = "mal"; }
-      else if (!ahoOk) { msg = t("msg503020Ahorro")(Math.round(r5030.pctAhorro)); tono = "alerta"; }
-      else { msg = t("msg503020Deseo")(Math.round(r5030.pctDeseo)); tono = "alerta"; }
-      html += '<div class="rule-msg ' + tono + '">' + msg + '</div>';
-      html += '</div>';
-    }
-    const fe = computeFondoEmergencia();
-    if (fe) {
-      const pct = Math.min((fe.mesesCubiertos / fe.metaMeses) * 100, 100);
-      html += '<div class="panel"><h2>' + t("fondoEmergenciaTitle") + '</h2><p class="hint">' + t("fondoEmergenciaHint") + '</p>';
-      html += '<div class="fund-row"><b>' + fe.mesesCubiertos.toFixed(1) + '</b><span>' + t("deLosMesesLbl")(fe.metaMeses) + '</span></div>';
-      html += utilBarHtml(pct, pct >= 100 ? "verde" : pct >= 50 ? "amarillo" : "rojo");
-      if (fe.faltante > 0) html += '<p class="opt-row-sub" style="margin-top:8px;">' + t("faltanParaMetaMsg")(sym() + fmt0(fe.faltante), sym() + fmt0(fe.metaMonto)) + '</p>';
-      else html += '<p class="opt-row-sub" style="margin-top:8px;color:var(--accent);font-weight:600;">' + t("fondoCompletoMsg") + '</p>';
-      html += '</div>';
-    }
-    const comercios = computeTopComercios(5);
-    if (comercios.length > 0) {
-      const maxCom = comercios[0].total || 1;
-      html += '<div class="panel"><div class="panel-head-row"><h2 style="margin-bottom:0;">' + t("topComerciosTitle") + '</h2><span class="sync-badge">' + icon("bank") + t("sincronizadoLbl") + '</span></div>';
-      comercios.forEach((c) => {
-        const ic = categoriaIconoColor(c.categoria);
-        html += '<div class="merch-row">';
-        html += '<span class="merch-ico" style="color:' + ic.color + ';">' + icon(ic.icon) + '</span>';
-        html += '<div class="merch-mid"><div class="merch-top"><span class="merch-name">' + esc(c.nombre) + '</span><span class="merch-amt">' + sym() + fmt0(c.total) + '</span></div>';
-        html += '<div class="merch-track"><div class="merch-fill" style="width:' + Math.max((c.total / maxCom) * 100, 4) + '%;"></div></div>';
-        html += '<span class="merch-sub">' + t("vecesMsg")(c.veces) + '</span></div></div>';
-      });
-      html += '</div>';
-    }
 
     const deudasPlan = listaDeudas();
     if (deudasPlan.length > 0) {
