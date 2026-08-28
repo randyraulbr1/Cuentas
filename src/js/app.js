@@ -329,6 +329,8 @@ root.addEventListener("click", (e) => {
     submitAuthForm: submitAuthForm, apiLogout: apiLogout, apiDeleteCloudAccount: apiDeleteCloudAccount,
     iniciarConectarBanco: iniciarConectarBanco, actualizarDatosNube: actualizarDatosNube, resetConexionNube: resetConexionNube,
     toggleEditGoals: toggleEditGoals, addGoal: addGoal, askDeleteGoal: () => askDeleteGoal(id), cancelDeleteGoal: cancelDeleteGoal, removeGoal: () => removeGoal(id),
+    toggleCuentasHistorial: () => { state.cuentasHistorialAbierto = !state.cuentasHistorialAbierto; render(); },
+    toggleCuentasAnalisis: () => { state.cuentasAnalisisAbierto = !state.cuentasAnalisisAbierto; render(); },
     setHistorialFiltro: () => { state.historialCategoriaFiltro = id || ""; render(); },
     setHistorialVista: () => { state.historialVista = id; state.historialCategoriaFiltro = ""; state.historialMesAbierto = null; render(); },
     verMasMesesHistorial: () => { state.historialMesesVisibles += 3; render(); },
