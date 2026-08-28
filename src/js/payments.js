@@ -85,12 +85,14 @@ function addSubFromBankTx(txId) {
   if (!tx || toNum(tx.monto) >= 0) return;
   const txDate = String(tx.fecha || "").slice(0, 10);
   const currentMonth = monthKey();
+  const originalName = tx.merchant_name || tx.descripcion || t("subNombrePh");
+  const inferred = typeof inferPaymentVisual === "function" ? inferPaymentVisual(originalName) : { icon: "tag", category: "otro" };
   const nuevo = {
     id: uid(),
-    nombre: tx.merchant_name || tx.descripcion || t("subNombrePh"),
+    nombre: originalName,
     monto: String(Math.abs(toNum(tx.monto))),
-    categoria: tx.categoria || "otro",
-    icono: CATEGORY_ICON[tx.categoria] || CATEGORY_ICON.otro,
+    categoria: inferred.category || "otro",
+    icono: inferred.icon || "tag",
     diaPago: String(Number(txDate.slice(8, 10)) || ""),
     merchantKey: merchantKey(tx.merchant_name || tx.descripcion || ""),
     matchedBankTxId: tx.id,
