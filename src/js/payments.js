@@ -67,7 +67,7 @@ function addSubPreset(key) {
 function toggleEditLoans() { state.editingLoans = !state.editingLoans; state.confirmDeleteLoanId = null; render(); }
 
 function addLoan() {
-  state.loans.push({ id: uid(), nombre: "", saldoTotal: "", montoOriginal: "", montoPago: "", tasa: "", frecuencia: "quincenal", ultimoPago: "", automatico: false, fuenteAutomatica: "debito" });
+  state.loans.push({ id: uid(), nombre: "", saldoTotal: "", montoOriginal: "", montoPago: "", tasa: "", frecuencia: "mensual", ultimoPago: "", automatico: false, fuenteAutomatica: "debito", pagosRealizados: [] });
   state.editingLoans = true;
   scheduleSave(); rerenderPreservingFocus();
 }
@@ -104,12 +104,11 @@ function processAutoPayments() {
     while (toNum(l.saldoTotal) > 0 && guard < 24) {
       const next = oneStepNextDate(l.ultimoPago, l.frecuencia);
       if (!next || next > now) break;
-      const monto = Math.min(toNum(l.montoPago), toNum(l.saldoTotal));
+      const monto = Math.min(toNum(l.montoPago), toNum(l.saldoTotal) + (toNum(l.saldoTotal) * Math.max(toNum(l.tasa), 0) / 100 / (l.frecuencia === "semanal" ? 52 : l.frecuencia === "quincenal" ? 26 : 12)));
       if (monto <= 0) break;
-      l.saldoTotal = String(Math.max(toNum(l.saldoTotal) - monto, 0));
+      applyLoanPayment(l, monto, next.toISOString().slice(0, 10));
       if (l.fuenteAutomatica === "debito") state.debito = String(Math.max(toNum(state.debito) - monto, 0));
       else state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
-      l.ultimoPago = next.toISOString().slice(0, 10);
       if (aplicados.indexOf(l.nombre || t("loanNombrePh")) === -1) aplicados.push(l.nombre || t("loanNombrePh"));
       guard++;
     }
@@ -169,7 +168,8 @@ function confirmPago() {
   const item = list.find((x) => x.id === state.payingTarget.id);
   if (!item) return;
   pushUndo();
-  item[field] = String(Math.max(toNum(item[field]) - monto, 0));
+  if (state.payingTarget.type === "loan") applyLoanPayment(item, monto, new Date().toISOString().slice(0, 10));
+  else item[field] = String(Math.max(toNum(item[field]) - monto, 0));
   if (state.payFormSource === "debito") state.debito = String(Math.max(toNum(state.debito) - monto, 0));
   else if (state.payFormSource === "ahorro") state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
   else if (state.payFormSource === "cash") state.cash = String(Math.max(toNum(state.cash) - monto, 0));
@@ -285,9 +285,19 @@ function confirmarGastoFijo() {
   if (!nombre) return;
   const key = merchantKey(tx.descripcion);
   pushUndo();
-  const existente = state.gastosFijosReconocidos.find((g) => g.merchantKey === key);
-  if (existente) { existente.nombre = nombre; }
-  else state.gastosFijosReconocidos.push({ id: uid(), nombre: nombre, merchantKey: key, monto: Math.abs(toNum(tx.monto)) });
+  const existente = state.subs.find((sub) => sub.merchantKey === key);
+  if (existente) {
+    existente.nombre = nombre;
+    existente.monto = String(Math.abs(toNum(tx.monto)));
+    existente.pagadoMes = String(tx.fecha).slice(0, 7) === monthKey() ? monthKey() : existente.pagadoMes;
+  } else {
+    state.subs.push({
+      id: uid(), nombre: nombre, monto: String(Math.abs(toNum(tx.monto))),
+      categoria: tx.categoria && CATEGORIES.indexOf(tx.categoria) !== -1 ? tx.categoria : "otro",
+      icono: CATEGORY_ICON[tx.categoria] || "receipt", merchantKey: key,
+      pagadoMes: String(tx.fecha).slice(0, 7) === monthKey() ? monthKey() : ""
+    });
+  }
   state.showMarcarGastoFijo = false;
   state.showTxDetalle = null;
   scheduleSave();
@@ -331,7 +341,7 @@ function marcarComoPlazo(txId) {
   state.loans.push({
     id: uid(), nombre: tx.merchant_name || tx.descripcion || t("cat_otros"),
     saldoTotal: String(monto), montoOriginal: String(monto), montoPago: "", tasa: "",
-    frecuencia: "mensual", ultimoPago: String(tx.fecha).slice(0, 10), automatico: false, fuenteAutomatica: "debito",
+    frecuencia: "mensual", ultimoPago: "", automatico: false, fuenteAutomatica: "debito", pagosRealizados: [],
   });
   scheduleSave();
   state.txDetalleFlash = t("marcadoComoPlazoMsg");
