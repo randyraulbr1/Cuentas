@@ -231,3 +231,28 @@
 }
 :root[data-theme="dark"] .theme-color-btn[data-accent-choice="black"] { background: #555B63; }
 :root[data-theme="dark"] .theme-color-btn[data-accent-choice="black"].active::after { color: #FFFFFF; }
+
+/* v107: oscuro tipo Fomo, negro violeta suave y contraste estable. */
+html[data-theme="dark"] {
+  --bg: #080711;
+  --card-bg: #12101C;
+  --card-bg-2: #181522;
+  --text: #F7F5FC;
+  --text-muted: #AAA6B7;
+  --border: #292536;
+  --input-bg: #1B1826;
+  --input-border: #373147;
+  --pill-bg: #211D2D;
+  --shadow: 0 8px 24px rgba(0,0,0,.24);
+  color-scheme: dark;
+}
+html[data-theme="dark"] body,
+html[data-theme="dark"] #root { background: var(--bg); color: var(--text); }
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .sum-card,
+html[data-theme="dark"] .result-card,
+html[data-theme="dark"] .tab-bar,
+html[data-theme="dark"] .options-sheet { background: var(--card-bg); border-color: var(--border); }
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea { background: var(--input-bg); color: var(--text); border-color: var(--input-border); }
