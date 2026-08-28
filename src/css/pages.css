@@ -276,3 +276,53 @@
 @media (max-width: 380px) {
   .loan-projection { grid-template-columns: 1fr; }
 }
+
+
+/* Panel financiero tipo plataforma de trading. */
+.trading-chart-shell {
+  margin: 10px 0 6px;
+  background: #0D1117;
+  border: 1px solid #29313D;
+  border-radius: 12px;
+  overflow: hidden;
+  color: #E6EDF3;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+.trading-chart-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+  padding: 12px 13px 5px;
+}
+.trading-chart-head > div:first-child { display: flex; flex-direction: column; gap: 3px; }
+.trading-symbol { font: 800 12px/1.2 "Manrope", sans-serif; letter-spacing: .08em; color: #F0F6FC; }
+.trading-live { display: flex; align-items: center; gap: 5px; color: #8B949E; font-size: 9.5px; font-weight: 600; }
+.trading-live i { width: 6px; height: 6px; border-radius: 50%; background: #2ECC71; box-shadow: 0 0 0 3px rgba(46,204,113,.12); }
+.trading-net { font: 800 18px/1 "Manrope", sans-serif; font-variant-numeric: tabular-nums; }
+.trading-net.positive, .positive-text { color: #2ED573; }
+.trading-net.negative, .negative-text { color: #FF5263; }
+.trading-totals { display: flex; gap: 13px; padding: 2px 13px 8px; font-size: 10px; font-weight: 700; }
+.trading-svg { display: block; width: 100%; height: auto; min-height: 220px; background: #0D1117; }
+.trading-grid { stroke: #222A35; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.trading-grid.vertical { stroke: #1B222C; }
+.trading-zero-line { stroke: #647081; stroke-width: 1; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; }
+.trade-candle line { stroke-width: 2; vector-effect: non-scaling-stroke; }
+.trade-candle.income line, .trade-candle.income rect { stroke: #2ED573; fill: #2ED573; }
+.trade-candle.expense line, .trade-candle.expense rect { stroke: #FF5263; fill: #FF5263; }
+.trade-candle rect { filter: drop-shadow(0 0 2px rgba(255,255,255,.08)); }
+.trade-doji { stroke: #3A4553; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.trading-axis-label { fill: #7D8998; font: 500 9px "Inter", sans-serif; }
+.trading-axis-label.zero { fill: #AAB4C0; }
+.trading-axis-label.date { fill: #697586; font-size: 8.5px; }
+.trading-chart-foot {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 8px 13px 11px; border-top: 1px solid #202732;
+  color: #9CA7B5; font-size: 9.5px; font-weight: 600;
+}
+.trading-chart-foot span { display: flex; align-items: center; gap: 5px; }
+.trading-chart-foot i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.trading-chart-foot .income-box { background: #2ED573; }
+.trading-chart-foot .expense-box { background: #FF5263; }
+@media (max-width: 420px) {
+  .trading-svg { min-height: 205px; }
+  .trading-chart-head { padding-top: 10px; }
+  .trading-net { font-size: 16px; }
+}
