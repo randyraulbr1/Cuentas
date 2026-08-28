@@ -194,14 +194,14 @@ async function unlockPin() {
 }
 
 function addPinDigit(digit) {
-  if (state.pinBusy || state.pinInput.length >= 6) return;
+  if (state.pinInput.length >= 6) return;
   state.pinInput = (state.pinInput + String(digit).replace(/\D/g, "")).slice(0, 6);
   state.pinError = "";
-  if (state.pinInput.length === 6) unlockPin(); else render();
+  render();
 }
 
 function deletePinDigit() {
-  if (state.pinBusy) return;
+  state.pinBusy = false;
   state.pinInput = state.pinInput.slice(0, -1);
   state.pinError = "";
   render();
