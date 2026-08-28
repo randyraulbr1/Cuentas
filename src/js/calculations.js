@@ -104,7 +104,7 @@ function computeSaludCreditoEstimada() {
   const usoPromedio = todas.reduce((a, u) => a + u, 0) / todas.length;
   const scoreUso = Math.max(0, 100 - usoPromedio);
 
-  const fijos = state.gastosFijosReconocidos;
+  const fijos = state.subs.filter((sub) => sub.merchantKey);
   const fijosPagados = fijos.filter((gf) => gastoFijoPagadoEsteMes(gf)).length;
   const scorePagos = fijos.length > 0 ? (fijosPagados / fijos.length) * 100 : 100;
 
