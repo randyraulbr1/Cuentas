@@ -108,3 +108,6 @@ CREATE TABLE IF NOT EXISTS sync_logs (
   detalle     TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS fecha_hora TIMESTAMPTZ;
