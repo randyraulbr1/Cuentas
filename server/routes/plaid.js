@@ -217,7 +217,7 @@ router.post("/disconnect", requireAuth, async (req, res) => {
 
 router.get("/institutions-status", requireAuth, async (req, res) => {
   const result = await query(
-    "SELECT id, institution_name, status, last_synced_at FROM plaid_items WHERE user_id = $1 ORDER BY created_at DESC",
+    "SELECT id, institution_name, status, last_synced_at FROM plaid_items WHERE user_id = $1 AND status = 'active' ORDER BY created_at DESC",
     [req.userId]
   );
   res.json({ items: result.rows });
