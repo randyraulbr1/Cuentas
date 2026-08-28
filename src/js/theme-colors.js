@@ -2,11 +2,13 @@
 
 (function () {
   const KEY = "cuentas-claras:accent-theme";
-  const THEMES = ["black", "blue", "green", "purple", "red"];
+  const THEMES = ["black", "blue", "teal", "purple", "orange"];
 
   function loadAccentTheme() {
     try {
-      const saved = localStorage.getItem(KEY);
+      let saved = localStorage.getItem(KEY);
+      if (saved === "green") saved = "teal";
+      if (saved === "red") saved = "orange";
       return THEMES.indexOf(saved) !== -1 ? saved : "black";
     } catch (e) {
       return "black";
@@ -33,8 +35,8 @@
   function choiceLabel(name) {
     const en = typeof LANG !== "undefined" && LANG === "en";
     const labels = en
-      ? { black: "Black", blue: "Blue", green: "Green", purple: "Purple", red: "Red" }
-      : { black: "Negro", blue: "Azul", green: "Verde", purple: "Morado", red: "Rojo" };
+      ? { black: "Graphite", blue: "Blue", teal: "Teal", purple: "Purple", orange: "Orange" }
+      : { black: "Grafito", blue: "Azul", teal: "Turquesa", purple: "Morado", orange: "Naranja" };
     return labels[name];
   }
 
