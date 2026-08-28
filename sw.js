@@ -1,4 +1,4 @@
-const CACHE = "cuentas-claras-v87";
+const CACHE = "cuentas-claras-v88";
 const ASSETS = [
   "./",
   "./index.html",
@@ -12,7 +12,7 @@ const ASSETS = [
   "./src/css/base.css?v=v86",
   "./src/css/components.css?v=v86",
   "./src/css/pages.css?v=v86",
-  "./src/css/theme-colors.css?v=v87",
+  "./src/css/theme-colors.css?v=v88",
   "./src/js/icons.js?v=v86",
   "./src/js/i18n.js?v=v86",
   "./src/js/storage.js?v=v86",
@@ -29,7 +29,7 @@ const ASSETS = [
   "./src/js/recommendations.js?v=v86",
   "./src/js/render.js?v=v86",
   "./src/js/app.js?v=v86",
-  "./src/js/theme-colors.js?v=v87",
+  "./src/js/theme-colors.js?v=v88",
 ];
 
 self.addEventListener("message", (event) => {
