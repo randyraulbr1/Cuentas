@@ -48,7 +48,16 @@ router.post("/exchange-public-token", requireAuth, async (req, res) => {
     const result = await query(
       `INSERT INTO plaid_items (user_id, item_id, institution_id, institution_name, access_token_enc, access_token_iv, access_token_tag, environment)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-       ON CONFLICT (user_id, item_id) DO UPDATE SET status = 'active', updated_at = now()
+       ON CONFLICT (user_id, item_id) DO UPDATE SET
+         institution_id = EXCLUDED.institution_id,
+         institution_name = EXCLUDED.institution_name,
+         access_token_enc = EXCLUDED.access_token_enc,
+         access_token_iv = EXCLUDED.access_token_iv,
+         access_token_tag = EXCLUDED.access_token_tag,
+         environment = EXCLUDED.environment,
+         cursor = NULL,
+         status = 'active',
+         updated_at = now()
        RETURNING id, institution_name`,
       [req.userId, itemId, institutionId, institutionName, enc.ciphertext, enc.iv, enc.tag, envName]
     );
@@ -62,6 +71,28 @@ async function getDecryptedAccessToken(plaidItemRow) {
   return decrypt(plaidItemRow.access_token_enc, plaidItemRow.access_token_iv, plaidItemRow.access_token_tag);
 }
 
+async function savePlaidAccount(userId, plaidItemId, acc) {
+  await query(
+    `INSERT INTO accounts (user_id, plaid_item_id, account_id, name, official_name, mask, type, subtype, balance_available, balance_current, balance_limit, currency)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+     ON CONFLICT (user_id, account_id) DO UPDATE SET
+       plaid_item_id = EXCLUDED.plaid_item_id,
+       name = EXCLUDED.name,
+       official_name = EXCLUDED.official_name,
+       mask = EXCLUDED.mask,
+       type = EXCLUDED.type,
+       subtype = EXCLUDED.subtype,
+       balance_available = EXCLUDED.balance_available,
+       balance_current = EXCLUDED.balance_current,
+       balance_limit = EXCLUDED.balance_limit,
+       currency = EXCLUDED.currency,
+       updated_at = now()`,
+    [userId, plaidItemId, acc.account_id, acc.name, acc.official_name, acc.mask, acc.type, acc.subtype,
+      acc.balances && acc.balances.available, acc.balances && acc.balances.current,
+      acc.balances && acc.balances.limit, acc.balances && acc.balances.iso_currency_code]
+  );
+}
+
 router.post("/sync-transactions", requireAuth, rateLimit(30, 60 * 60 * 1000), async (req, res) => {
   const { plaid_item_id } = req.body || {};
   try {
@@ -73,6 +104,14 @@ router.post("/sync-transactions", requireAuth, rateLimit(30, 60 * 60 * 1000), as
 
     for (const item of itemsResult.rows) {
       const accessToken = await getDecryptedAccessToken(item);
+
+      // /accounts/get esta disponible inmediatamente despues de Link. No esperamos a que
+      // Plaid termine la actualizacion inicial de Transactions para mostrar cuentas y saldos.
+      const accountsResp = await plaidClient.accountsGet({ access_token: accessToken });
+      for (const acc of accountsResp.data.accounts || []) {
+        await savePlaidAccount(req.userId, item.id, acc);
+      }
+
       let cursor = item.cursor || undefined;
       let hasMore = true;
 
@@ -81,15 +120,7 @@ router.post("/sync-transactions", requireAuth, rateLimit(30, 60 * 60 * 1000), as
         const data = resp.data;
 
         for (const acc of data.accounts || []) {
-          await query(
-            `INSERT INTO accounts (user_id, plaid_item_id, account_id, name, official_name, mask, type, subtype, balance_available, balance_current, balance_limit, currency)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-             ON CONFLICT (user_id, account_id) DO UPDATE SET
-               balance_available = EXCLUDED.balance_available, balance_current = EXCLUDED.balance_current,
-               balance_limit = EXCLUDED.balance_limit, updated_at = now()`,
-            [req.userId, item.id, acc.account_id, acc.name, acc.official_name, acc.mask, acc.type, acc.subtype,
-              acc.balances.available, acc.balances.current, acc.balances.limit, acc.balances.iso_currency_code]
-          );
+          await savePlaidAccount(req.userId, item.id, acc);
         }
 
         const learnedResult = await query("SELECT merchant_key, categoria FROM category_rules WHERE user_id = $1", [req.userId]);
@@ -146,7 +177,10 @@ router.post("/sync-transactions", requireAuth, rateLimit(30, 60 * 60 * 1000), as
 
     res.json({ ok: true, added: totalAdded, modified: totalModified, removed: totalRemoved });
   } catch (e) {
-    res.status(502).json({ error: "No se pudo sincronizar", detail: e.response ? e.response.data : e.message });
+    const detail = e.response ? e.response.data : e.message;
+    console.error("PLAID_SYNC_ERROR:", JSON.stringify(detail));
+    const code = detail && detail.error_code ? " (" + detail.error_code + ")" : "";
+    res.status(502).json({ error: "No se pudo sincronizar" + code, detail });
   }
 });
 
