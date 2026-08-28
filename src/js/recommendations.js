@@ -34,15 +34,16 @@ function buildCashflowBuckets(period, monthOffset) {
       buckets.push({ etiqueta: String(start.getDate()), ingresos: r.ingresos, gastos: r.gastos, rangeStart: dateKeyOf(start), rangeEnd: dateKeyOf(start) });
     }
   } else if (period === "week") {
-    const dow = now.getDay();
-    const offsetToMonday = dow === 0 ? 6 : dow - 1;
-    const thisMonday = new Date(now); thisMonday.setDate(thisMonday.getDate() - offsetToMonday);
-    for (let i = 7; i >= 0; i--) {
-      const start = new Date(thisMonday); start.setDate(start.getDate() - i * 7);
+    // Las semanas pertenecen solo al mes seleccionado; no mezclamos meses.
+    let start = new Date(selectedStart);
+    while (start <= now) {
       const end = new Date(start); end.setDate(end.getDate() + 7);
-      const r = sumaRango(start, end);
-      const endIncl = new Date(end); endIncl.setDate(endIncl.getDate() - 1);
+      const afterSelectedEnd = new Date(selectedEnd); afterSelectedEnd.setDate(afterSelectedEnd.getDate() + 1);
+      const rangeEnd = end > afterSelectedEnd ? afterSelectedEnd : end;
+      const r = sumaRango(start, rangeEnd);
+      const endIncl = new Date(rangeEnd); endIncl.setDate(endIncl.getDate() - 1);
       buckets.push({ etiqueta: String(start.getDate()) + "/" + String(start.getMonth() + 1), ingresos: r.ingresos, gastos: r.gastos, rangeStart: dateKeyOf(start), rangeEnd: dateKeyOf(endIncl) });
+      start = end;
     }
   } else {
     for (let i = 5; i >= 0; i--) {
