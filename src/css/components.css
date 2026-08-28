@@ -184,3 +184,10 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .tx-action-btn .ic { color: var(--accent); }
 .tx-action-btn .ic svg { width: 17px; height: 17px; }
 .tx-action-btn:active { border-color: var(--accent); background: var(--accent-soft); }
+
+.icon-pencil{background:#E4F7EC;color:#158A55;border:1px solid #B9E8CE;border-radius:10px;box-shadow:none}
+.icon-pencil:hover,.icon-pencil:active{background:#CFF1DE;color:#0B6E42}
+[data-theme="dark"] .icon-pencil{background:#123C2B;color:#5BE39D;border-color:#245D43}
+.payment-record-note{display:flex;gap:9px;align-items:flex-start;padding:10px 11px;margin-bottom:8px;border-radius:10px;background:#EAF8F0;color:#176C45;font-size:12px;line-height:1.45}
+.payment-record-note svg{width:17px;height:17px;flex:0 0 auto;margin-top:1px}
+[data-theme="dark"] .payment-record-note{background:#123C2B;color:#8DE8B8}
