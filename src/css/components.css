@@ -194,3 +194,8 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 
 .cc-card .util-bar-marker{background:#fff;border:1px solid #080812;box-shadow:0 0 0 1px #fff,0 0 8px #fff;animation:cardMarkerPulse 1.25s ease-in-out infinite}
 @keyframes cardMarkerPulse{0%,100%{opacity:1;transform:scaleX(1)}50%{opacity:.45;transform:scaleX(1.8)}}
+
+/* v115: la navegación siempre queda tocable sobre cualquier panel. */
+.tab-bar { z-index: 10000 !important; pointer-events: auto !important; isolation: isolate; }
+.tab-bar .tab-btn { pointer-events: auto !important; touch-action: manipulation; position: relative; z-index: 1; }
+.tab-bar .tab-btn::before { content: ""; position: absolute; inset: -6px -3px; }
