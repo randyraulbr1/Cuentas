@@ -50,16 +50,26 @@ function renderPinScreen() {
   const remaining = Math.max(0, Math.ceil((lockUntil - Date.now()) / 1000));
   const minutes = Math.floor(remaining / 60);
   const seconds = String(remaining % 60).padStart(2, "0");
+  const entered = String(state.pinInput || "").slice(0, 6);
   let html = '<div class="page pin-page"><div class="pin-screen"><div class="selector-logo">' + icon("lock") + '</div>';
   html += '<h1>' + (LANG === "es" ? "Ingresa tu PIN" : "Enter your PIN") + '</h1>';
   html += '<p class="selector-hint">' + (remaining > 0 ? (LANG === "es" ? "Demasiados intentos. Espera " + minutes + ":" + seconds + "." : "Too many attempts. Wait " + minutes + ":" + seconds + ".") : (LANG === "es" ? "PIN local de 6 dígitos" : "6-digit local PIN")) + '</p>';
-  html += '<input id="pin-unlock-input" data-scope="pinUnlock" class="pin-main-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password" placeholder="••••••" value="' + esc(state.pinInput) + '"' + (remaining > 0 || state.pinBusy ? " disabled" : "") + '>';
-  html += '<button class="pay-trigger" data-action="unlockPin"' + (remaining > 0 || state.pinBusy ? " disabled" : "") + '>' + (LANG === "es" ? "Entrar" : "Unlock") + '</button>';
+  html += '<div class="pin-dots" aria-label="' + entered.length + ' de 6 dígitos">';
+  for (let index = 0; index < 6; index++) html += '<span class="' + (index < entered.length ? "filled" : "") + '">' + (index < entered.length ? "●" : "") + '</span>';
+  html += '</div>';
+  if (remaining === 0) {
+    html += '<div class="pin-keypad">';
+    ["1","2","3","4","5","6","7","8","9"].forEach((digit) => { html += '<button type="button" data-action="pinDigit" data-id="' + digit + '">' + digit + '</button>'; });
+    html += '<span></span><button type="button" data-action="pinDigit" data-id="0">0</button><button type="button" class="pin-delete" data-action="pinDelete" aria-label="' + (LANG === "es" ? "Borrar" : "Delete") + '">' + icon("back") + '<small>' + (LANG === "es" ? "Borrar" : "Delete") + '</small></button>';
+    html += '</div>';
+    html += '<button class="pay-trigger pin-enter-btn" data-action="unlockPin"' + (entered.length !== 6 || state.pinBusy ? " disabled" : "") + '>' + (state.pinBusy ? (LANG === "es" ? "Comprobando…" : "Checking…") : (LANG === "es" ? "Entrar" : "Unlock")) + '</button>';
+  }
   if (state.pinError) html += '<p class="pin-error">' + esc(state.pinError) + '</p>';
   html += '</div></div>';
   root.innerHTML = html;
   if (remaining > 0) setTimeout(() => { if (state.appLocked) render(); }, 1000);
 }
+
 
 function renderSelector() {
   let html = '<div class="page"><div class="selector-wrap">';
