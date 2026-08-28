@@ -317,6 +317,7 @@ root.addEventListener("click", (e) => {
     addSub: addSub, removeSub: () => removeSub(id), askDeleteSub: () => askDeleteSub(id), cancelDeleteSub: cancelDeleteSub, toggleEditSubs: toggleEditSubs,
     toggleSubPagado: () => toggleSubPagado(id), confirmPagoSub: confirmPagoSub, cancelPagoSub: cancelPagoSub,
     addSubPreset: () => addSubPreset(id),
+    addSubFromBankTx: () => addSubFromBankTx(id),
     toggleSubPresetPicker: () => { state.subPresetPicker = !state.subPresetPicker; render(); },
     toggleEditIngreso: toggleEditIngreso, toggleEditAhorro: toggleEditAhorro, toggleEditCards: toggleEditCards,
     addIngresoEntry: addIngresoEntry, removeIngresoEntry: () => removeIngresoEntry(id),
