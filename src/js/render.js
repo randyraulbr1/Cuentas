@@ -57,9 +57,9 @@ function renderPinScreen() {
   html += '<div class="pin-dots" aria-label="' + entered.length + ' de 6 dígitos">';
   for (let index = 0; index < 6; index++) html += '<span class="' + (index < entered.length ? "filled" : "") + '">' + (index < entered.length ? "●" : "") + '</span>';
   html += '</div>';
+  let biometricConfigured = false;
+  try { biometricConfigured = !!localStorage.getItem(BIOMETRIC_CRED_KEY); } catch (error) {}
   if (remaining === 0) {
-    let biometricConfigured = false;
-    try { biometricConfigured = !!localStorage.getItem(BIOMETRIC_CRED_KEY); } catch (error) {}
     if (biometricConfigured) html += '<button class="biometric-unlock" data-action="unlockBiometric"' + (state.biometricBusy ? " disabled" : "") + '>' + icon("lock") + '<span>' + (state.biometricBusy ? (LANG === "es" ? "Comprobando…" : "Checking…") : (LANG === "es" ? "Entrar con huella" : "Unlock with biometrics")) + '</span></button>';
     html += '<div class="pin-or"><span>' + (LANG === "es" ? "o usa tu PIN" : "or use your PIN") + '</span></div>';
     html += '<div class="pin-keypad">';
