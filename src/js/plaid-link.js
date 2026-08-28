@@ -137,10 +137,27 @@ async function actualizarDatosNube() {
 function askDisconnectBank(plaidItemId) { state.confirmDisconnectId = plaidItemId; render(); }
 function cancelDisconnectBank() { state.confirmDisconnectId = null; render(); }
 async function confirmDisconnectBank(plaidItemId) {
-  state.cloudBusy = true; render();
-  const r = await apiDisconnectBank(plaidItemId, false);
+  state.cloudBusy = true;
+  state.cloudErrorMsg = "";
   state.confirmDisconnectId = null;
-  if (!r.ok) { state.cloudBusy = false; state.cloudErrorMsg = r.error; render(); return; }
+
+  // Quita inmediatamente de pantalla la conexión y cualquier dato bancario
+  // almacenado localmente; el backend sigue siendo la fuente de verdad.
+  state.cloudInstitutions = state.cloudInstitutions.filter((item) => String(item.id) !== String(plaidItemId));
+  state.cloudAccounts = [];
+  state.cloudTransactions = [];
+  state.cloudLiabilities = {};
+  state.cloudLastSync = "";
+  await limpiarCacheNube();
+  render();
+
+  const r = await apiDisconnectBank(plaidItemId, false);
+  if (!r.ok) {
+    state.cloudBusy = false;
+    state.cloudErrorMsg = r.error;
+    render();
+    return;
+  }
   await refrescarDatosNube();
   state.cloudBusy = false;
   render();
