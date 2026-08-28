@@ -54,7 +54,14 @@ let breakWarned80 = false, breakWarned100 = false, breakLastRepeat = 0;
 function resetBreakAlerts() { breakWarned80 = false; breakWarned100 = false; breakLastRepeat = 0; }
 
 function requestWorkNotifPermission() {
-  try { if ("Notification" in window) Notification.requestPermission(); } catch (e) {}
+  try { if ("Notification" in window) Notification.requestPermission().then(() => render()); } catch (e) {}
+}
+
+function notifStatusText() {
+  if (!("Notification" in window)) return t("notifUnsupported");
+  if (Notification.permission === "granted") return t("notifGranted");
+  if (Notification.permission === "denied") return t("notifDenied");
+  return t("notifBtnHint");
 }
 
 function playWorkBeep() {
@@ -80,6 +87,22 @@ function notifyBreak(title, body) {
   try { if ("Notification" in window && Notification.permission === "granted") new Notification(title, { body: body }); } catch (e) {}
   clearTimeout(notifyBreak._t);
   notifyBreak._t = setTimeout(() => { state.workNotifBanner = null; render(); }, 5000);
+}
+
+function checkHorarioReminder() {
+  if (!state.job.horarioRecordar) return;
+  if (state.turnoActivo) return;
+  const now = new Date();
+  const hoy = dateKeyOf(now);
+  if (state.job.horarioUltimoRecordatorio === hoy) return;
+  if (!state.job.horarioDias[now.getDay()]) return;
+  const [hh, mm] = String(state.job.horarioInicio || "09:00").split(":").map((x) => parseInt(x, 10) || 0);
+  const scheduled = new Date(now); scheduled.setHours(hh, mm, 0, 0);
+  if (now < scheduled) return;
+  if (now - scheduled > 3 * 60 * 60 * 1000) return; // no molestar si ya pasaron mas de 3h
+  state.job.horarioUltimoRecordatorio = hoy;
+  scheduleSave();
+  notifyBreak(t("recordatorioHorarioTitle"), t("recordatorioHorarioBody"));
 }
 
 function checkBreakAlerts() {

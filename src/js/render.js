@@ -733,9 +733,20 @@ function renderApp() {
       html += '<div class="goal-grid" style="margin-top:8px;">';
       html += '<div class="goal-field"><label>' + t("limiteAlmuerzoLbl") + '</label><input type="text" inputmode="numeric" placeholder="30" id="job-limiteAlmuerzo" value="' + esc(state.job.limiteAlmuerzo) + '" data-scope="job" data-field="limiteAlmuerzo"></div>';
       html += '</div>';
+      html += '<label style="font-size:13px;font-weight:600;color:var(--text-muted);display:block;margin:10px 0 6px;">' + t("horarioTrabajoLbl") + '</label>';
+      html += '<div class="seg" style="margin-bottom:8px;">';
+      t("diasSemanaCortos").forEach((dnom, di) => {
+        html += '<button style="flex:1;padding:8px 0;font-size:11px;" class="' + (state.job.horarioDias[di] ? "active" : "") + '" data-action="toggleHorarioDia" data-id="' + di + '">' + dnom + '</button>';
+      });
+      html += '</div>';
+      html += '<div class="goal-grid">';
+      html += '<div class="goal-field"><label>' + t("horarioInicioLbl") + '</label><input type="time" id="job-horarioInicio" value="' + esc(state.job.horarioInicio) + '" data-scope="job" data-field="horarioInicio"></div>';
+      html += '<div class="goal-field"><label>' + t("horarioFinLbl") + '</label><input type="time" id="job-horarioFin" value="' + esc(state.job.horarioFin) + '" data-scope="job" data-field="horarioFin"></div>';
+      html += '</div>';
+      html += '<div class="opt-row" style="margin-top:2px;"><span class="opt-row-label">' + t("horarioRecordarLbl") + '</span><div class="seg"><button class="' + (!state.job.horarioRecordar ? "active" : "") + '" data-action="setHorarioRecordarOff">' + t("off") + '</button><button class="' + (state.job.horarioRecordar ? "active" : "") + '" data-action="setHorarioRecordarOn">' + t("on") + '</button></div></div>';
       html += '<div class="opt-row" style="margin-top:8px;"><span class="opt-row-label">' + t("descansoPagadoLbl") + '</span><div class="seg"><button class="' + (!state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOff">' + t("off") + '</button><button class="' + (state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOn">' + t("on") + '</button></div></div>';
       html += '<button class="pill-btn wide" style="margin-top:10px;" data-action="requestWorkNotifPermission">' + t("notifBtnLbl") + '</button>';
-      html += '<p class="opt-row-sub" style="margin-top:6px;">' + t("notifBtnHint") + '</p>';
+      html += '<p class="opt-row-sub" style="margin-top:6px;">' + notifStatusText() + '</p>';
     }
     html += '</div>';
 

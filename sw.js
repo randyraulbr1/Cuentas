@@ -1,4 +1,4 @@
-const CACHE = "cuentas-claras-v93";
+const CACHE = "cuentas-claras-v94";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,26 +9,27 @@ const ASSETS = [
   "./data-policy.html",
   "./terms.html",
   "./contact.html",
+  "./offline.html",
   "./src/css/base.css?v=v86",
   "./src/css/components.css?v=v86",
   "./src/css/pages.css?v=v86",
   "./src/css/theme-colors.css?v=v88",
   "./src/js/icons.js?v=v86",
-  "./src/js/i18n.js?v=v93",
+  "./src/js/i18n.js?v=v94",
   "./src/js/storage.js?v=v86",
   "./src/js/migrations.js?v=v86",
-  "./src/js/state.js?v=v93",
+  "./src/js/state.js?v=v94",
   "./src/js/calculations.js?v=v86",
   "./src/js/categories.js?v=v86",
-  "./src/js/work.js?v=v92",
+  "./src/js/work.js?v=v94",
   "./src/js/payments.js?v=v86",
   "./src/js/bank.js?v=v86",
   "./src/js/api.js?v=v86",
   "./src/js/plaid-link.js?v=v86",
   "./src/js/history.js?v=v86",
   "./src/js/recommendations.js?v=v92",
-  "./src/js/render.js?v=v93",
-  "./src/js/app.js?v=v92",
+  "./src/js/render.js?v=v94",
+  "./src/js/app.js?v=v94",
   "./src/js/theme-colors.js?v=v88",
 ];
 
@@ -65,6 +66,12 @@ self.addEventListener("fetch", (event) => {
         }
         return res;
       })
-      .catch(() => caches.match(req))
+      .catch(() =>
+        caches.match(req).then((cached) => {
+          if (cached) return cached;
+          if (req.mode === "navigate") return caches.match("./offline.html");
+          return new Response("", { status: 408, statusText: "Sin conexión" });
+        })
+      )
   );
 });

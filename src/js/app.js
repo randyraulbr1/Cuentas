@@ -40,7 +40,7 @@ async function enterProfile(id) {
   state.proximoPagoAjuste = d.proximoPagoAjuste || "";
   state.ingresosLog = d.ingresosLog || [];
   state.loans = d.loans || [];
-  state.job = Object.assign({ nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false, limiteAlmuerzo: "30" }, d.job || {});
+  state.job = Object.assign({ nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false, limiteAlmuerzo: "30", horarioDias: [false, false, false, false, false, false, false], horarioInicio: "09:00", horarioFin: "17:00", horarioRecordar: false, horarioUltimoRecordatorio: "" }, d.job || {});
   if (!state.job.pagoHora) state.job.pagoHora = "18";
   if (!state.job.limiteAlmuerzo) state.job.limiteAlmuerzo = "30";
   state.turnos = d.turnos || [];
@@ -260,7 +260,8 @@ root.addEventListener("input", (e) => {
   }
   if (scope === "job") {
     const f = el.dataset.field;
-    state.job[f] = f === "nombre" ? el.value : sanitizeNum(el.value);
+    const raw = f === "nombre" || f === "horarioInicio" || f === "horarioFin";
+    state.job[f] = raw ? el.value : sanitizeNum(el.value);
     scheduleSave(); rerenderPreservingFocus(); return;
   }
   if (scope === "pagoTrabajo") {
@@ -341,6 +342,9 @@ root.addEventListener("click", (e) => {
     setJobFrecuencia: () => updateJobField("frecuenciaPago", freq),
     setDescansoPagadoOn: () => updateJobField("descansoPagado", true),
     setDescansoPagadoOff: () => updateJobField("descansoPagado", false),
+    toggleHorarioDia: () => { const di = toNum(id); state.job.horarioDias[di] = !state.job.horarioDias[di]; scheduleSave(); render(); },
+    setHorarioRecordarOn: () => updateJobField("horarioRecordar", true),
+    setHorarioRecordarOff: () => updateJobField("horarioRecordar", false),
     empezarTrabajo: empezarTrabajo, empezarBreak: empezarBreak, terminarBreak: terminarBreak,
     askTerminarTrabajo: askTerminarTrabajo, cancelTerminarTrabajo: cancelTerminarTrabajo, terminarTrabajo: terminarTrabajo,
     askDeleteTurno: () => askDeleteTurno(id), cancelDeleteTurno: cancelDeleteTurno, removeTurno: () => removeTurno(id),
@@ -435,6 +439,8 @@ root.addEventListener("click", (e) => {
     }
   }
 })();
+
+setInterval(checkHorarioReminder, 60000);
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
