@@ -415,8 +415,13 @@ root.addEventListener("click", (e) => {
         render();
       }
     }
-    if (!huboCache || cacheNubeVencido()) {
-      refrescarDatosNube().then(() => {
+    if (!huboCache || cacheNubeVencido() || state.cloudAccounts.length === 0) {
+      // Primero pide a Plaid cuentas/saldos y cualquier transaccion ya preparada.
+      // Esto tambien recupera conexiones nuevas cuyo historial inicial aun estaba procesandose.
+      apiSyncTransactions().then((syncRes) => {
+        if (!syncRes.ok) state.cloudErrorMsg = syncRes.error;
+        return refrescarDatosNube();
+      }).then(() => {
         if (!state.activeProfileId && state.profiles.length === 0 && state.cloudInstitutions.length > 0) {
           state.newProfileName = state.cloudInstitutions[0].institution_name || t("bancoDesconocido");
           createProfile();
