@@ -232,43 +232,81 @@ function renderDonutChart(items) {
 }
 
 function renderCashflowChart(buckets) {
-  let running = 0;
-  const candles = buckets.map((b) => {
-    const open = running;
-    const high = open + Math.max(toNum(b.ingresos), 0);
-    const close = open + toNum(b.ingresos) - toNum(b.gastos);
-    const low = Math.min(open, close, high - toNum(b.gastos));
-    running = close;
-    return Object.assign({}, b, { open, high: Math.max(high, open, close), low, close });
+  const width = 720, height = 270;
+  const left = 18, right = 70, top = 26, bottom = 38;
+  const plotW = width - left - right;
+  const plotH = height - top - bottom;
+  const baseline = top + plotH / 2;
+  const maxVal = Math.max.apply(null, buckets.map((b) => Math.max(toNum(b.ingresos), toNum(b.gastos))).concat([1]));
+  const totalIncome = buckets.reduce((a, b) => a + toNum(b.ingresos), 0);
+  const totalExpense = buckets.reduce((a, b) => a + toNum(b.gastos), 0);
+  const step = plotW / Math.max(buckets.length, 1);
+  const candleW = Math.max(Math.min(step * 0.25, 12), 4);
+  const scaleH = (v) => Math.max((toNum(v) / maxVal) * (plotH / 2 - 12), toNum(v) > 0 ? 3 : 0);
+  const moneyShort = (n) => {
+    n = Math.abs(toNum(n));
+    if (n >= 1000000) return (n / 1000000).toFixed(n >= 10000000 ? 0 : 1) + "M";
+    if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k";
+    return fmt0(n);
+  };
+
+  let h = '<div class="trading-chart-shell">';
+  h += '<div class="trading-chart-head"><div><span class="trading-symbol">305 CASH FLOW</span><span class="trading-live"><i></i>' + (LANG === "es" ? "Datos reales" : "Live data") + '</span></div>';
+  h += '<div class="trading-net ' + (totalIncome - totalExpense >= 0 ? "positive" : "negative") + '">' +
+    (totalIncome - totalExpense >= 0 ? "+" : "\u2212") + sym() + fmt0(Math.abs(totalIncome - totalExpense)) + '</div></div>';
+  h += '<div class="trading-totals"><span class="positive-text">▲ ' + (LANG === "es" ? "Ingresos" : "Income") + ' ' + sym() + fmt0(totalIncome) + '</span>';
+  h += '<span class="negative-text">▼ ' + (LANG === "es" ? "Gastos" : "Expenses") + ' ' + sym() + fmt0(totalExpense) + '</span></div>';
+  h += '<svg class="trading-svg" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' + (LANG === "es" ? "Gráfico de velas de ingresos y gastos" : "Income and expense candlestick chart") + '">';
+
+  // Cuadricula profesional y eje central.
+  [0, .25, .5, .75, 1].forEach((p) => {
+    const y = top + plotH * p;
+    h += '<line class="trading-grid" x1="' + left + '" y1="' + y + '" x2="' + (width - right) + '" y2="' + y + '"></line>';
   });
-  const values = candles.flatMap((c) => [c.high, c.low, c.open, c.close]);
-  let max = Math.max.apply(null, values.concat([1]));
-  let min = Math.min.apply(null, values.concat([0]));
-  if (max === min) { max += 1; min -= 1; }
-  const chartH = 168;
-  const topPad = 8;
-  const plotH = 132;
-  const y = (v) => topPad + ((max - v) / (max - min)) * plotH;
-  const zeroY = y(0);
-  let h = '<div class="cash-candle-chart">';
-  h += '<div class="cash-zero" style="top:' + zeroY + 'px;"></div>';
-  h += '<div class="cash-candles" style="height:' + chartH + 'px;">';
-  candles.forEach((c) => {
-    const positive = c.close >= c.open;
-    const color = positive ? "var(--positive)" : "var(--negative)";
-    const wickTop = y(c.high);
-    const wickBottom = y(c.low);
-    const bodyTop = Math.min(y(c.open), y(c.close));
-    const bodyH = Math.max(Math.abs(y(c.open) - y(c.close)), 3);
-    const title = (positive ? "+" : "\u2212") + sym() + fmt0(Math.abs(c.close - c.open)) +
-      " \u00b7 " + (LANG === "es" ? "Ingresos " : "Income ") + sym() + fmt0(c.ingresos) +
-      " \u00b7 " + (LANG === "es" ? "Compras " : "Purchases ") + sym() + fmt0(c.gastos);
-    h += '<div class="cash-candle-col" title="' + esc(title) + '">';
-    h += '<div class="cash-wick" style="top:' + wickTop + 'px;height:' + Math.max(wickBottom - wickTop, 2) + 'px;background:' + color + ';"></div>';
-    h += '<div class="cash-body" style="top:' + bodyTop + 'px;height:' + bodyH + 'px;background:' + color + ';border-color:' + color + ';"></div>';
-    h += '<span>' + esc(c.etiqueta) + '</span></div>';
+  buckets.forEach((b, i) => {
+    if (i % Math.max(Math.ceil(buckets.length / 7), 1) === 0) {
+      const x = left + step * (i + .5);
+      h += '<line class="trading-grid vertical" x1="' + x + '" y1="' + top + '" x2="' + x + '" y2="' + (top + plotH) + '"></line>';
+    }
   });
-  h += '</div></div>';
+  h += '<line class="trading-zero-line" x1="' + left + '" y1="' + baseline + '" x2="' + (width - right) + '" y2="' + baseline + '"></line>';
+
+  buckets.forEach((b, i) => {
+    const center = left + step * (i + .5);
+    const incomeH = scaleH(b.ingresos);
+    const expenseH = scaleH(b.gastos);
+    const incomeX = center - candleW - 2;
+    const expenseX = center + 2;
+    const incomeTop = baseline - incomeH;
+    const expenseBottom = baseline + expenseH;
+    const incomeBodyH = Math.max(incomeH * .58, b.ingresos > 0 ? 3 : 0);
+    const expenseBodyH = Math.max(expenseH * .58, b.gastos > 0 ? 3 : 0);
+
+    if (b.ingresos > 0) {
+      h += '<g class="trade-candle income"><title>' + esc(b.etiqueta + " · " + (LANG === "es" ? "Ingresos " : "Income ") + sym() + fmt0(b.ingresos)) + '</title>';
+      h += '<line x1="' + (incomeX + candleW / 2) + '" y1="' + incomeTop + '" x2="' + (incomeX + candleW / 2) + '" y2="' + baseline + '"></line>';
+      h += '<rect x="' + incomeX + '" y="' + (baseline - incomeBodyH - incomeH * .16) + '" width="' + candleW + '" height="' + incomeBodyH + '" rx="1.5"></rect></g>';
+    } else {
+      h += '<line class="trade-doji" x1="' + incomeX + '" y1="' + baseline + '" x2="' + (incomeX + candleW) + '" y2="' + baseline + '"></line>';
+    }
+    if (b.gastos > 0) {
+      h += '<g class="trade-candle expense"><title>' + esc(b.etiqueta + " · " + (LANG === "es" ? "Gastos " : "Expenses ") + sym() + fmt0(b.gastos)) + '</title>';
+      h += '<line x1="' + (expenseX + candleW / 2) + '" y1="' + baseline + '" x2="' + (expenseX + candleW / 2) + '" y2="' + expenseBottom + '"></line>';
+      h += '<rect x="' + expenseX + '" y="' + (baseline + expenseH * .16) + '" width="' + candleW + '" height="' + expenseBodyH + '" rx="1.5"></rect></g>';
+    } else {
+      h += '<line class="trade-doji" x1="' + expenseX + '" y1="' + baseline + '" x2="' + (expenseX + candleW) + '" y2="' + baseline + '"></line>';
+    }
+    if (i % Math.max(Math.ceil(buckets.length / 7), 1) === 0 || i === buckets.length - 1) {
+      h += '<text class="trading-axis-label date" x="' + center + '" y="' + (height - 10) + '" text-anchor="middle">' + esc(b.etiqueta) + '</text>';
+    }
+  });
+
+  h += '<text class="trading-axis-label" x="' + (width - 7) + '" y="' + (top + 4) + '" text-anchor="end">+' + sym() + moneyShort(maxVal) + '</text>';
+  h += '<text class="trading-axis-label zero" x="' + (width - 7) + '" y="' + (baseline + 4) + '" text-anchor="end">' + sym() + '0</text>';
+  h += '<text class="trading-axis-label" x="' + (width - 7) + '" y="' + (top + plotH + 4) + '" text-anchor="end">\u2212' + sym() + moneyShort(maxVal) + '</text>';
+  h += '</svg>';
+  h += '<div class="trading-chart-foot"><span><i class="income-box"></i>' + (LANG === "es" ? "Pagos e ingresos" : "Payments and income") + '</span><span><i class="expense-box"></i>' + (LANG === "es" ? "Compras y gastos" : "Purchases and expenses") + '</span></div>';
+  h += '</div>';
   return h;
 }
 
