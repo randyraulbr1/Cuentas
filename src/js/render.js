@@ -584,7 +584,7 @@ function renderApp() {
         html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteSubMsg")(sub.nombre || t("subNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeSub" data-id="' + sub.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteSub">' + t("cancel") + '</button></div></div>';
       } else if (state.editingSubs) {
         const icoActual = sub.icono || CATEGORY_ICON[sub.categoria] || CATEGORY_ICON.otro;
-        html += '<div class="sub-edit"><button class="sub-ico-btn" data-action="abrirIconPicker" data-id="' + sub.id + '">' + icon(icoActual) + '<span class="sub-ico-edit">' + icon("pencil") + '</span></button>';
+        html += '<div class="sub-edit"><button class="sub-ico-btn" id="sub-icon-' + sub.id + '" data-action="abrirIconPicker" data-id="' + sub.id + '">' + icon(icoActual) + '<span class="sub-ico-edit">' + icon("pencil") + '</span></button>';
         html += '<div class="sub-edit-fields"><input type="text" placeholder="' + t("subNombrePh") + '" data-scope="sub" data-id="' + sub.id + '" data-field="nombre" value="' + esc(sub.nombre) + '">';
         html += '<div class="sub-edit-row2"><div class="amount-field"><span class="amount-sym">' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" data-scope="sub" data-id="' + sub.id + '" data-field="monto" value="' + esc(sub.monto) + '"></div>';
         html += '<input class="sub-due-day" type="number" inputmode="numeric" min="1" max="31" placeholder="' + (LANG === "es" ? "Día" : "Day") + '" data-scope="sub" data-id="' + sub.id + '" data-field="diaPago" value="' + esc(sub.diaPago || "") + '">';
