@@ -346,7 +346,7 @@ async function copyExport() {
 }
 
 function goTab(id) {
-  if (!["inicio", "cuentas", "trabajo", "opciones"].includes(id)) return;
+  if (!["inicio", "cuentas", "trabajo", "tarjetas", "opciones"].includes(id)) return;
   if (state.activeTab !== id) {
     try { history.pushState({ ccTab: id, ccOverlay: null }, ""); } catch (e) {}
   }
