@@ -547,28 +547,27 @@ function renderApp() {
       html += '<div class="flash">' + t("autoPagoAplicado")(state.autoPagoNotif.join(", ")) + '</div>';
     }
     html += '<div class="panel"><div class="panel-head-row"><div><h2 style="margin-bottom:0;">' + t("subsTitle") + '</h2></div><div class="panel-head-actions"><button class="icon-pencil sub-add-trigger" data-action="toggleSubPresetPicker">' + icon("plus") + '</button><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? icon("check") : icon("pencil")) + '</button></div></div>';
-    const presetsDisponibles = SUB_PRESETS.filter((preset) => !state.subs.some((sub) => sub.categoria === preset.cat && (sub.nombre || "").toLowerCase() === t("preset_" + preset.key).toLowerCase()));
     if (state.subPresetPicker) {
-      html += '<div class="sub-add-picker">';
-      html += '<p class="opt-section-title">' + t("presetsTitle") + '</p><div class="preset-scroll">';
-      presetsDisponibles.forEach((preset) => {
-        html += '<button class="preset-tile" data-action="addSubPreset" data-id="' + preset.key + '"><span class="preset-tile-ico">' + icon(CATEGORY_ICON[preset.cat]) + '</span><span class="preset-tile-lbl">' + t("preset_" + preset.key) + '</span></button>';
-      });
-      html += '<button class="preset-tile" data-action="addSub"><span class="preset-tile-ico">' + icon("plus") + '</span><span class="preset-tile-lbl">' + t("cat_otro") + '</span></button>';
-      html += '</div></div>';
+      const bankExpenses = state.cloudTransactions
+        .filter((tx) => toNum(tx.monto) < 0 && !state.subs.some((sub) => String(sub.matchedBankTxId || "") === String(tx.id)))
+        .slice()
+        .sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")))
+        .slice(0, 80);
+      html += '<div class="sub-add-picker bank-expense-picker">';
+      html += '<div class="bank-expense-picker-head"><b>' + (LANG === "es" ? "Selecciona un gasto del banco" : "Select a bank expense") + '</b><button class="icon-del" data-action="toggleSubPresetPicker">' + icon("close") + '</button></div>';
+      if (bankExpenses.length === 0) {
+        html += '<div class="empty-state">' + (LANG === "es" ? "No hay gastos bancarios disponibles." : "No bank expenses are available.") + '</div>';
+      } else {
+        bankExpenses.forEach((tx) => {
+          html += '<button class="bank-expense-choice" data-action="addSubFromBankTx" data-id="' + esc(tx.id) + '">';
+          html += '<span class="bank-expense-choice-icon">' + icon(CATEGORY_ICON[tx.categoria] || CATEGORY_ICON.otro) + '</span>';
+          html += '<span class="bank-expense-choice-info"><b>' + esc(tx.merchant_name || tx.descripcion || "") + '</b><small>' + esc(String(tx.fecha || "").slice(0, 10)) + ' · ' + t("cat_" + (tx.categoria || "otro")) + '</small></span>';
+          html += '<strong>−' + sym() + fmt0(Math.abs(toNum(tx.monto))) + '</strong></button>';
+        });
+      }
+      html += '</div>';
     }
 
-    const insCuentas = computeInsights();
-    const manualNameKeys = state.subs.map((sub) => merchantKey(sub.nombre || ""));
-    const detectedAuto = insCuentas.suscripcionesDetectadas.filter((detected) => {
-      if (detected.origen !== "auto" || detected.cancelada) return false;
-      const detectedKey = merchantKey(detected.nombre || "");
-      return !state.subs.some((sub, index) => {
-        const sameName = manualNameKeys[index] && (detectedKey.indexOf(manualNameKeys[index]) !== -1 || manualNameKeys[index].indexOf(detectedKey) !== -1);
-        const sameAmount = Math.abs(toNum(sub.monto) - toNum(detected.monto)) <= Math.max(2, toNum(sub.monto) * 0.08);
-        return sameName || (sameAmount && sub.merchantKey === detected.key);
-      });
-    });
     const todayFixed = new Date(); todayFixed.setHours(0, 0, 0, 0);
     function fixedDueDate(sub) {
       const day = Math.min(Math.max(parseInt(sub.diaPago, 10) || 1, 1), 31);
@@ -577,18 +576,9 @@ function renderApp() {
       return due;
     }
     const unifiedFixed = state.subs.map((sub) => ({ kind: "manual", due: fixedDueDate(sub), item: sub }))
-      .concat(detectedAuto.map((detected) => ({ kind: "detected", due: new Date(detected.proxima), item: detected })))
       .sort((a, b) => a.due - b.due);
 
     unifiedFixed.forEach((entry) => {
-      if (entry.kind === "detected") {
-        const detected = entry.item;
-        html += '<div class="sub-item detected-payment">';
-        html += '<span class="sub-item-ico">' + icon("card") + '</span>';
-        html += '<div class="sub-item-mid"><span class="sub-item-name">' + esc(detected.nombre) + '</span><span class="sub-item-cat">' + esc(diasLabel(detected.diasFaltan)) + ' · ' + esc(formatDate(detected.proxima)) + '</span></div>';
-        html += '<span class="sub-item-amt">' + sym() + fmt0(detected.monto) + '</span></div>';
-        return;
-      }
       const sub = entry.item;
       if (state.confirmDeleteSubId === sub.id) {
         html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteSubMsg")(sub.nombre || t("subNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeSub" data-id="' + sub.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteSub">' + t("cancel") + '</button></div></div>';
@@ -626,7 +616,7 @@ function renderApp() {
       const paidCount = state.subs.filter((sub) => sub.pagadoMes === monthKey()).length;
       html += '<div class="mini-total"><span>' + t("subsPagados")(paidCount, state.subs.length) + '</span></div>';
     }
-    const unifiedTotal = state.subs.reduce((sum, sub) => sum + toNum(sub.monto), 0) + detectedAuto.reduce((sum, detected) => sum + toNum(detected.monto), 0);
+    const unifiedTotal = state.subs.reduce((sum, sub) => sum + toNum(sub.monto), 0);
     html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(unifiedTotal) + '</b></div></div>';
 
     html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("loansTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("loansHint") + '</p></div><button class="icon-pencil' + (state.editingLoans ? " done" : "") + '" data-action="toggleEditLoans">' + (state.editingLoans ? icon("check") : icon("pencil")) + '</button></div>';
