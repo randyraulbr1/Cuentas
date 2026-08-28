@@ -6,8 +6,8 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v113";
-const BUILD_DATE = "29/08 02:00 UTC";
+const APP_VERSION = "v114";
+const BUILD_DATE = "29/08 02:18 UTC";
 
 let uidCounter = 1;
 
@@ -15,6 +15,7 @@ const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
 
 const PROFILES_KEY = "cuentas-claras:perfiles";
 const PIN_HASH_KEY = "cuentas-claras:pin-hash";
+const PIN_QUICK_KEY = "cuentas-claras:pin-quick-v1";
 const PIN_ATTEMPTS_KEY = "cuentas-claras:pin-attempts";
 const PIN_LOCK_KEY = "cuentas-claras:pin-lock-until";
 const BIOMETRIC_CRED_KEY = "cuentas-claras:biometric-credential";
