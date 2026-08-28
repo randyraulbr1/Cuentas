@@ -80,6 +80,31 @@ function syncFixedPaymentsFromBank() {
   if (changed) scheduleSave();
 }
 
+function addSubFromBankTx(txId) {
+  const tx = state.cloudTransactions.find((item) => String(item.id) === String(txId));
+  if (!tx || toNum(tx.monto) >= 0) return;
+  const txDate = String(tx.fecha || "").slice(0, 10);
+  const currentMonth = monthKey();
+  const nuevo = {
+    id: uid(),
+    nombre: tx.merchant_name || tx.descripcion || t("subNombrePh"),
+    monto: String(Math.abs(toNum(tx.monto))),
+    categoria: tx.categoria || "otro",
+    icono: CATEGORY_ICON[tx.categoria] || CATEGORY_ICON.otro,
+    diaPago: String(Number(txDate.slice(8, 10)) || ""),
+    merchantKey: merchantKey(tx.merchant_name || tx.descripcion || ""),
+    matchedBankTxId: tx.id,
+    pagadoMes: txDate.slice(0, 7) === currentMonth ? currentMonth : null,
+    pagadoFuente: txDate.slice(0, 7) === currentMonth ? "banco" : null,
+    pagadoMonto: txDate.slice(0, 7) === currentMonth ? String(Math.abs(toNum(tx.monto))) : null,
+  };
+  state.subs.push(nuevo);
+  state.subPresetPicker = false;
+  state.editingSubs = true;
+  scheduleSave();
+  render();
+}
+
 function toggleEditIngreso() { state.editingIngreso = !state.editingIngreso; render(); }
 
 function addIngresoEntry() { state.ingresosLog.push({ id: uid(), monto: "", month: monthKey() }); scheduleSave(); rerenderPreservingFocus(); }
