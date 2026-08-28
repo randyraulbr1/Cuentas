@@ -346,17 +346,28 @@ async function copyExport() {
 }
 
 function goTab(id) {
+  if (!["inicio", "cuentas", "trabajo", "opciones"].includes(id)) return;
   if (state.activeTab !== id) {
     try { history.pushState({ ccTab: id, ccOverlay: null }, ""); } catch (e) {}
   }
   state.activeTab = id;
-  state.showExport = false; state.showTxDetalle = null;
-  if (document.startViewTransition) {
-    document.startViewTransition(() => { render(); window.scrollTo(0, 0); });
-  } else {
-    render(); window.scrollTo(0, 0);
-  }
+  state.showExport = false;
+  state.showTxDetalle = null;
+  state.showConsentimiento = false;
+  state.expandedCloudCardIds = {};
+  render();
+  requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
 }
+
+/* La navegación inferior tiene prioridad sobre tarjetas, modales y cualquier otro botón. */
+document.addEventListener("click", (event) => {
+  const tabButton = event.target && event.target.closest ? event.target.closest(".tab-btn[data-id]") : null;
+  if (!tabButton) return;
+  event.preventDefault();
+  event.stopPropagation();
+  if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+  goTab(tabButton.dataset.id);
+}, true);
 
 function pushOverlayNavState(overlayName) {
   try { history.pushState({ ccTab: state.activeTab, ccOverlay: overlayName }, ""); } catch (e) {}
