@@ -387,3 +387,23 @@
 .pin-setup-row input { min-width: 0; text-align: center; font-size: 21px; letter-spacing: 7px; }
 .pin-error { color: var(--negative); font-weight: 700; margin: 10px 0 0; }
 .pin-lock-now { display: block; margin: 12px auto 0; }
+
+/* v109: teclado PIN completamente visible */
+.pin-screen { overflow: visible; padding: 24px 22px calc(24px + env(safe-area-inset-bottom)); }
+.pin-dots { display: grid; grid-template-columns: repeat(6, 44px); justify-content: center; gap: 8px; margin: 20px 0 22px; }
+.pin-dots span { width: 44px; height: 52px; display: grid; place-items: center; border: 2px solid var(--input-border); border-radius: 12px; background: var(--input-bg); color: var(--text); font-size: 20px; }
+.pin-dots span.filled { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent); }
+.pin-keypad { width: min(100%, 310px); margin: 0 auto 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pin-keypad button { min-height: 58px; border: 1px solid var(--border); border-radius: 16px; background: var(--card-bg-2); color: var(--text); font: 700 24px/1 inherit; box-shadow: none; }
+.pin-keypad button:active { transform: scale(.96); background: var(--pill-bg); }
+.pin-keypad .pin-delete { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; color: var(--negative); font-size: 18px; }
+.pin-keypad .pin-delete svg { width: 22px; height: 22px; }
+.pin-keypad .pin-delete small { font-size: 10px; font-weight: 700; }
+.pin-enter-btn { margin-top: 4px; }
+.pin-setup-row input { width: 100%; height: 52px; box-sizing: border-box; overflow: visible; }
+@media (max-width: 370px) {
+  .pin-screen { width: 95vw; padding-left: 14px; padding-right: 14px; }
+  .pin-dots { grid-template-columns: repeat(6, 38px); gap: 5px; }
+  .pin-dots span { width: 38px; height: 46px; }
+  .pin-keypad button { min-height: 52px; }
+}
