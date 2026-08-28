@@ -6,8 +6,8 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v105";
-const BUILD_DATE = "28/08 23:25 UTC";
+const APP_VERSION = "v106";
+const BUILD_DATE = "28/08 23:50 UTC";
 
 let uidCounter = 1;
 
