@@ -351,3 +351,11 @@
 .real-credit-stats>div{padding:10px 8px;border:1px solid var(--border);border-radius:10px;min-width:0}
 .real-credit-stats span,.real-credit-stats b{display:block}.real-credit-stats b{margin-top:4px;font-size:13px;overflow-wrap:anywhere}
 .real-credit-disclaimer{margin:10px 0 0;color:var(--text-muted);font-size:11px;line-height:1.4}
+
+.panel-head-actions{display:flex;align-items:center;gap:7px}
+.sub-add-trigger{background:#DDF6E8!important;color:#12814D!important;border-color:#ACE2C4!important}
+.sub-add-picker{margin:12px 0 8px;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--input-bg)}
+.detected-payment{border-left:3px solid #23A968;padding-left:9px}
+.sub-due-day{width:70px!important;min-width:64px}
+@media(max-width:520px){.sub-edit-row2{display:grid!important;grid-template-columns:1fr 68px}.sub-edit-row2 select{grid-column:1/-1}}
+[data-theme="dark"] .sub-add-trigger{background:#123C2B!important;color:#65E5A3!important;border-color:#245D43!important}
