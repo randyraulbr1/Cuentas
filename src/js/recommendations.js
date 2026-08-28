@@ -317,7 +317,7 @@ function computeFondoEmergencia() {
   const r = compute503020();
   const gastoEsencialMensual = r ? r.necesidad : null;
   if (!gastoEsencialMensual || gastoEsencialMensual <= 0) return null;
-  const liquido = toNum(state.ahorroActual) + toNum(state.cash);
+  const liquido = toNum(state.ahorroActual);
   const mesesCubiertos = liquido / gastoEsencialMensual;
   const metaMeses = 6;
   const metaMonto = gastoEsencialMensual * metaMeses;
