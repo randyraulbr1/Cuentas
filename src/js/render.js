@@ -546,83 +546,88 @@ function renderApp() {
     if (state.autoPagoNotif && state.autoPagoNotif.length > 0) {
       html += '<div class="flash">' + t("autoPagoAplicado")(state.autoPagoNotif.join(", ")) + '</div>';
     }
-    html += '<div class="panel"><div class="panel-head-row"><div><h2 style="margin-bottom:0;">' + t("subsTitle") + '</h2></div><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? icon("check") : icon("pencil")) + '</button></div>';
-    const presetsDisponibles = SUB_PRESETS.filter((p) => !state.subs.some((s) => s.categoria === p.cat && (s.nombre || "").toLowerCase() === t("preset_" + p.key).toLowerCase()));
-    if (presetsDisponibles.length > 0) {
-      html += '<p class="opt-section-title" style="margin-top:2px;">' + t("presetsTitle") + '</p>';
-      html += '<div class="preset-scroll">';
-      presetsDisponibles.forEach((p) => { html += '<button class="preset-tile" data-action="addSubPreset" data-id="' + p.key + '"><span class="preset-tile-ico">' + icon(CATEGORY_ICON[p.cat]) + '</span><span class="preset-tile-lbl">' + t("preset_" + p.key) + '</span></button>'; });
-      html += '</div>';
+    html += '<div class="panel"><div class="panel-head-row"><div><h2 style="margin-bottom:0;">' + t("subsTitle") + '</h2></div><div class="panel-head-actions"><button class="icon-pencil sub-add-trigger" data-action="toggleSubPresetPicker">' + icon("plus") + '</button><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? icon("check") : icon("pencil")) + '</button></div></div>';
+    const presetsDisponibles = SUB_PRESETS.filter((preset) => !state.subs.some((sub) => sub.categoria === preset.cat && (sub.nombre || "").toLowerCase() === t("preset_" + preset.key).toLowerCase()));
+    if (state.subPresetPicker) {
+      html += '<div class="sub-add-picker">';
+      html += '<p class="opt-section-title">' + t("presetsTitle") + '</p><div class="preset-scroll">';
+      presetsDisponibles.forEach((preset) => {
+        html += '<button class="preset-tile" data-action="addSubPreset" data-id="' + preset.key + '"><span class="preset-tile-ico">' + icon(CATEGORY_ICON[preset.cat]) + '</span><span class="preset-tile-lbl">' + t("preset_" + preset.key) + '</span></button>';
+      });
+      html += '<button class="preset-tile" data-action="addSub"><span class="preset-tile-ico">' + icon("plus") + '</span><span class="preset-tile-lbl">' + t("cat_otro") + '</span></button>';
+      html += '</div></div>';
     }
-    state.subs.forEach((s) => {
-      if (state.confirmDeleteSubId === s.id) {
-        html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteSubMsg")(s.nombre || t("subNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeSub" data-id="' + s.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteSub">' + t("cancel") + '</button></div></div>';
+
+    const insCuentas = computeInsights();
+    const manualNameKeys = state.subs.map((sub) => merchantKey(sub.nombre || ""));
+    const detectedAuto = insCuentas.suscripcionesDetectadas.filter((detected) => {
+      if (detected.origen !== "auto" || detected.cancelada) return false;
+      const detectedKey = merchantKey(detected.nombre || "");
+      return !state.subs.some((sub, index) => {
+        const sameName = manualNameKeys[index] && (detectedKey.indexOf(manualNameKeys[index]) !== -1 || manualNameKeys[index].indexOf(detectedKey) !== -1);
+        const sameAmount = Math.abs(toNum(sub.monto) - toNum(detected.monto)) <= Math.max(2, toNum(sub.monto) * 0.08);
+        return sameName || (sameAmount && sub.merchantKey === detected.key);
+      });
+    });
+    const todayFixed = new Date(); todayFixed.setHours(0, 0, 0, 0);
+    function fixedDueDate(sub) {
+      const day = Math.min(Math.max(parseInt(sub.diaPago, 10) || 1, 1), 31);
+      let due = new Date(todayFixed.getFullYear(), todayFixed.getMonth(), day);
+      if (sub.pagadoMes === monthKey()) due = new Date(todayFixed.getFullYear(), todayFixed.getMonth() + 1, day);
+      return due;
+    }
+    const unifiedFixed = state.subs.map((sub) => ({ kind: "manual", due: fixedDueDate(sub), item: sub }))
+      .concat(detectedAuto.map((detected) => ({ kind: "detected", due: new Date(detected.proxima), item: detected })))
+      .sort((a, b) => a.due - b.due);
+
+    unifiedFixed.forEach((entry) => {
+      if (entry.kind === "detected") {
+        const detected = entry.item;
+        html += '<div class="sub-item detected-payment">';
+        html += '<span class="sub-item-ico">' + icon("card") + '</span>';
+        html += '<div class="sub-item-mid"><span class="sub-item-name">' + esc(detected.nombre) + '</span><span class="sub-item-cat">' + esc(diasLabel(detected.diasFaltan)) + ' · ' + esc(formatDate(detected.proxima)) + '</span></div>';
+        html += '<span class="sub-item-amt">' + sym() + fmt0(detected.monto) + '</span></div>';
+        return;
+      }
+      const sub = entry.item;
+      if (state.confirmDeleteSubId === sub.id) {
+        html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteSubMsg")(sub.nombre || t("subNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeSub" data-id="' + sub.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteSub">' + t("cancel") + '</button></div></div>';
       } else if (state.editingSubs) {
-        const icoActual = s.icono || CATEGORY_ICON[s.categoria] || CATEGORY_ICON.otro;
-        html += '<div class="sub-edit">';
-        html += '<button class="sub-ico-btn" data-action="abrirIconPicker" data-id="' + s.id + '" title="' + t("elegirIconoLbl") + '">' + icon(icoActual) + '<span class="sub-ico-edit">' + icon("pencil") + '</span></button>';
-        html += '<div class="sub-edit-fields">';
-        html += '<input type="text" placeholder="' + t("subNombrePh") + '" id="sub-nombre-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="nombre" value="' + esc(s.nombre) + '">';
-        html += '<div class="sub-edit-row2">';
-        html += '<div class="amount-field"><span class="amount-sym">' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" id="sub-monto-' + s.id + '" data-scope="sub" data-id="' + s.id + '" data-field="monto" value="' + esc(s.monto) + '"></div>';
-        html += '<select data-scope="sub" data-id="' + s.id + '" data-field="categoria">';
-        CATEGORIES.forEach((c) => { html += '<option value="' + c + '"' + (s.categoria === c ? " selected" : "") + '>' + t("cat_" + c) + '</option>'; });
-        html += '</select>';
-        html += '</div></div>';
-        html += '<button class="icon-del" data-action="askDeleteSub" data-id="' + s.id + '">' + icon("close") + '</button>';
-        html += '</div>';
-        if (state.iconPickerSubId === s.id) {
+        const icoActual = sub.icono || CATEGORY_ICON[sub.categoria] || CATEGORY_ICON.otro;
+        html += '<div class="sub-edit"><button class="sub-ico-btn" data-action="abrirIconPicker" data-id="' + sub.id + '">' + icon(icoActual) + '<span class="sub-ico-edit">' + icon("pencil") + '</span></button>';
+        html += '<div class="sub-edit-fields"><input type="text" placeholder="' + t("subNombrePh") + '" data-scope="sub" data-id="' + sub.id + '" data-field="nombre" value="' + esc(sub.nombre) + '">';
+        html += '<div class="sub-edit-row2"><div class="amount-field"><span class="amount-sym">' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" data-scope="sub" data-id="' + sub.id + '" data-field="monto" value="' + esc(sub.monto) + '"></div>';
+        html += '<input class="sub-due-day" type="number" inputmode="numeric" min="1" max="31" placeholder="' + (LANG === "es" ? "Día" : "Day") + '" data-scope="sub" data-id="' + sub.id + '" data-field="diaPago" value="' + esc(sub.diaPago || "") + '">';
+        html += '<select data-scope="sub" data-id="' + sub.id + '" data-field="categoria">';
+        CATEGORIES.forEach((cat) => { html += '<option value="' + cat + '"' + (sub.categoria === cat ? " selected" : "") + '>' + t("cat_" + cat) + '</option>'; });
+        html += '</select></div></div><button class="icon-del" data-action="askDeleteSub" data-id="' + sub.id + '">' + icon("close") + '</button></div>';
+        if (state.iconPickerSubId === sub.id) {
           html += '<div class="icon-picker"><div class="icon-picker-head"><span>' + t("elegirIconoLbl") + '</span><button class="icon-del" data-action="cerrarIconPicker">' + icon("close") + '</button></div><div class="icon-grid">';
-          ICON_PICKER.forEach((ik) => {
-            html += '<button class="icon-opt' + (icoActual === ik ? " sel" : "") + '" data-action="elegirIconoSub" data-id="' + s.id + '|' + ik + '">' + icon(ik) + '</button>';
-          });
+          ICON_PICKER.forEach((ik) => { html += '<button class="icon-opt' + (icoActual === ik ? " sel" : "") + '" data-action="elegirIconoSub" data-id="' + sub.id + '|' + ik + '">' + icon(ik) + '</button>'; });
           html += '</div></div>';
         }
       } else {
-        const pagadoBanco = s.merchantKey && state.cloudTransactions.some((tx) => merchantKey(tx.descripcion) === s.merchantKey && String(tx.fecha).slice(0, 7) === monthKey());
-        const pagado = s.pagadoMes === monthKey() || pagadoBanco;
-        if (state.payingSubId === s.id) {
-          html += '<div class="pay-form" style="margin:8px 0;">';
-          html += '<p class="opt-row-sub" style="margin-bottom:6px;">' + esc(s.nombre || t("subNombrePh")) + ' \u00b7 ' + t("pagarDesdeLbl") + '</p>';
-          html += '<div class="seg" style="width:100%;flex-wrap:wrap;">';
-          html += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ahorro" ? "active" : "") + '" data-action="setPagoSourceAhorro">' + t("ahorroActualLbl") + ' ' + sym() + fmt0(toNum(state.ahorroActual)) + '</button>';
-          html += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "debito" ? "active" : "") + '" data-action="setPagoSourceDebito">' + t("debitoLbl") + ' ' + sym() + fmt0(toNum(state.debito)) + '</button>';
-          html += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ninguno" ? "active" : "") + '" data-action="setPagoSourceNinguno">' + t("noDescontar") + '</button>';
-          html += '</div>';
-          html += '<input type="text" inputmode="decimal" placeholder="0" id="pago-sub-monto-' + s.id + '" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
-          html += '<div style="display:flex;gap:8px;margin-top:8px;">';
-          html += '<button class="pill-btn confirm" style="flex:1;" data-action="confirmPagoSub">' + t("confirmarPago") + '</button>';
-          html += '<button class="pill-btn" style="flex:1;" data-action="cancelPagoSub">' + t("cancel") + '</button>';
-          html += '</div></div>';
+        const pagado = sub.pagadoMes === monthKey();
+        if (state.payingSubId === sub.id) {
+          html += '<div class="pay-form" style="margin:8px 0;"><p class="opt-row-sub">' + esc(sub.nombre || t("subNombrePh")) + '</p>';
+          html += '<input type="text" inputmode="decimal" placeholder="0" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
+          html += '<div style="display:flex;gap:8px;margin-top:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmPagoSub">' + t("confirmarPago") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelPagoSub">' + t("cancel") + '</button></div></div>';
         } else {
-          const ico = s.icono || CATEGORY_ICON[s.categoria] || CATEGORY_ICON.otro;
-          html += '<div class="sub-item' + (pagado ? " pagado" : "") + '">';
-          html += '<button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + s.id + '">' + (pagado ? icon("check") : "") + '</button>';
-          html += '<span class="sub-item-ico">' + icon(ico) + '</span>';
-          html += '<div class="sub-item-mid"><span class="sub-item-name">' + esc(s.nombre || t("subNombrePh")) + '</span><span class="sub-item-cat">' + t("cat_" + (s.categoria || "otro")) + '</span></div>';
-          html += '<span class="sub-item-amt">' + sym() + fmt0(toNum(s.monto)) + '</span>';
-          html += '</div>';
+          const ico = sub.icono || CATEGORY_ICON[sub.categoria] || CATEGORY_ICON.otro;
+          html += '<div class="sub-item' + (pagado ? " pagado" : "") + '"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + sub.id + '">' + (pagado ? icon("check") : "") + '</button>';
+          html += '<span class="sub-item-ico">' + icon(ico) + '</span><div class="sub-item-mid"><span class="sub-item-name">' + esc(sub.nombre || t("subNombrePh")) + '</span><span class="sub-item-cat">' + t("cat_" + (sub.categoria || "otro")) + (sub.diaPago ? ' · ' + esc(formatDate(entry.due)) : "") + '</span></div>';
+          html += '<span class="sub-item-amt">' + sym() + fmt0(toNum(sub.monto)) + '</span></div>';
         }
       }
     });
-    if (state.subs.length === 0 && !state.editingSubs) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
-    if (state.editingSubs) html += '<button class="add-btn" data-action="addSub">' + t("addSub") + '</button>';
+    if (unifiedFixed.length === 0 && !state.editingSubs) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
+    if (state.editingSubs) html += '<button class="add-btn" data-action="toggleSubPresetPicker">' + t("addSub") + '</button>';
     if (state.subs.length > 0) {
-      const pagadosCount = state.subs.filter((s) => s.pagadoMes === monthKey()).length;
-      html += '<div class="mini-total"><span>' + t("subsPagados")(pagadosCount, state.subs.length) + '</span></div>';
+      const paidCount = state.subs.filter((sub) => sub.pagadoMes === monthKey()).length;
+      html += '<div class="mini-total"><span>' + t("subsPagados")(paidCount, state.subs.length) + '</span></div>';
     }
-    html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(t2.totalSubs) + '</b></div></div>';
-
-    const insCuentas = computeInsights();
-    if (insCuentas.suscripcionesDetectadas.length > 0) {
-      html += '<div class="panel collapsible-data-panel"><h2>' + t("suscripcionesDetectadasTitle") + '</h2>';
-      insCuentas.suscripcionesDetectadas.forEach((subDetectada) => {
-        html += '<div class="card-entry" style="' + (subDetectada.cancelada ? "opacity:0.5;" : "") + '">';
-        html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(subDetectada.nombre) + '</span><span class="locked-amount">' + sym() + fmt0(subDetectada.monto) + '</span></div>';
-        html += '<p class="opt-row-sub">' + esc(diasLabel(subDetectada.diasFaltan)) + ' \u00b7 ' + esc(formatDate(subDetectada.proxima)) + '</p></div>';
-      });
-      html += '</div>';
-    }
+    const unifiedTotal = state.subs.reduce((sum, sub) => sum + toNum(sub.monto), 0) + detectedAuto.reduce((sum, detected) => sum + toNum(detected.monto), 0);
+    html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(unifiedTotal) + '</b></div></div>';
 
     html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("loansTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("loansHint") + '</p></div><button class="icon-pencil' + (state.editingLoans ? " done" : "") + '" data-action="toggleEditLoans">' + (state.editingLoans ? icon("check") : icon("pencil")) + '</button></div>';
     state.loans.forEach((l) => {
