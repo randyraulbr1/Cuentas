@@ -76,6 +76,27 @@ function createProfile() {
   enterProfile(p.id);
 }
 
+let pinUnlockSequence = 0;
+let biometricUnlockSequence = 0;
+let biometricAbortController = null;
+
+function pinQuickCheck(pin) {
+  let hash = 2166136261;
+  const value = "305-save-pin-v1:" + pin;
+  for (let index = 0; index < value.length; index++) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function pinDigestWithTimeout(pin) {
+  return Promise.race([
+    pinDigest(pin),
+    new Promise((resolve, reject) => setTimeout(() => reject(new Error("PIN_TIMEOUT")), 2500))
+  ]);
+}
+
 async function pinDigest(pin) {
   const data = new TextEncoder().encode("305-save-local-pin:" + pin);
   const hash = await crypto.subtle.digest("SHA-256", data);
@@ -126,6 +147,8 @@ async function unlockBiometric() {
   let credentialId = "";
   try { credentialId = localStorage.getItem(BIOMETRIC_CRED_KEY) || ""; } catch (error) {}
   if (!credentialId) { state.pinError = LANG === "es" ? "Primero activa la huella en Opciones." : "Enable biometrics in Options first."; render(); return; }
+  const biometricRunId = ++biometricUnlockSequence;
+  biometricAbortController = typeof AbortController !== "undefined" ? new AbortController() : null;
   state.biometricBusy = true; state.pinError = ""; render();
   try {
     const assertion = await navigator.credentials.get({ publicKey: {
@@ -133,13 +156,15 @@ async function unlockBiometric() {
       allowCredentials: [{ type: "public-key", id: base64UrlToBytes(credentialId), transports: ["internal"] }],
       userVerification: "required",
       timeout: 60000
-    } });
+    }, signal: biometricAbortController ? biometricAbortController.signal : undefined });
     if (!assertion) throw new Error("No assertion");
+    if (biometricRunId !== biometricUnlockSequence) return;
     state.appLocked = false; state.pinInput = ""; state.pinError = "";
   } catch (error) {
+    if (biometricRunId !== biometricUnlockSequence) return;
     state.pinError = LANG === "es" ? "No se pudo comprobar la huella. Usa el PIN o vuelve a intentarlo." : "Biometric verification failed. Use the PIN or try again.";
   }
-  state.biometricBusy = false; render();
+  if (biometricRunId === biometricUnlockSequence) { state.biometricBusy = false; biometricAbortController = null; render(); }
 }
 
 async function savePin() {
@@ -149,6 +174,7 @@ async function savePin() {
   try {
     const digest = await pinDigest(pin);
     localStorage.setItem(PIN_HASH_KEY, digest);
+    localStorage.setItem(PIN_QUICK_KEY, pinQuickCheck(pin));
     localStorage.setItem(PIN_ATTEMPTS_KEY, "0");
     localStorage.removeItem(PIN_LOCK_KEY);
     state.pinSetupInput = ""; state.pinError = "";
@@ -167,6 +193,7 @@ function cancelResetPin() { state.confirmPinReset = false; render(); }
 function confirmResetPin() {
   try {
     localStorage.removeItem(PIN_HASH_KEY);
+    localStorage.removeItem(PIN_QUICK_KEY);
     localStorage.removeItem(PIN_ATTEMPTS_KEY);
     localStorage.removeItem(PIN_LOCK_KEY);
     localStorage.removeItem(BIOMETRIC_CRED_KEY);
@@ -177,16 +204,29 @@ function confirmResetPin() {
 }
 
 async function unlockPin() {
+  if (state.pinBusy) return;
   let lockUntil = 0;
   try { lockUntil = Number(localStorage.getItem(PIN_LOCK_KEY)) || 0; } catch (error) {}
   if (lockUntil > Date.now()) { render(); return; }
   const pin = String(state.pinInput || "").replace(/\D/g, "").slice(0, 6);
   if (pin.length !== 6) { state.pinError = LANG === "es" ? "Escribe los 6 números." : "Enter all 6 digits."; render(); return; }
-  state.pinBusy = true;
+
+  const runId = ++pinUnlockSequence;
+  state.pinBusy = true; state.pinError = ""; render();
   try {
-    const expected = localStorage.getItem(PIN_HASH_KEY) || "";
-    const actual = await pinDigest(pin);
-    if (expected && actual === expected) {
+    const quickExpected = localStorage.getItem(PIN_QUICK_KEY) || "";
+    let valid = false;
+    if (quickExpected) {
+      valid = pinQuickCheck(pin) === quickExpected;
+    } else {
+      const expected = localStorage.getItem(PIN_HASH_KEY) || "";
+      const actual = await pinDigestWithTimeout(pin);
+      if (runId !== pinUnlockSequence) return;
+      valid = !!expected && actual === expected;
+      if (valid) localStorage.setItem(PIN_QUICK_KEY, pinQuickCheck(pin));
+    }
+    if (runId !== pinUnlockSequence) return;
+    if (valid) {
       localStorage.setItem(PIN_ATTEMPTS_KEY, "0"); localStorage.removeItem(PIN_LOCK_KEY);
       state.pinInput = ""; state.pinError = ""; state.appLocked = false;
     } else {
@@ -202,12 +242,16 @@ async function unlockPin() {
       state.pinInput = "";
     }
   } catch (error) {
-    state.pinError = LANG === "es" ? "No se pudo comprobar el PIN." : "PIN could not be verified.";
+    if (runId === pinUnlockSequence) state.pinError = LANG === "es" ? "La comprobación tardó demasiado. Toca Entrar otra vez o restablece el PIN." : "Verification took too long. Tap Unlock again or reset the PIN.";
+  } finally {
+    if (runId === pinUnlockSequence) { state.pinBusy = false; render(); }
   }
-  state.pinBusy = false; render();
 }
 
 function addPinDigit(digit) {
+  if (biometricAbortController) { try { biometricAbortController.abort(); } catch (error) {} biometricAbortController = null; }
+  biometricUnlockSequence++;
+  state.biometricBusy = false;
   if (state.pinInput.length >= 6) return;
   state.pinInput = (state.pinInput + String(digit).replace(/\D/g, "")).slice(0, 6);
   state.pinError = "";
@@ -215,6 +259,10 @@ function addPinDigit(digit) {
 }
 
 function deletePinDigit() {
+  pinUnlockSequence++;
+  if (biometricAbortController) { try { biometricAbortController.abort(); } catch (error) {} biometricAbortController = null; }
+  biometricUnlockSequence++;
+  state.biometricBusy = false;
   state.pinBusy = false;
   state.pinInput = state.pinInput.slice(0, -1);
   state.pinError = "";
@@ -701,6 +749,6 @@ if ("serviceWorker" in navigator) {
       reg.update().catch(() => {});
     }).catch(() => {});
     let ccReloaded = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => { if (ccReloaded) return; ccReloaded = true; location.reload(); });
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (ccReloaded) return; ccReloaded = true; UPDATE_AVAILABLE = true; if (!state.appLocked) render(); });
   });
 }
