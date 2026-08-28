@@ -255,3 +255,65 @@ function fechaLibre(meses) {
   d.setMonth(d.getMonth() + meses);
   return d.toLocaleDateString(LANG === "es" ? "es-ES" : "en-US", { month: "long", year: "numeric" });
 }
+
+
+/* Proyeccion de amortizacion real: separa interes y principal por cuota. */
+function loanProjection(loan, extraPayment) {
+  const saldoInicial = Math.max(toNum(loan && loan.saldoTotal), 0);
+  const pagoBase = Math.max(toNum(loan && loan.montoPago), 0);
+  const extra = Math.max(toNum(extraPayment), 0);
+  const pago = pagoBase + extra;
+  const apr = Math.max(toNum(loan && loan.tasa), 0) / 100;
+  const frecuencia = (loan && loan.frecuencia) || "mensual";
+  const periodosAno = frecuencia === "semanal" ? 52 : frecuencia === "quincenal" ? 26 : 12;
+  const tasaPeriodo = apr / periodosAno;
+  let saldo = saldoInicial;
+  let interesTotal = 0;
+  let totalPagado = 0;
+  let periodos = 0;
+  let imposible = false;
+  const maxPeriodos = periodosAno * 100;
+
+  if (saldo <= 0) return { periodos: 0, interesTotal: 0, totalPagado: 0, pago: pago, imposible: false, fechaFinal: null };
+  if (pago <= 0) return { periodos: 0, interesTotal: 0, totalPagado: 0, pago: pago, imposible: true, fechaFinal: null };
+
+  while (saldo > 0.005 && periodos < maxPeriodos) {
+    const interes = saldo * tasaPeriodo;
+    if (pago <= interes && saldo > pago) { imposible = true; break; }
+    const cuota = Math.min(pago, saldo + interes);
+    const principal = Math.max(cuota - interes, 0);
+    saldo = Math.max(saldo - principal, 0);
+    interesTotal += interes;
+    totalPagado += cuota;
+    periodos++;
+  }
+  if (periodos >= maxPeriodos && saldo > 0.005) imposible = true;
+
+  let fechaFinal = null;
+  if (!imposible && periodos > 0) {
+    fechaFinal = new Date();
+    if (frecuencia === "mensual") fechaFinal.setMonth(fechaFinal.getMonth() + periodos);
+    else fechaFinal.setDate(fechaFinal.getDate() + periodos * (frecuencia === "semanal" ? 7 : 15));
+  }
+  return { periodos, interesTotal, totalPagado, pago, imposible, fechaFinal };
+}
+
+function applyLoanPayment(loan, amount, paymentDate) {
+  const saldo = Math.max(toNum(loan.saldoTotal), 0);
+  const monto = Math.max(toNum(amount), 0);
+  const frecuencia = loan.frecuencia || "mensual";
+  const periodosAno = frecuencia === "semanal" ? 52 : frecuencia === "quincenal" ? 26 : 12;
+  const interes = saldo * (Math.max(toNum(loan.tasa), 0) / 100 / periodosAno);
+  const aplicado = Math.min(monto, saldo + interes);
+  const principal = Math.max(Math.min(aplicado - interes, saldo), 0);
+  loan.saldoTotal = String(Math.max(saldo - principal, 0));
+  loan.ultimoPago = paymentDate || new Date().toISOString().slice(0, 10);
+  if (!Array.isArray(loan.pagosRealizados)) loan.pagosRealizados = [];
+  loan.pagosRealizados.unshift({
+    id: uid(), fecha: loan.ultimoPago, monto: aplicado,
+    interes: Math.min(interes, aplicado), principal: principal,
+    saldo: toNum(loan.saldoTotal)
+  });
+  if (loan.pagosRealizados.length > 120) loan.pagosRealizados.length = 120;
+  return { aplicado, interes: Math.min(interes, aplicado), principal };
+}
