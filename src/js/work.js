@@ -245,6 +245,29 @@ function pendienteDePago() {
 
 function toggleEditJob() { state.editingJob = !state.editingJob; render(); }
 
+function startAgregarTurno() {
+  const hoy = dateKeyOf(new Date());
+  state.agregarTurnoForm = { fecha: hoy, horas: "" };
+  state.showAgregarTurno = true;
+  render();
+}
+function cancelAgregarTurno() { state.showAgregarTurno = false; render(); }
+function confirmAgregarTurno() {
+  const f = state.agregarTurnoForm;
+  const horas = toNum(f.horas);
+  if (!f.fecha || horas <= 0) return;
+  pushUndo();
+  const inicio = new Date(f.fecha + "T09:00:00");
+  const fin = new Date(inicio.getTime() + horas * 3600000);
+  state.turnos.push({
+    id: uid(), fecha: f.fecha, horaInicio: inicio.toISOString(), horaFin: fin.toISOString(),
+    breaks: [], propinas: "", bonos: "", notas: "", estado: "trabajado",
+  });
+  state.turnos.sort((a, b) => (a.horaInicio < b.horaInicio ? 1 : -1));
+  state.showAgregarTurno = false;
+  scheduleSave(); render();
+}
+
 function setCashflowPeriod(p) { state.cashflowPeriod = p; render(); }
 
 function startPagoTrabajo() {

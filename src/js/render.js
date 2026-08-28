@@ -829,7 +829,14 @@ function renderApp() {
     }
 
     // lista de turnos
-    html += '<div class="panel"><h2>' + t("turnosTitle") + '</h2><p class="hint">' + t("turnosHint") + '</p>';
+    html += '<div class="panel"><div class="panel-head-row"><h2>' + t("turnosTitle") + '</h2><button class="icon-pencil' + (state.showAgregarTurno ? " done" : "") + '" data-action="' + (state.showAgregarTurno ? "cancelAgregarTurno" : "startAgregarTurno") + '">' + (state.showAgregarTurno ? icon("check") : icon("plus")) + '</button></div><p class="hint">' + t("turnosHint") + '</p>';
+    if (state.showAgregarTurno) {
+      html += '<div class="goal-grid" style="margin-bottom:10px;">';
+      html += '<div class="goal-field"><label>' + t("fechaLbl") + '</label><input type="date" id="at-fecha" value="' + esc(state.agregarTurnoForm.fecha) + '" data-scope="agregarTurno" data-field="fecha"></div>';
+      html += '<div class="goal-field"><label>' + t("horasTrabajadasLbl") + '</label><input type="text" inputmode="decimal" placeholder="8" id="at-horas" value="' + esc(state.agregarTurnoForm.horas) + '" data-scope="agregarTurno" data-field="horas"></div>';
+      html += '</div>';
+      html += '<button class="pill-btn wide confirm" data-action="confirmAgregarTurno">' + t("agregarTurnoBtn") + '</button>';
+    }
     const turnosRecientes = state.turnos.slice(0, 15);
     turnosRecientes.forEach((tn) => {
       const r = turnoPagoBruto(tn);

@@ -209,6 +209,7 @@ root.addEventListener("input", (e) => {
   if (scope === "ingreso") { state.ingreso = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "debito") { state.debito = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "agregarTurno") { state.agregarTurnoForm[el.dataset.field] = el.value; rerenderPreservingFocus(); return; }
   if (scope === "cash") { state.cash = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "apiBaseUrl") { state.apiBaseUrl = el.value.trim(); saveSettings(); rerenderPreservingFocus(); return; }
   if (scope === "authEmail") { state.authEmail = el.value; rerenderPreservingFocus(); return; }
@@ -335,6 +336,9 @@ root.addEventListener("click", (e) => {
     aceptarConsentimiento: aceptarConsentimiento, cancelarConsentimiento: cancelarConsentimiento,
     askDeleteBankTx: () => askDeleteBankTx(id), cancelDeleteBankTx: cancelDeleteBankTx, removeBankTx: () => removeBankTx(id),
     toggleEditJob: toggleEditJob,
+    startAgregarTurno: startAgregarTurno,
+    cancelAgregarTurno: cancelAgregarTurno,
+    confirmAgregarTurno: confirmAgregarTurno,
     requestWorkNotifPermission: requestWorkNotifPermission,
     askEmpezarBreak: askEmpezarBreak,
     cancelEmpezarBreak: cancelEmpezarBreak,

@@ -6,8 +6,8 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v94";
-const BUILD_DATE = "28/08 15:21 UTC";
+const APP_VERSION = "v95";
+const BUILD_DATE = "28/08 15:25 UTC";
 
 let uidCounter = 1;
 
@@ -102,6 +102,7 @@ const state = {
   job: { nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false, limiteAlmuerzo: "30", horarioDias: [false, false, false, false, false, false, false], horarioInicio: "09:00", horarioFin: "17:00", horarioRecordar: false, horarioUltimoRecordatorio: "" },
   turnos: [], turnoActivo: null, pagosTrabajo: [], workNotifBanner: null,
   editingJob: false, confirmTerminarTrabajo: false, confirmEmpezarBreak: false, confirmDeleteTurnoId: null, expandedTurnoIds: {},
+  showAgregarTurno: false, agregarTurnoForm: { fecha: "", horas: "" },
   showPagoTrabajo: false, pagoTrabajoForm: null, workPagoFlash: false, confirmDeletePagoTrabajoId: null,
   resultado: null, confirmReset: false, savedFlash: false, storageError: false,
 };
