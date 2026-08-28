@@ -330,12 +330,17 @@ root.addEventListener("input", (e) => {
 root.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target && e.target.id === "new-profile-input") createProfile(); });
 
 root.addEventListener("scroll", (e) => {
-  if (e.target && e.target.id === "bank-expense-picker") state.bankExpenseScrollTop = e.target.scrollTop;
+  if (e.target && e.target.id === "bank-expense-picker") {
+    state.bankExpenseScrollTop = e.target.scrollTop;
+    try { sessionStorage.setItem("bankExpenseScrollTop", String(e.target.scrollTop)); } catch (error) {}
+  }
 }, true);
 
 root.addEventListener("click", (e) => {
+  let closedCloudCards = false;
   if (!e.target.closest(".cc-card") && state.expandedCloudCardIds && Object.keys(state.expandedCloudCardIds).some((key) => state.expandedCloudCardIds[key])) {
     state.expandedCloudCardIds = {};
+    closedCloudCards = true;
   }
   if (e.target.classList && e.target.classList.contains("options-overlay")) {
     if (state.showConsentimiento) { state.showConsentimiento = false; render(); return; }
@@ -344,7 +349,7 @@ root.addEventListener("click", (e) => {
     return;
   }
   const btn = e.target.closest("[data-action]");
-  if (!btn) return;
+  if (!btn) { if (closedCloudCards) render(); return; }
   const action = btn.dataset.action;
   const id = btn.dataset.id;
   const freq = btn.dataset.freq;
@@ -363,7 +368,11 @@ root.addEventListener("click", (e) => {
       render();
       if (state.subPresetPicker) setTimeout(() => {
         const picker = document.getElementById("bank-expense-picker");
-        if (picker) picker.scrollTop = state.bankExpenseScrollTop || 0;
+        if (picker) {
+          let savedScroll = 0;
+          try { savedScroll = Number(sessionStorage.getItem("bankExpenseScrollTop")) || 0; } catch (error) {}
+          picker.scrollTop = state.bankExpenseScrollTop || savedScroll;
+        }
       }, 30);
     },
     toggleEditIngreso: toggleEditIngreso, toggleEditAhorro: toggleEditAhorro, toggleEditCards: toggleEditCards,
