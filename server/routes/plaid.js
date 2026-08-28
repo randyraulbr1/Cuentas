@@ -153,6 +153,63 @@ router.post("/sync-transactions", requireAuth, rateLimit(30, 60 * 60 * 1000), as
         hasMore = data.has_more;
       }
 
+      // Respaldo para conexiones nuevas: /transactions/sync puede responder vacío
+      // durante la preparación inicial. Consultamos directamente seis meses de historial.
+      const existingTx = await query(
+        "SELECT COUNT(*)::int AS total FROM transactions t JOIN accounts a ON a.id = t.account_id WHERE t.user_id = $1 AND a.plaid_item_id = $2 AND t.removed = false",
+        [req.userId, item.id]
+      );
+      if (Number(existingTx.rows[0].total || 0) === 0) {
+        try {
+          const endDate = new Date();
+          const startDate = new Date(endDate); startDate.setDate(startDate.getDate() - 180);
+          const endKey = endDate.toISOString().slice(0, 10);
+          const startKey = startDate.toISOString().slice(0, 10);
+          let offset = 0, totalAvailable = 1;
+          const learnedResult = await query("SELECT merchant_key, categoria FROM category_rules WHERE user_id = $1", [req.userId]);
+          const learnedMap = {};
+          learnedResult.rows.forEach((row) => { learnedMap[row.merchant_key] = row.categoria; });
+
+          while (offset < totalAvailable && offset < 1000) {
+            const historyResp = await plaidClient.transactionsGet({
+              access_token: accessToken,
+              start_date: startKey,
+              end_date: endKey,
+              options: { count: 500, offset: offset },
+            });
+            const history = historyResp.data.transactions || [];
+            totalAvailable = Number(historyResp.data.total_transactions || history.length);
+            for (const tx of history) {
+              const accRow = await query("SELECT id FROM accounts WHERE user_id = $1 AND account_id = $2", [req.userId, tx.account_id]);
+              if (accRow.rows.length === 0) continue;
+              const monto = -tx.amount;
+              const categoria = guessCategory(tx.merchant_name || tx.name, monto, learnedMap);
+              await query(
+                `INSERT INTO transactions (user_id, account_id, plaid_tx_id, fecha, descripcion, merchant_name, monto, categoria, pendiente, source)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'plaid')
+                 ON CONFLICT (user_id, plaid_tx_id) DO UPDATE SET
+                   fecha = EXCLUDED.fecha, descripcion = EXCLUDED.descripcion, merchant_name = EXCLUDED.merchant_name,
+                   monto = EXCLUDED.monto, categoria = EXCLUDED.categoria, pendiente = EXCLUDED.pendiente,
+                   removed = false, updated_at = now()`,
+                [req.userId, accRow.rows[0].id, tx.transaction_id, tx.date, tx.name, tx.merchant_name, monto, categoria, tx.pending]
+              );
+            }
+            totalAdded += history.length;
+            offset += history.length;
+            if (history.length === 0) break;
+          }
+        } catch (historyError) {
+          const detail = historyError.response ? historyError.response.data : historyError.message;
+          const code = detail && detail.error_code;
+          if (code === "PRODUCT_NOT_READY") {
+            try { await plaidClient.transactionsRefresh({ access_token: accessToken }); } catch (refreshError) {}
+            console.log("PLAID_HISTORY_PENDING:", item.item_id);
+          } else {
+            console.error("PLAID_HISTORY_FALLBACK_ERROR:", JSON.stringify(detail));
+          }
+        }
+      }
+
       await query("UPDATE plaid_items SET cursor = $1, last_synced_at = now(), updated_at = now() WHERE id = $2", [cursor, item.id]);
       await query("INSERT INTO sync_logs (user_id, plaid_item_id, tipo, detalle) VALUES ($1,$2,'sync',$3)",
         [req.userId, item.id, `added=${totalAdded} modified=${totalModified} removed=${totalRemoved}`]);
