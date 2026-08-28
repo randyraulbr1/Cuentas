@@ -495,7 +495,7 @@ function renderApp() {
         .slice()
         .sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")))
         .slice(0, 80);
-      html += '<div class="sub-add-picker bank-expense-picker">';
+      html += '<div class="sub-add-picker bank-expense-picker" id="bank-expense-picker">';
       html += '<div class="bank-expense-picker-head"><b>' + (LANG === "es" ? "Selecciona un gasto del banco" : "Select a bank expense") + '</b><button class="icon-del" data-action="toggleSubPresetPicker">' + icon("close") + '</button></div>';
       if (bankExpenses.length === 0) {
         html += '<div class="empty-state">' + (LANG === "es" ? "No hay gastos bancarios disponibles." : "No bank expenses are available.") + '</div>';
