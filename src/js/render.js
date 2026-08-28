@@ -1077,7 +1077,6 @@ function renderApp() {
     }
   }
 
-    }
   }
 
   if (tab === "opciones") {
