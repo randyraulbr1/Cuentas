@@ -21,6 +21,7 @@ router.post("/create-link-token", requireAuth, rateLimit(20, 60 * 60 * 1000), as
     });
     res.json({ link_token: response.data.link_token });
   } catch (e) {
+    console.error("PLAID_LINK_TOKEN_ERROR:", JSON.stringify(e.response ? e.response.data : e.message));
     res.status(502).json({ error: "No se pudo crear el link token de Plaid", detail: e.response ? e.response.data : e.message });
   }
 });
