@@ -171,6 +171,7 @@ async function cargarCacheNube() {
 }
 function cacheNubeVencido() {
   if (!state.cloudLastSync) return true;
+  if (state.cloudAccounts.length > 0 && state.cloudTransactions.length === 0) return true;
   return (Date.now() - new Date(state.cloudLastSync).getTime()) > CLOUD_CACHE_MAX_AGE_MS;
 }
 
