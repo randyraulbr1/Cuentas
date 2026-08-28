@@ -6,14 +6,17 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v107";
-const BUILD_DATE = "29/08 00:25 UTC";
+const APP_VERSION = "v108";
+const BUILD_DATE = "29/08 00:55 UTC";
 
 let uidCounter = 1;
 
 const uid = () => "id_" + Date.now() + "_" + (uidCounter++);
 
 const PROFILES_KEY = "cuentas-claras:perfiles";
+const PIN_HASH_KEY = "cuentas-claras:pin-hash";
+const PIN_ATTEMPTS_KEY = "cuentas-claras:pin-attempts";
+const PIN_LOCK_KEY = "cuentas-claras:pin-lock-until";
 
 const CURRENCY = { usd: "$", eur: "€" };
 
@@ -66,6 +69,7 @@ const settingsInit = loadSettings();
 
 const state = {
   screen: "selector",
+  appLocked: false, pinInput: "", pinSetupInput: "", pinError: "", pinBusy: false,
   profiles: loadProfiles(),
   activeProfileId: null,
   confirmDeleteProfileId: null,
