@@ -202,6 +202,29 @@ async function actualizarApp() {
   location.reload();
 }
 
+function inferPaymentVisual(name) {
+  const value = String(name || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const rules = [
+    { words: ["renta", "alquiler", "rent", "casa", "apartamento", "mortgage", "hipoteca"], icon: "home", category: "renta" },
+    { words: ["carro", "auto", "coche", "vehicle", "car payment"], icon: "car", category: "carro" },
+    { words: ["seguro", "insurance", "geico", "progressive"], icon: "shield", category: "seguro" },
+    { words: ["luz", "electric", "electricidad", "fpl", "power"], icon: "bulb", category: "luz" },
+    { words: ["agua", "water"], icon: "droplet", category: "agua" },
+    { words: ["gas"], icon: "flame", category: "gas" },
+    { words: ["wifi", "internet", "router", "xfinity", "comcast"], icon: "wifi", category: "wifi" },
+    { words: ["telefono", "phone", "mobile", "t-mobile", "verizon", "at&t"], icon: "phone", category: "telefono" },
+    { words: ["gym", "gimnasio", "fitness"], icon: "dumbbell", category: "gym" },
+    { words: ["netflix", "hulu", "disney", "streaming", "subscription", "suscripcion"], icon: "clapper", category: "streaming" },
+    { words: ["comida", "restaurant", "restaurante", "food"], icon: "utensils", category: "otro" },
+    { words: ["gasolina", "fuel", "shell", "chevron"], icon: "fuel", category: "carro" },
+    { words: ["doctor", "medico", "salud", "hospital", "farmacia", "pharmacy"], icon: "medcross", category: "salud" },
+    { words: ["escuela", "colegio", "school", "universidad"], icon: "book", category: "otro" },
+    { words: ["prestamo", "loan", "credito"], icon: "bills", category: "otro" },
+  ];
+  for (const rule of rules) if (rule.words.some((word) => value.indexOf(word) !== -1)) return { icon: rule.icon, category: rule.category };
+  return { icon: "tag", category: "otro" };
+}
+
 function sanitizeNum(str) {
   str = String(str).replace(/[^0-9.]/g, "");
   const parts = str.split(".");
@@ -214,11 +237,11 @@ root.addEventListener("input", (e) => {
   if (el.id === "new-profile-input") { state.newProfileName = el.value; return; }
   const scope = el.dataset.scope;
   if (!scope) return;
-  if (scope === "ingreso") { state.ingreso = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
-  if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
-  if (scope === "debito") { state.debito = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "ingreso") { state.ingreso = sanitizeNum(el.value); scheduleSave(); return; }
+  if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); return; }
+  if (scope === "debito") { state.debito = sanitizeNum(el.value); scheduleSave(); return; }
   if (scope === "agregarTurno") { state.agregarTurnoForm[el.dataset.field] = el.value; rerenderPreservingFocus(); return; }
-  if (scope === "cash") { state.cash = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "cash") { state.cash = sanitizeNum(el.value); scheduleSave(); return; }
   if (scope === "apiBaseUrl") { state.apiBaseUrl = el.value.trim(); saveSettings(); rerenderPreservingFocus(); return; }
   if (scope === "authEmail") { state.authEmail = el.value; rerenderPreservingFocus(); return; }
   if (scope === "authPassword") { state.authPassword = el.value; rerenderPreservingFocus(); return; }
@@ -243,7 +266,7 @@ root.addEventListener("input", (e) => {
     state.agregarTurnoForm[el.dataset.field] = el.dataset.field === "fecha" ? el.value : sanitizeNum(el.value);
     rerenderPreservingFocus(); return;
   }
-  if (scope === "metaAhorro") { state.metaAhorro = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "metaAhorro") { state.metaAhorro = sanitizeNum(el.value); scheduleSave(); return; }
   if (scope === "savingsRate") { state.savingsRate = Number(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "ingresoLog") {
     const entry = state.ingresosLog.find((x) => x.id === el.dataset.id);
@@ -256,8 +279,18 @@ root.addEventListener("input", (e) => {
   if (scope === "sub") {
     const item = state.subs.find((x) => x.id === el.dataset.id);
     if (!item) return;
-    item[el.dataset.field] = el.dataset.field === "monto" ? sanitizeNum(el.value) : el.value;
-    scheduleSave(); rerenderPreservingFocus(); return;
+    const field = el.dataset.field;
+    item[field] = field === "monto" ? sanitizeNum(el.value) : el.value;
+    if (field === "nombre" && !item.iconManual) {
+      const visual = inferPaymentVisual(el.value);
+      item.icono = visual.icon;
+      item.categoria = visual.category;
+      const iconButton = document.getElementById("sub-icon-" + item.id);
+      if (iconButton) iconButton.innerHTML = icon(visual.icon) + '<span class="sub-ico-edit">' + icon("pencil") + '</span>';
+      const categorySelect = root.querySelector('[data-scope="sub"][data-id="' + item.id + '"][data-field="categoria"]');
+      if (categorySelect) categorySelect.value = visual.category;
+    }
+    scheduleSave(); return;
   }
   if (scope === "card") {
     const item = state.cards.find((x) => x.id === el.dataset.id);
@@ -399,9 +432,9 @@ root.addEventListener("click", (e) => {
     elegirIconoSub: () => {
       const partes = id.split("|");
       const sub = state.subs.find((x) => x.id === partes[0]);
-      if (sub) { sub.icono = partes[1]; state.iconPickerSubId = null; scheduleSave(); render(); }
+      if (sub) { sub.icono = partes[1]; sub.iconManual = true; state.iconPickerSubId = null; scheduleSave(); render(); }
     },
-    toggleSaldosInicio: () => { state.editingSaldosInicio = !state.editingSaldosInicio; render(); if (state.editingSaldosInicio) setTimeout(() => { const i = document.getElementById("cash-input"); if (i) i.focus(); }, 50); },
+    toggleSaldosInicio: () => { state.editingSaldosInicio = !state.editingSaldosInicio; render(); if (state.editingSaldosInicio) setTimeout(() => { const i = document.getElementById("debito-input"); if (i) i.focus(); }, 50); },
     toggleCardNube: () => { state.cardNubeExpandida = state.cardNubeExpandida === id ? null : id; render(); },
     abrirConfirmarAhorro: abrirConfirmarAhorro, cancelarConfirmarAhorro: cancelarConfirmarAhorro, confirmarAhorroMes: confirmarAhorroMes,
     setDebtAvalancha: () => { state.debtStrategy = "avalancha"; render(); }, setDebtBolaNieve: () => { state.debtStrategy = "bola_nieve"; render(); },
