@@ -414,7 +414,7 @@ function renderApp() {
       const sugAhorro = resultadoMes && !resultadoMes.insuficiente ? resultadoMes.ahorro : t2.disponibleBruto * (state.savingsRate / 100);
       const insGustos = computeInsights();
       const mkActual = monthKey();
-      const fijosPagadosEsteMes = state.gastosFijosReconocidos.filter((gf) => gastoFijoPagadoEsteMes(gf)).reduce((a, gf) => { const ux = gastoFijoUltimaTx(gf); return a + (ux ? Math.abs(toNum(ux.monto)) : toNum(gf.monto)); }, 0);
+      const fijosPagadosEsteMes = state.subs.filter((sub) => sub.merchantKey && gastoFijoPagadoEsteMes(sub)).reduce((a, sub) => { const ux = gastoFijoUltimaTx(sub); return a + (ux ? Math.abs(toNum(ux.monto)) : toNum(sub.monto)); }, 0);
       const suscripcionesEsteMes = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0 && String(tx.fecha).slice(0, 7) === mkActual && (tx.categoria === "suscripciones" || tx.categoria === "streaming")).reduce((a, tx) => a + Math.abs(toNum(tx.monto)), 0);
       const gastadoGustos = Math.max(insGustos.totalActual - fijosPagadosEsteMes - suscripcionesEsteMes, 0);
       html += '<div class="panel"><h2>' + t("esteMesSugerenciasTitle") + '</h2>';
