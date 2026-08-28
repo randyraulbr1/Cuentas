@@ -185,8 +185,8 @@ router.post("/sync-transactions", requireAuth, rateLimit(30, 60 * 60 * 1000), as
               const monto = -tx.amount;
               const categoria = guessCategory(tx.merchant_name || tx.name, monto, learnedMap);
               await query(
-                `INSERT INTO transactions (user_id, account_id, plaid_tx_id, fecha, descripcion, merchant_name, monto, categoria, pendiente, source)
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'plaid')
+                `INSERT INTO transactions (user_id, account_id, plaid_tx_id, fecha, descripcion, merchant_name, monto, categoria, pendiente, fecha_hora, source)
+                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'plaid')
                  ON CONFLICT (user_id, plaid_tx_id) DO UPDATE SET
                    fecha = EXCLUDED.fecha, descripcion = EXCLUDED.descripcion, merchant_name = EXCLUDED.merchant_name,
                    monto = EXCLUDED.monto, categoria = EXCLUDED.categoria, pendiente = EXCLUDED.pendiente,
