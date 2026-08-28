@@ -6,8 +6,8 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v111";
-const BUILD_DATE = "29/08 01:38 UTC";
+const APP_VERSION = "v112";
+const BUILD_DATE = "29/08 01:52 UTC";
 
 let uidCounter = 1;
 
@@ -70,7 +70,7 @@ const settingsInit = loadSettings();
 
 const state = {
   screen: "selector",
-  appLocked: false, pinInput: "", pinSetupInput: "", pinError: "", pinBusy: false, biometricBusy: false,
+  appLocked: false, pinInput: "", pinSetupInput: "", pinError: "", pinBusy: false, biometricBusy: false, biometricAutoTried: false, confirmPinReset: false,
   profiles: loadProfiles(),
   activeProfileId: null,
   confirmDeleteProfileId: null,
