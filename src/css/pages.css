@@ -326,3 +326,10 @@
   .trading-chart-head { padding-top: 10px; }
   .trading-net { font-size: 16px; }
 }
+
+
+/* Selector mensual del gráfico de flujo */
+.cash-month-picker{display:flex;gap:7px;overflow-x:auto;padding:2px 1px 9px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.cash-month-picker::-webkit-scrollbar{display:none}
+.cash-month-btn{flex:0 0 auto;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text-muted);padding:8px 11px;font:700 12px/1.1 var(--font-body);box-shadow:none}
+.cash-month-btn.active{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast);box-shadow:none}
