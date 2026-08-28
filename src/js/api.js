@@ -33,7 +33,8 @@ async function apiFetch(path, options) {
   if (state.authToken) headers.Authorization = "Bearer " + state.authToken;
   let resp;
   const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-  const timeoutId = controller ? setTimeout(() => controller.abort(), 25000) : null;
+  const requestTimeoutMs = path === "/api/plaid/sync-transactions" ? 90000 : 25000;
+  const timeoutId = controller ? setTimeout(() => controller.abort(), requestTimeoutMs) : null;
   try {
     resp = await fetch(apiUrl(path), {
       method: options.method || "GET",
