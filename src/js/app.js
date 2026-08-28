@@ -359,6 +359,7 @@ root.addEventListener("click", (e) => {
     askEmpezarBreak: askEmpezarBreak,
     cancelEmpezarBreak: cancelEmpezarBreak,
     setCashflowPeriod: () => setCashflowPeriod(id),
+    setCashflowMonth: () => { state.cashflowMonthOffset = Math.max(parseInt(id, 10) || 0, 0); render(); },
     setJobFrecuencia: () => updateJobField("frecuenciaPago", freq),
     setDescansoPagadoOn: () => updateJobField("descansoPagado", true),
     setDescansoPagadoOff: () => updateJobField("descansoPagado", false),
