@@ -69,9 +69,18 @@ function renderPinScreen() {
     html += '<button class="pay-trigger pin-enter-btn" data-action="unlockPin"' + (entered.length !== 6 || state.pinBusy ? " disabled" : "") + '>' + (state.pinBusy ? (LANG === "es" ? "Comprobando…" : "Checking…") : (LANG === "es" ? "Entrar" : "Unlock")) + '</button>';
   }
   if (state.pinError) html += '<p class="pin-error">' + esc(state.pinError) + '</p>';
+  if (state.confirmPinReset) {
+    html += '<div class="pin-reset-confirm"><p>' + (LANG === "es" ? "Esto borrará solamente el PIN y la huella guardados en este teléfono. No borra bancos, pagos ni movimientos." : "This only removes the PIN and biometrics stored on this phone. It does not delete financial data.") + '</p><div><button class="pill-btn confirm" data-action="confirmResetPin">' + (LANG === "es" ? "Sí, restablecer" : "Reset") + '</button><button class="pill-btn" data-action="cancelResetPin">' + (LANG === "es" ? "Cancelar" : "Cancel") + '</button></div></div>';
+  } else {
+    html += '<button class="pin-reset-link" data-action="askResetPin">' + (LANG === "es" ? "El PIN no funciona" : "PIN is not working") + '</button>';
+  }
   html += '</div></div>';
   root.innerHTML = html;
   if (remaining > 0) setTimeout(() => { if (state.appLocked) render(); }, 1000);
+  if (remaining === 0 && biometricConfigured && !state.biometricAutoTried && !state.biometricBusy) {
+    state.biometricAutoTried = true;
+    setTimeout(() => { if (state.appLocked) unlockBiometric(); }, 250);
+  }
 }
 
 
