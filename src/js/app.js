@@ -82,6 +82,66 @@ async function pinDigest(pin) {
   return Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+function bytesToBase64Url(bytes) {
+  let binary = "";
+  new Uint8Array(bytes).forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function base64UrlToBytes(value) {
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((value.length + 3) % 4);
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+async function setupBiometric() {
+  if (!window.PublicKeyCredential || !navigator.credentials) {
+    state.pinError = LANG === "es" ? "Este navegador no permite usar la huella. Puedes seguir usando el PIN." : "This browser does not support biometrics. You can keep using the PIN.";
+    render(); return;
+  }
+  state.biometricBusy = true; state.pinError = ""; render();
+  try {
+    const challenge = crypto.getRandomValues(new Uint8Array(32));
+    const userId = crypto.getRandomValues(new Uint8Array(16));
+    const credential = await navigator.credentials.create({ publicKey: {
+      challenge,
+      rp: { name: "305 Save", id: location.hostname },
+      user: { id: userId, name: "305-save-local", displayName: "305 Save" },
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "preferred" },
+      timeout: 60000,
+      attestation: "none"
+    } });
+    if (!credential) throw new Error("No credential");
+    localStorage.setItem(BIOMETRIC_CRED_KEY, bytesToBase64Url(credential.rawId));
+    state.pinError = LANG === "es" ? "Huella activada correctamente." : "Biometrics enabled.";
+  } catch (error) {
+    state.pinError = LANG === "es" ? "No se activó la huella. Inténtalo otra vez o usa el PIN." : "Biometrics were not enabled. Try again or use the PIN.";
+  }
+  state.biometricBusy = false; render();
+}
+
+async function unlockBiometric() {
+  if (!window.PublicKeyCredential || !navigator.credentials) { state.pinError = LANG === "es" ? "La huella no está disponible. Usa el PIN." : "Biometrics unavailable. Use the PIN."; render(); return; }
+  let credentialId = "";
+  try { credentialId = localStorage.getItem(BIOMETRIC_CRED_KEY) || ""; } catch (error) {}
+  if (!credentialId) { state.pinError = LANG === "es" ? "Primero activa la huella en Opciones." : "Enable biometrics in Options first."; render(); return; }
+  state.biometricBusy = true; state.pinError = ""; render();
+  try {
+    const assertion = await navigator.credentials.get({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials: [{ type: "public-key", id: base64UrlToBytes(credentialId), transports: ["internal"] }],
+      userVerification: "required",
+      timeout: 60000
+    } });
+    if (!assertion) throw new Error("No assertion");
+    state.appLocked = false; state.pinInput = ""; state.pinError = "";
+  } catch (error) {
+    state.pinError = LANG === "es" ? "No se pudo comprobar la huella. Usa el PIN o vuelve a intentarlo." : "Biometric verification failed. Use the PIN or try again.";
+  }
+  state.biometricBusy = false; render();
+}
+
 async function savePin() {
   const pin = String(state.pinSetupInput || "").replace(/\D/g, "").slice(0, 6);
   if (pin.length !== 6) { state.pinError = LANG === "es" ? "El PIN debe tener exactamente 6 números." : "PIN must contain exactly 6 digits."; render(); return; }
@@ -510,7 +570,7 @@ root.addEventListener("click", (e) => {
     startPago: () => startPago(payType, id), cancelPago: cancelPago, confirmPago: confirmPago,
     setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito, setPagoSourceCash: setPagoSourceCash, setPagoSourceNinguno: setPagoSourceNinguno,
     guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
-    savePin: savePin, lockApp: lockApp, unlockPin: unlockPin, pinDigit: () => addPinDigit(id), pinDelete: deletePinDigit,
+    savePin: savePin, lockApp: lockApp, unlockPin: unlockPin, setupBiometric: setupBiometric, unlockBiometric: unlockBiometric, pinDigit: () => addPinDigit(id), pinDelete: deletePinDigit,
     toggleTheme: toggleTheme, toggleLang: toggleLang, toggleCurrency: toggleCurrency,
     setObjEquilibrado: () => setObjetivo("equilibrado"), setObjCredito: () => setObjetivo("credito"), setObjAhorro: () => setObjetivo("ahorro"),
     setLangEs: () => { if (state.lang !== "es") toggleLang(); },
