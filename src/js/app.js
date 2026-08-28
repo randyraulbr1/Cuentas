@@ -435,6 +435,7 @@ root.addEventListener("click", (e) => {
   else render();
   if (state.authToken && state.apiBaseUrl) {
     const huboCache = await cargarCacheNube();
+    if (huboCache && typeof syncFixedPaymentsFromBank === "function") syncFixedPaymentsFromBank();
     const necesitaCrearPerfilAuto = !state.activeProfileId && state.profiles.length === 0 && state.cloudInstitutions.length > 0;
     if (huboCache) {
       if (necesitaCrearPerfilAuto) {
