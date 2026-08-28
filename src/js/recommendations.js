@@ -4,8 +4,13 @@ function ingresoTrabajoParaFecha(fechaStr) {
   return state.turnos.filter((tn) => tn.fecha === fechaStr).reduce((a, tn) => a + turnoPagoBruto(tn).bruto, 0);
 }
 
-function buildCashflowBuckets(period) {
-  const now = new Date(); now.setHours(0, 0, 0, 0);
+function buildCashflowBuckets(period, monthOffset) {
+  monthOffset = Math.max(parseInt(monthOffset, 10) || 0, 0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const selectedStart = new Date(today.getFullYear(), today.getMonth() - monthOffset, 1);
+  const selectedEnd = new Date(selectedStart.getFullYear(), selectedStart.getMonth() + 1, 0);
+  selectedEnd.setHours(0, 0, 0, 0);
+  const now = monthOffset === 0 ? today : selectedEnd;
 
   function sumaRango(start, end) {
     let ingresos = 0, gastos = 0;
