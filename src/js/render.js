@@ -873,6 +873,10 @@ function renderApp() {
   }
 
   if (tab === "historial" || tab === "cuentas") {
+    if (tab === "cuentas") {
+      html += '<button class="section-collapser" data-action="toggleCuentasHistorial"><span>' + icon("clock") + ' ' + t("tabHistorial") + '</span><span class="chev' + (state.cuentasHistorialAbierto ? " open" : "") + '">' + icon("chevron") + '</span></button>';
+    }
+    if (tab === "historial" || state.cuentasHistorialAbierto) {
     html += '<div class="panel"><p class="hint">' + t("historialHint") + '</p>';
     if (state.history.length === 0) html += '<div class="empty-state">' + t("historialEmpty") + '</div>';
     state.history.forEach((h) => {
@@ -933,9 +937,14 @@ function renderApp() {
 
       html += '</div>';
     }
+    }
   }
 
   if (tab === "insights" || tab === "cuentas") {
+    if (tab === "cuentas") {
+      html += '<button class="section-collapser" data-action="toggleCuentasAnalisis"><span>' + icon("chart2") + ' ' + t("tabInsights") + '</span><span class="chev' + (state.cuentasAnalisisAbierto ? " open" : "") + '">' + icon("chevron") + '</span></button>';
+    }
+    if (tab === "insights" || state.cuentasAnalisisAbierto) {
     if (tab === "cuentas") html += '<div class="section-title-divider"><h2>' + t("tabInsights") + '</h2></div>';
 
     // Flujo de caja: grafica tipo velas (verde=ingreso, rojo=gasto)
@@ -1065,6 +1074,9 @@ function renderApp() {
         });
       }
       html += '</div></div>';
+    }
+  }
+
     }
   }
 
