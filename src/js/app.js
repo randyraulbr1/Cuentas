@@ -76,6 +76,63 @@ function createProfile() {
   enterProfile(p.id);
 }
 
+async function pinDigest(pin) {
+  const data = new TextEncoder().encode("305-save-local-pin:" + pin);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function savePin() {
+  const pin = String(state.pinSetupInput || "").replace(/\D/g, "").slice(0, 6);
+  if (pin.length !== 6) { state.pinError = LANG === "es" ? "El PIN debe tener exactamente 6 números." : "PIN must contain exactly 6 digits."; render(); return; }
+  state.pinBusy = true;
+  try {
+    const digest = await pinDigest(pin);
+    localStorage.setItem(PIN_HASH_KEY, digest);
+    localStorage.setItem(PIN_ATTEMPTS_KEY, "0");
+    localStorage.removeItem(PIN_LOCK_KEY);
+    state.pinSetupInput = ""; state.pinError = "";
+  } catch (error) {
+    state.pinError = LANG === "es" ? "No se pudo guardar el PIN en este teléfono." : "PIN could not be saved on this device.";
+  }
+  state.pinBusy = false; render();
+}
+
+function lockApp() {
+  state.pinInput = ""; state.pinError = ""; state.appLocked = true; render();
+}
+
+async function unlockPin() {
+  let lockUntil = 0;
+  try { lockUntil = Number(localStorage.getItem(PIN_LOCK_KEY)) || 0; } catch (error) {}
+  if (lockUntil > Date.now()) { render(); return; }
+  const pin = String(state.pinInput || "").replace(/\D/g, "").slice(0, 6);
+  if (pin.length !== 6) { state.pinError = LANG === "es" ? "Escribe los 6 números." : "Enter all 6 digits."; render(); return; }
+  state.pinBusy = true;
+  try {
+    const expected = localStorage.getItem(PIN_HASH_KEY) || "";
+    const actual = await pinDigest(pin);
+    if (expected && actual === expected) {
+      localStorage.setItem(PIN_ATTEMPTS_KEY, "0"); localStorage.removeItem(PIN_LOCK_KEY);
+      state.pinInput = ""; state.pinError = ""; state.appLocked = false;
+    } else {
+      const attempts = (Number(localStorage.getItem(PIN_ATTEMPTS_KEY)) || 0) + 1;
+      if (attempts >= 3) {
+        localStorage.setItem(PIN_ATTEMPTS_KEY, "0");
+        localStorage.setItem(PIN_LOCK_KEY, String(Date.now() + 5 * 60 * 1000));
+        state.pinError = LANG === "es" ? "PIN incorrecto 3 veces. Bloqueado por 5 minutos." : "PIN incorrect 3 times. Locked for 5 minutes.";
+      } else {
+        localStorage.setItem(PIN_ATTEMPTS_KEY, String(attempts));
+        state.pinError = (LANG === "es" ? "PIN incorrecto. Intentos restantes: " : "Incorrect PIN. Attempts remaining: ") + (3 - attempts) + ".";
+      }
+      state.pinInput = "";
+    }
+  } catch (error) {
+    state.pinError = LANG === "es" ? "No se pudo comprobar el PIN." : "PIN could not be verified.";
+  }
+  state.pinBusy = false; render();
+}
+
 function switchUser() {
   if (saveTimeout) { clearTimeout(saveTimeout); saveUserDataNow(); }
   state.activeProfileId = null;
@@ -235,6 +292,8 @@ function sanitizeNum(str) {
 root.addEventListener("input", (e) => {
   const el = e.target;
   if (el.id === "new-profile-input") { state.newProfileName = el.value; return; }
+  if (el.dataset.scope === "pinSetup") { state.pinSetupInput = el.value.replace(/\D/g, "").slice(0, 6); state.pinError = ""; return; }
+  if (el.dataset.scope === "pinUnlock") { state.pinInput = el.value.replace(/\D/g, "").slice(0, 6); state.pinError = ""; return; }
   const scope = el.dataset.scope;
   if (!scope) return;
   if (scope === "ingreso") { state.ingreso = sanitizeNum(el.value); scheduleSave(); return; }
@@ -337,6 +396,8 @@ root.addEventListener("scroll", (e) => {
 }, true);
 
 root.addEventListener("click", (e) => {
+  const directTab = e.target.closest(".tab-btn[data-id]");
+  if (directTab) { e.preventDefault(); goTab(directTab.dataset.id); return; }
   let closedCloudCards = false;
   if (!e.target.closest(".cc-card") && state.expandedCloudCardIds && Object.keys(state.expandedCloudCardIds).some((key) => state.expandedCloudCardIds[key])) {
     state.expandedCloudCardIds = {};
@@ -435,7 +496,7 @@ root.addEventListener("click", (e) => {
     startPago: () => startPago(payType, id), cancelPago: cancelPago, confirmPago: confirmPago,
     setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito, setPagoSourceCash: setPagoSourceCash, setPagoSourceNinguno: setPagoSourceNinguno,
     guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
-    switchUser: switchUser,
+    savePin: savePin, lockApp: lockApp, unlockPin: unlockPin,
     toggleTheme: toggleTheme, toggleLang: toggleLang, toggleCurrency: toggleCurrency,
     setObjEquilibrado: () => setObjetivo("equilibrado"), setObjCredito: () => setObjetivo("credito"), setObjAhorro: () => setObjetivo("ahorro"),
     setLangEs: () => { if (state.lang !== "es") toggleLang(); },
@@ -494,6 +555,8 @@ root.addEventListener("click", (e) => {
   const activeId = (function () { try { return localStorage.getItem(ACTIVE_KEY); } catch (e) { return null; } })();
   if (activeId && state.profiles.some((p) => p.id === activeId)) await enterProfile(activeId);
   else render();
+  try { state.appLocked = !!localStorage.getItem(PIN_HASH_KEY); } catch (error) { state.appLocked = false; }
+  if (state.appLocked) render();
   if (state.authToken && state.apiBaseUrl) {
     const huboCache = await cargarCacheNube();
     if (huboCache && typeof syncFixedPaymentsFromBank === "function") syncFixedPaymentsFromBank();
