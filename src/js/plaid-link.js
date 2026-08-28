@@ -93,8 +93,24 @@ async function iniciarConectarBanco() {
         }
         setTimeout(() => { state.cloudFlash = ""; rerenderPreservingFocus(); }, 2200);
       },
-      onExit: (err) => {
-        if (err) { state.cloudErrorMsg = t("apiErrorPlaidExit"); render(); }
+      onExit: (err, metadata) => {
+        if (!err) return;
+        const detail = {
+          error_type: err.error_type || "",
+          error_code: err.error_code || "",
+          error_message: err.error_message || err.display_message || "",
+          request_id: err.request_id || "",
+          exit_status: metadata && metadata.status ? metadata.status : "",
+          institution: metadata && metadata.institution ? metadata.institution.name : "",
+        };
+        console.error("PLAID_LINK_EXIT_ERROR:", detail);
+        const parts = [
+          detail.error_code || detail.error_type,
+          detail.error_message,
+          detail.request_id ? "request_id: " + detail.request_id : "",
+        ].filter(Boolean);
+        state.cloudErrorMsg = t("apiErrorPlaidExit") + (parts.length ? " — " + parts.join(" | ") : "");
+        render();
       },
     });
     handler.open();
