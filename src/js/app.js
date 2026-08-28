@@ -456,6 +456,14 @@ root.addEventListener("click", (e) => {
         } else {
           render();
         }
+        if (state.cloudAccounts.length > 0 && state.cloudTransactions.length === 0) {
+          [15000, 60000].forEach((delay) => setTimeout(async () => {
+            if (state.cloudTransactions.length > 0 || !state.authToken) return;
+            const retry = await apiSyncTransactions();
+            if (retry.ok) await refrescarDatosNube();
+            render();
+          }, delay));
+        }
       });
     }
   }
