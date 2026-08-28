@@ -159,7 +159,21 @@ async function savePin() {
 }
 
 function lockApp() {
-  state.pinInput = ""; state.pinError = ""; state.appLocked = true; render();
+  state.pinInput = ""; state.pinError = ""; state.biometricAutoTried = false; state.appLocked = true; render();
+}
+
+function askResetPin() { state.confirmPinReset = true; state.pinError = ""; render(); }
+function cancelResetPin() { state.confirmPinReset = false; render(); }
+function confirmResetPin() {
+  try {
+    localStorage.removeItem(PIN_HASH_KEY);
+    localStorage.removeItem(PIN_ATTEMPTS_KEY);
+    localStorage.removeItem(PIN_LOCK_KEY);
+    localStorage.removeItem(BIOMETRIC_CRED_KEY);
+  } catch (error) {}
+  state.pinInput = ""; state.pinError = ""; state.confirmPinReset = false;
+  state.biometricAutoTried = false; state.appLocked = false;
+  render();
 }
 
 async function unlockPin() {
@@ -570,7 +584,7 @@ root.addEventListener("click", (e) => {
     startPago: () => startPago(payType, id), cancelPago: cancelPago, confirmPago: confirmPago,
     setPagoSourceAhorro: setPagoSourceAhorro, setPagoSourceDebito: setPagoSourceDebito, setPagoSourceCash: setPagoSourceCash, setPagoSourceNinguno: setPagoSourceNinguno,
     guardarMes: guardarMes, removeHistory: () => removeHistory(id), askDeleteHistory: () => askDeleteHistory(id), cancelDeleteHistory: cancelDeleteHistory,
-    savePin: savePin, lockApp: lockApp, unlockPin: unlockPin, setupBiometric: setupBiometric, unlockBiometric: unlockBiometric, pinDigit: () => addPinDigit(id), pinDelete: deletePinDigit,
+    savePin: savePin, lockApp: lockApp, unlockPin: unlockPin, setupBiometric: setupBiometric, unlockBiometric: unlockBiometric, askResetPin: askResetPin, cancelResetPin: cancelResetPin, confirmResetPin: confirmResetPin, pinDigit: () => addPinDigit(id), pinDelete: deletePinDigit,
     toggleTheme: toggleTheme, toggleLang: toggleLang, toggleCurrency: toggleCurrency,
     setObjEquilibrado: () => setObjetivo("equilibrado"), setObjCredito: () => setObjetivo("credito"), setObjAhorro: () => setObjetivo("ahorro"),
     setLangEs: () => { if (state.lang !== "es") toggleLang(); },
