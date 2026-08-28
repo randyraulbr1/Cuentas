@@ -148,7 +148,7 @@ function renderTxRow(descripcion, categoria, monto, fecha, rightExtraHtml, txId)
   const tieneNota = txId && state.notasTransacciones[txId];
   let h = '<div class="history-row"' + (txId ? ' data-action="verDetalleTx" data-id="' + txId + '" style="cursor:pointer;"' : '') + '><div class="tx-row">';
   h += renderTxChip(categoria);
-  h += '<div class="tx-row-main"><div class="tx-row-top"><span class="tx-row-name">' + esc(descripcion) + (tieneNota ? ' ' + icon("pencil") : "") + '</span><span class="locked-amount" style="color:' + (positivo ? "#34C759" : "var(--text)") + ';white-space:nowrap;">' + (positivo ? "+" : "\u2212") + sym() + fmt0(Math.abs(toNum(monto))) + '</span></div>';
+  h += '<div class="tx-row-main"><div class="tx-row-top"><span class="tx-row-name">' + esc(descripcion) + (tieneNota ? ' ' + icon("pencil") : "") + '</span><span class="locked-amount" style="color:' + (positivo ? "var(--positive)" : "var(--negative)") + ';white-space:nowrap;">' + (positivo ? "+" : "\u2212") + sym() + fmt0(Math.abs(toNum(monto))) + '</span></div>';
   h += '<div class="tx-row-cat">' + esc(fecha || "") + (categoria ? " \u00b7 " + t("cat_" + categoria) : "") + '</div></div>';
   h += '</div>' + (rightExtraHtml || "") + '</div>';
   return h;
@@ -232,27 +232,41 @@ function renderDonutChart(items) {
 }
 
 function renderCashflowChart(buckets) {
-  const hayDatos = buckets.some((b) => b.ingresos > 0 || b.gastos > 0);
-  const maxVal = Math.max(...buckets.map((b) => Math.max(b.ingresos, b.gastos)), 1);
-  const half = 74;
-  let h = '<div style="position:relative;">';
-  h += '<div style="position:absolute;left:0;right:0;top:' + half + 'px;border-top:1px dashed var(--border);"></div>';
-  h += '<div style="display:flex;align-items:center;gap:3px;height:' + (half * 2 + 20) + 'px;margin:8px 0;overflow-x:auto;position:relative;">';
-  if (!hayDatos) {
-    h += '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12.5px;color:var(--text-muted);padding:0 20px;background:var(--card-bg);">' + t("flujoCajaVacio") + '</div>';
-  }
-  buckets.forEach((b) => {
-    const ingH = Math.round((b.ingresos / maxVal) * half);
-    const gasH = Math.round((b.gastos / maxVal) * half);
-    h += '<div style="flex:1;min-width:16px;display:flex;flex-direction:column;align-items:center;">';
-    h += '<div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:' + half + 'px;">';
-    h += '<div style="width:100%;max-width:22px;margin:0 auto;height:' + Math.max(ingH, b.ingresos > 0 ? 2 : 0) + 'px;background:#22c55e;border-radius:3px 3px 0 0;"></div>';
-    h += '</div>';
-    h += '<div style="width:100%;display:flex;flex-direction:column;height:' + half + 'px;">';
-    h += '<div style="width:100%;max-width:22px;margin:0 auto;height:' + Math.max(gasH, b.gastos > 0 ? 2 : 0) + 'px;background:#ef4444;border-radius:0 0 3px 3px;"></div>';
-    h += '</div>';
-    h += '<div style="font-size:8.5px;color:var(--text-muted);margin-top:4px;white-space:nowrap;">' + esc(b.etiqueta) + '</div>';
-    h += '</div>';
+  let running = 0;
+  const candles = buckets.map((b) => {
+    const open = running;
+    const high = open + Math.max(toNum(b.ingresos), 0);
+    const close = open + toNum(b.ingresos) - toNum(b.gastos);
+    const low = Math.min(open, close, high - toNum(b.gastos));
+    running = close;
+    return Object.assign({}, b, { open, high: Math.max(high, open, close), low, close });
+  });
+  const values = candles.flatMap((c) => [c.high, c.low, c.open, c.close]);
+  let max = Math.max.apply(null, values.concat([1]));
+  let min = Math.min.apply(null, values.concat([0]));
+  if (max === min) { max += 1; min -= 1; }
+  const chartH = 168;
+  const topPad = 8;
+  const plotH = 132;
+  const y = (v) => topPad + ((max - v) / (max - min)) * plotH;
+  const zeroY = y(0);
+  let h = '<div class="cash-candle-chart">';
+  h += '<div class="cash-zero" style="top:' + zeroY + 'px;"></div>';
+  h += '<div class="cash-candles" style="height:' + chartH + 'px;">';
+  candles.forEach((c) => {
+    const positive = c.close >= c.open;
+    const color = positive ? "var(--positive)" : "var(--negative)";
+    const wickTop = y(c.high);
+    const wickBottom = y(c.low);
+    const bodyTop = Math.min(y(c.open), y(c.close));
+    const bodyH = Math.max(Math.abs(y(c.open) - y(c.close)), 3);
+    const title = (positive ? "+" : "\u2212") + sym() + fmt0(Math.abs(c.close - c.open)) +
+      " \u00b7 " + (LANG === "es" ? "Ingresos " : "Income ") + sym() + fmt0(c.ingresos) +
+      " \u00b7 " + (LANG === "es" ? "Compras " : "Purchases ") + sym() + fmt0(c.gastos);
+    h += '<div class="cash-candle-col" title="' + esc(title) + '">';
+    h += '<div class="cash-wick" style="top:' + wickTop + 'px;height:' + Math.max(wickBottom - wickTop, 2) + 'px;background:' + color + ';"></div>';
+    h += '<div class="cash-body" style="top:' + bodyTop + 'px;height:' + bodyH + 'px;background:' + color + ';border-color:' + color + ';"></div>';
+    h += '<span>' + esc(c.etiqueta) + '</span></div>';
   });
   h += '</div></div>';
   return h;
@@ -283,17 +297,15 @@ function renderPagoBlock(type, item, saldoActual) {
   if (toNum(saldoActual) <= 0) return "";
   const isActive = state.payingTarget && state.payingTarget.type === type && state.payingTarget.id === item.id;
   if (!isActive) {
-    return '<button class="pay-trigger" data-action="startPago" data-type="' + type + '" data-id="' + item.id + '">' + icon("card") + ' ' + t("pagarBtn") + '</button>';
+    return '<button class="pay-trigger" data-action="startPago" data-type="' + type + '" data-id="' + item.id + '">' + icon("card") + ' ' + (type === "loan" ? (LANG === "es" ? "Registrar cuota cobrada" : "Record charged payment") : t("pagarBtn")) + '</button>';
   }
   const ahorroDisp = toNum(state.ahorroActual);
   const debitoDisp = toNum(state.debito);
-  const cashDisp = toNum(state.cash);
   let h = '<div class="pay-form">';
   h += '<p class="opt-row-sub" style="margin-bottom:6px;">' + t("pagarDesdeLbl") + '</p>';
   h += '<div class="seg" style="width:100%;flex-wrap:wrap;">';
   h += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ahorro" ? "active" : "") + '" data-action="setPagoSourceAhorro">' + t("ahorroActualLbl") + ' ' + sym() + fmt0(ahorroDisp) + '</button>';
   h += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "debito" ? "active" : "") + '" data-action="setPagoSourceDebito">' + t("debitoLbl") + ' ' + sym() + fmt0(debitoDisp) + '</button>';
-  h += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "cash" ? "active" : "") + '" data-action="setPagoSourceCash">' + t("cashLbl") + ' ' + sym() + fmt0(cashDisp) + '</button>';
   h += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ninguno" ? "active" : "") + '" data-action="setPagoSourceNinguno">' + t("noDescontar") + '</button>';
   h += '</div>';
   h += '<input type="text" inputmode="decimal" placeholder="0" id="pago-monto-' + item.id + '" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
@@ -341,8 +353,8 @@ function renderApp() {
   if (tab === "inicio") {
     const cloudNoCredit = state.cloudAccounts.filter((a) => a.type !== "credit").reduce((a, c) => a + toNum(c.balance_current), 0);
     const deudaPrestamos = state.loans.reduce((a, l) => a + Math.max(toNum(l.saldoTotal), 0), 0);
-    const patrimonioNeto = toNum(state.ahorroActual) + toNum(state.cash) + toNum(state.debito) + cloudNoCredit - t2.totalDeuda - deudaPrestamos;
-    const disponibleHoy = toNum(state.cash) + toNum(state.debito) + cloudNoCredit;
+    const patrimonioNeto = toNum(state.ahorroActual) + toNum(state.debito) + cloudNoCredit - t2.totalDeuda - deudaPrestamos;
+    const disponibleHoy = toNum(state.ahorroActual) + toNum(state.debito) + cloudNoCredit;
     html += '<div class="hero-card">';
     html += '<span class="hero-lbl">' + t("patrimonioNetoLbl") + '</span>';
     html += '<div class="hero-val' + (patrimonioNeto < 0 ? " neg" : "") + '">' + (patrimonioNeto < 0 ? "\u2212" : "") + sym() + fmt0(Math.abs(patrimonioNeto)) + '</div>';
@@ -371,7 +383,6 @@ function renderApp() {
       html += '</div>';
     }
     html += '<div class="summary">';
-    html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("cashLbl") + ' ' + icon("pencil") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.cash)) + '</div></button>';
     html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("debitoLbl") + ' ' + icon("pencil") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito) + cloudNoCredit) + '</div></button>';
     html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
     html += '<div class="sum-card"><button class="sum-card-inner" data-action="toggleSaldosInicio"><div class="sum-label">' + t("ahorradoActual") + ' ' + icon("pencil") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></button>';
@@ -385,10 +396,7 @@ function renderApp() {
 
     if (state.editingSaldosInicio) {
       html += '<div class="panel"><h2>' + t("saldosManualesTitle") + '</h2>';
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("cashLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="cash-input" data-scope="cash" value="' + esc(state.cash) + '"></div>';
-      html += '<div class="goal-field"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '"></div>';
-      html += '</div>';
+      html += '<div class="goal-field"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '" style="width:100%;"></div>';
       html += '<div class="goal-field" style="margin-top:10px;"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '" style="width:100%;"></div>';
       html += '<button class="pill-btn confirm" style="width:100%;margin-top:10px;" data-action="toggleSaldosInicio">' + t("listoBtn") + '</button>';
       html += '</div>';
@@ -532,14 +540,14 @@ function renderApp() {
           html += '</div></div>';
         }
       } else {
-        const pagado = s.pagadoMes === monthKey();
+        const pagadoBanco = s.merchantKey && state.cloudTransactions.some((tx) => merchantKey(tx.descripcion) === s.merchantKey && String(tx.fecha).slice(0, 7) === monthKey());
+        const pagado = s.pagadoMes === monthKey() || pagadoBanco;
         if (state.payingSubId === s.id) {
           html += '<div class="pay-form" style="margin:8px 0;">';
           html += '<p class="opt-row-sub" style="margin-bottom:6px;">' + esc(s.nombre || t("subNombrePh")) + ' \u00b7 ' + t("pagarDesdeLbl") + '</p>';
           html += '<div class="seg" style="width:100%;flex-wrap:wrap;">';
           html += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ahorro" ? "active" : "") + '" data-action="setPagoSourceAhorro">' + t("ahorroActualLbl") + ' ' + sym() + fmt0(toNum(state.ahorroActual)) + '</button>';
           html += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "debito" ? "active" : "") + '" data-action="setPagoSourceDebito">' + t("debitoLbl") + ' ' + sym() + fmt0(toNum(state.debito)) + '</button>';
-          html += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "cash" ? "active" : "") + '" data-action="setPagoSourceCash">' + t("cashLbl") + ' ' + sym() + fmt0(toNum(state.cash)) + '</button>';
           html += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ninguno" ? "active" : "") + '" data-action="setPagoSourceNinguno">' + t("noDescontar") + '</button>';
           html += '</div>';
           html += '<input type="text" inputmode="decimal" placeholder="0" id="pago-sub-monto-' + s.id + '" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
@@ -567,41 +575,13 @@ function renderApp() {
     html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(t2.totalSubs) + '</b></div></div>';
 
     const insCuentas = computeInsights();
-    if (state.gastosFijosReconocidos.length > 0 || insCuentas.suscripcionesDetectadas.length > 0) {
-      html += '<div class="panel"><h2>' + t("gastosFijosBancoTitle") + '</h2><p class="hint">' + t("gastosFijosBancoHint") + '</p>';
-      let totalPendiente = 0, totalPagado = 0, totalSuscripcionesMes = insCuentas.suscripcionesTotalMensual;
-      state.gastosFijosReconocidos.forEach((gf) => {
-        const ultimaTx = gastoFijoUltimaTx(gf);
-        const monto = ultimaTx ? Math.abs(toNum(ultimaTx.monto)) : toNum(gf.monto);
-        const pagado = gastoFijoPagadoEsteMes(gf);
-        if (pagado) totalPagado += monto; else totalPendiente += monto;
-        html += '<div class="sub-row-locked"><span class="locked-name" style="display:flex;align-items:center;gap:8px;"><span class="status-pill ' + (pagado ? "verde" : "amarillo") + '" style="font-size:9.5px;">' + (pagado ? t("pagadoEsteMesLbl") : t("pendienteEsteMesLbl")) + '</span>' + esc(gf.nombre) + '</span><span class="locked-amount">' + sym() + fmt0(monto) + '</span></div>';
-        html += '<button class="delete-link" style="margin-bottom:6px;" data-action="removeGastoFijoReconocido" data-id="' + gf.id + '">' + t("olvidarBtn") + '</button>';
+    if (insCuentas.suscripcionesDetectadas.length > 0) {
+      html += '<div class="panel collapsible-data-panel"><h2>' + t("suscripcionesDetectadasTitle") + '</h2>';
+      insCuentas.suscripcionesDetectadas.forEach((subDetectada) => {
+        html += '<div class="card-entry" style="' + (subDetectada.cancelada ? "opacity:0.5;" : "") + '">';
+        html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(subDetectada.nombre) + '</span><span class="locked-amount">' + sym() + fmt0(subDetectada.monto) + '</span></div>';
+        html += '<p class="opt-row-sub">' + esc(diasLabel(subDetectada.diasFaltan)) + ' \u00b7 ' + esc(formatDate(subDetectada.proxima)) + '</p></div>';
       });
-      if (state.gastosFijosReconocidos.length > 0) {
-        html += '<div class="mini-total"><span>' + t("pendienteEsteMesTotalLbl") + '</span><b style="color:#FF3B30;">' + sym() + fmt0(totalPendiente) + '</b></div>';
-        html += '<div class="mini-total"><span>' + t("pagadoEsteMesTotalLbl") + '</span><b style="color:#34C759;">' + sym() + fmt0(totalPagado) + '</b></div>';
-      }
-
-      if (insCuentas.suscripcionesDetectadas.length > 0) {
-        html += '<p class="opt-section-title" style="margin-top:14px;">' + t("suscripcionesDetectadasTitle") + '</p>';
-        insCuentas.suscripcionesDetectadas.forEach((s) => {
-          html += '<div class="card-entry" style="' + (s.cancelada ? "opacity:0.5;" : "") + '">';
-          html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(s.nombre) + (s.cancelada ? ' \u00b7 ' + t("canceladaLbl") : '') + '</span><span class="locked-amount" style="' + (s.cancelada ? "text-decoration:line-through;" : "") + '">' + sym() + fmt0(s.monto) + '</span></div>';
-          if (!s.cancelada) html += '<p class="opt-row-sub">' + esc(diasLabel(s.diasFaltan)) + ' \u00b7 ' + esc(formatDate(s.proxima)) + '</p>';
-          html += '<div class="seg" style="width:100%;margin-top:6px;">';
-          ["semanal", "quincenal", "mensual", "anual"].forEach((f) => {
-            html += '<button style="flex:1;font-size:10.5px;padding:5px;" class="' + (s.frecuencia === f ? "active" : "") + '" data-action="' + (s.origen === "manual" ? "setManualFrecuencia" : "setFrecuenciaAuto") + '" data-id="' + esc(s.origen === "manual" ? s.id : s.key) + '" data-freq="' + f + '">' + t(f === "anual" ? "freqAnual" : f === "mensual" ? "payMensual" : f === "quincenal" ? "payQuincenal" : "paySemanal") + '</button>';
-          });
-          html += '</div>';
-          html += '<div style="display:flex;gap:8px;margin-top:6px;">';
-          html += '<button class="delete-link" data-action="toggleSuscripcionCancelada" data-id="' + esc(s.origen === "manual" ? s.id : s.key) + '">' + (s.cancelada ? t("reactivarBtn") : t("cancelarBtn")) + '</button>';
-          if (s.origen === "manual") html += '<button class="delete-link" data-action="removeSuscripcionManual" data-id="' + s.id + '">' + t("eliminar") + '</button>';
-          html += '</div>';
-          html += '</div>';
-        });
-        html += '<div class="mini-total"><span>' + t("totalSuscripcionesLbl") + '</span><b>' + sym() + fmt0(totalSuscripcionesMes) + '</b></div>';
-      }
       html += '</div>';
     }
 
@@ -611,8 +591,11 @@ function renderApp() {
       const original = toNum(l.montoOriginal);
       const pago = toNum(l.montoPago);
       const pagado = saldo <= 0;
-      const pagosRestantes = pago > 0 ? Math.ceil(saldo / pago) : 0;
-      const interesEstimado = pago > 0 ? Math.max(pagosRestantes * pago - saldo, 0) : 0;
+      const proyeccion = loanProjection(l, 0);
+      const pagosRestantes = proyeccion.periodos;
+      const interesEstimado = proyeccion.interesTotal;
+      const extraSugerido = pago > 0 ? Math.max(10, Math.round(pago * 0.2)) : 0;
+      const proyeccionExtra = extraSugerido > 0 ? loanProjection(l, extraSugerido) : null;
       const np = pago > 0 && !pagado ? nextGenericPayInfo(l.ultimoPago, l.frecuencia) : null;
       const progreso = original > 0 ? Math.min(((original - saldo) / original) * 100, 100) : null;
 
@@ -628,7 +611,20 @@ function renderApp() {
           html += '<div class="progress-track"><div class="progress-fill" style="width:' + progreso + '%"></div></div>';
           html += '<div class="goal-caption"><span>' + sym() + fmt0(original - saldo) + ' ' + t("loanPagadoDe") + ' ' + sym() + fmt0(original) + '</span><span>' + Math.round(progreso) + '%</span></div>';
         }
-        if (!pagado && interesEstimado > 0) html += '<div class="opt-row-sub" style="margin-top:6px;">' + t("loanInteresEstimado")(fmt0(interesEstimado)) + '</div>';
+        if (!pagado && !proyeccion.imposible) {
+          html += '<div class="loan-projection">';
+          html += '<div><span>' + (LANG === "es" ? "Total que pagarás" : "Total to pay") + '</span><b>' + sym() + fmt0(proyeccion.totalPagado) + '</b></div>';
+          html += '<div><span>' + (LANG === "es" ? "Interés restante" : "Remaining interest") + '</span><b class="negative-text">' + sym() + fmt0(interesEstimado) + '</b></div>';
+          html += '<div><span>' + (LANG === "es" ? "Cuotas restantes" : "Payments left") + '</span><b>' + pagosRestantes + '</b></div>';
+          html += '</div>';
+          if (proyeccionExtra && proyeccionExtra.periodos < proyeccion.periodos) {
+            html += '<div class="loan-suggestion">' + (LANG === "es"
+              ? "Sugerencia: paga " + sym() + fmt0(extraSugerido) + " extra por cuota. Terminarías " + (proyeccion.periodos - proyeccionExtra.periodos) + " cuotas antes y ahorrarías " + sym() + fmt0(proyeccion.interesTotal - proyeccionExtra.interesTotal) + " en intereses."
+              : "Suggestion: pay " + sym() + fmt0(extraSugerido) + " extra per payment. You would finish " + (proyeccion.periodos - proyeccionExtra.periodos) + " payments sooner and save " + sym() + fmt0(proyeccion.interesTotal - proyeccionExtra.interesTotal) + " in interest.") + '</div>';
+          }
+        } else if (!pagado && proyeccion.imposible) {
+          html += '<div class="debt-warn">' + (LANG === "es" ? "La cuota no alcanza para cubrir el interés. Debes aumentar el pago." : "The payment does not cover the interest. Increase the payment.") + '</div>';
+        }
         if (np) html += '<div class="opt-row-sub" style="margin-top:4px;">' + t("proximoPago") + ': ' + esc(diasLabel(np.diffDays)) + ' \u00b7 ' + esc(formatDate(np.date)) + '</div>';
         html += renderPagoBlock("loan", l, saldo);
         html += '</div>';
@@ -829,7 +825,7 @@ function renderApp() {
     }
 
     // lista de turnos
-    html += '<div class="panel"><div class="panel-head-row"><h2>' + t("turnosTitle") + '</h2><button class="icon-pencil' + (state.showAgregarTurno ? " done" : "") + '" data-action="' + (state.showAgregarTurno ? "cancelAgregarTurno" : "startAgregarTurno") + '">' + (state.showAgregarTurno ? icon("check") : icon("plus")) + '</button></div><p class="hint">' + t("turnosHint") + '</p>';
+    html += '<div class="panel"><div class="panel-head-row"><h2>' + t("turnosTitle") + '</h2><button class="icon-pencil' + (state.showAgregarTurno ? " done" : "") + '" data-action="' + (state.showAgregarTurno ? "cancelAgregarTurno" : "startAgregarTurno") + '">' + (state.showAgregarTurno ? icon("close") : icon("plus")) + '</button></div><p class="hint">' + t("turnosHint") + '</p>';
     if (state.showAgregarTurno) {
       html += '<div class="goal-grid" style="margin-bottom:10px;">';
       html += '<div class="goal-field"><label>' + t("fechaLbl") + '</label><input type="date" id="at-fecha" value="' + esc(state.agregarTurnoForm.fecha) + '" data-scope="agregarTurno" data-field="fecha"></div>';
