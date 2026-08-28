@@ -95,6 +95,7 @@ const state = {
 
   goals: [], editingGoals: false, confirmDeleteGoalId: null, editingSaldosInicio: false, iconPickerSubId: null, confirmSumarAhorro: false, diaSemanaSel: null,
   historialSearch: "", historialCategoriaFiltro: "", showTxDetalle: null, notasTransacciones: {},
+  cuentasHistorialAbierto: false, cuentasAnalisisAbierto: false,
   historialMesesVisibles: 3, pagosMesesVisibles: 3, historialMesAbierto: null, historialVista: "compras", txDetalleFlash: "",
   cloudErrorMsg: "", cloudBusy: false, cloudFlash: "", confirmDisconnectId: null,
   payFrequency: "mensual", ultimoPago: "", proximoPagoAjuste: "", ingresosLog: [], loans: [],
