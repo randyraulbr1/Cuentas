@@ -149,13 +149,18 @@ async function unlockBiometric() {
   if (!credentialId) { state.pinError = LANG === "es" ? "Primero activa la huella en Opciones." : "Enable biometrics in Options first."; render(); return; }
   const biometricRunId = ++biometricUnlockSequence;
   biometricAbortController = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const biometricWatchdog = setTimeout(() => {
+    if (biometricRunId !== biometricUnlockSequence) return;
+    if (biometricAbortController) { try { biometricAbortController.abort(); } catch (error) {} }
+    state.biometricBusy = false;
+  }, 13000);
   state.biometricBusy = true; state.pinError = ""; render();
   try {
     const assertion = await navigator.credentials.get({ publicKey: {
       challenge: crypto.getRandomValues(new Uint8Array(32)),
       allowCredentials: [{ type: "public-key", id: base64UrlToBytes(credentialId), transports: ["internal"] }],
       userVerification: "required",
-      timeout: 60000
+      timeout: 12000
     }, signal: biometricAbortController ? biometricAbortController.signal : undefined });
     if (!assertion) throw new Error("No assertion");
     if (biometricRunId !== biometricUnlockSequence) return;
@@ -164,6 +169,7 @@ async function unlockBiometric() {
     if (biometricRunId !== biometricUnlockSequence) return;
     state.pinError = LANG === "es" ? "No se pudo comprobar la huella. Usa el PIN o vuelve a intentarlo." : "Biometric verification failed. Use the PIN or try again.";
   }
+  clearTimeout(biometricWatchdog);
   if (biometricRunId === biometricUnlockSequence) { state.biometricBusy = false; biometricAbortController = null; render(); }
 }
 
@@ -402,6 +408,8 @@ function verMesTendencia(mk) {
 
 async function actualizarApp() {
   try {
+    if (saveTimeout) { clearTimeout(saveTimeout); saveTimeout = null; saveUserDataNow(); }
+    try { sessionStorage.setItem("305-save-safe-update", String(Date.now())); } catch (error) {}
     if ("serviceWorker" in navigator) {
       const reg = await navigator.serviceWorker.getRegistration();
       if (reg && reg.waiting) {
@@ -710,6 +718,16 @@ root.addEventListener("click", (e) => {
 (async function boot() {
   try { history.replaceState({ ccTab: "inicio", ccOverlay: null }, ""); } catch (e) {}
   applyTheme(); applyTextSize();
+
+  // Decide el bloqueo antes de esperar IndexedDB, el banco o el service worker.
+  // Así una recarga lenta nunca muestra una pantalla intermedia que luego deje botones congelados.
+  try { state.appLocked = !!localStorage.getItem(PIN_HASH_KEY); } catch (error) { state.appLocked = false; }
+  state.pinBusy = false;
+  state.biometricBusy = false;
+  state.pinInput = "";
+  state.pinError = "";
+  if (state.appLocked) render();
+
   await ensureMigrated();
   const session = await loadAuthSession();
   if (session && session.token) {
@@ -719,7 +737,6 @@ root.addEventListener("click", (e) => {
   const activeId = (function () { try { return localStorage.getItem(ACTIVE_KEY); } catch (e) { return null; } })();
   if (activeId && state.profiles.some((p) => p.id === activeId)) await enterProfile(activeId);
   else render();
-  try { state.appLocked = !!localStorage.getItem(PIN_HASH_KEY); } catch (error) { state.appLocked = false; }
   if (state.appLocked) render();
   if (state.authToken && state.apiBaseUrl) {
     const huboCache = await cargarCacheNube();
@@ -758,6 +775,29 @@ root.addEventListener("click", (e) => {
     }
   }
 })();
+
+/* Recupera controles si Android restaura la PWA desde memoria o interrumpe una huella. */
+window.addEventListener("pageshow", (event) => {
+  if (!event.persisted) return;
+  pinUnlockSequence++;
+  biometricUnlockSequence++;
+  if (biometricAbortController) { try { biometricAbortController.abort(); } catch (error) {} biometricAbortController = null; }
+  state.pinBusy = false;
+  state.biometricBusy = false;
+  state.pinError = "";
+  render();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible" || !state.appLocked) return;
+  if (state.pinBusy) { pinUnlockSequence++; state.pinBusy = false; }
+  if (state.biometricBusy) {
+    biometricUnlockSequence++;
+    if (biometricAbortController) { try { biometricAbortController.abort(); } catch (error) {} biometricAbortController = null; }
+    state.biometricBusy = false;
+  }
+  render();
+});
 
 setInterval(checkHorarioReminder, 60000);
 
