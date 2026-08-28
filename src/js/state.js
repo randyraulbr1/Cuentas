@@ -78,7 +78,7 @@ const state = {
   showExport: false, exportCopied: false,
   activeTab: "inicio",
   confirmDeleteSubId: null, confirmDeleteCardId: null, confirmDeleteHistoryKey: null, confirmDeleteLoanId: null,
-  editingSubs: false,
+  editingSubs: false, subPresetPicker: false,
   editingIngreso: false, editingAhorro: false, editingCards: false, editingLoans: false,
   payingTarget: null, payingSubId: null, payFormSource: "ahorro", payFormMonto: "", payFlash: false, autoPagoNotif: null,
   expandedCardIds: {},
