@@ -204,3 +204,7 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .opt-slider-row input[type="range"] { min-height: 44px; touch-action: pan-x; cursor: pointer; pointer-events: auto !important; }
 .opt-slider-row input[type="range"]::-webkit-slider-thumb { width: 26px; height: 26px; }
 [data-savings-rate] { touch-action: manipulation; pointer-events: auto !important; }
+
+/* v117: cinco accesos principales */
+.tab-bar { display:grid !important; grid-template-columns:repeat(5,minmax(0,1fr)); }
+.tab-bar .tab-btn { min-width:0; padding-left:2px; padding-right:2px; }
