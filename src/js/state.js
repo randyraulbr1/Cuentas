@@ -6,8 +6,8 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v90";
-const BUILD_DATE = "28/08 02:05 UTC";
+const APP_VERSION = "v91";
+const BUILD_DATE = "28/08 13:16 UTC";
 
 let uidCounter = 1;
 
@@ -50,6 +50,7 @@ const MESES_ES = ["enero","febrero","marzo","abril","mayo","junio","julio","agos
 const MESES_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const monthKey = (d) => { d = d || new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); };
+const dateKeyOf = (d) => { d = (d instanceof Date) ? d : new Date(d); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
 
 const monthLabel = (key) => { const p = key.split("-").map(Number); const arr = LANG === "es" ? MESES_ES : MESES_EN; return arr[p[1] - 1] + " " + p[0]; };
 
@@ -97,6 +98,7 @@ const state = {
   historialMesesVisibles: 3, pagosMesesVisibles: 3, historialMesAbierto: null, historialVista: "compras", txDetalleFlash: "",
   cloudErrorMsg: "", cloudBusy: false, cloudFlash: "", confirmDisconnectId: null,
   payFrequency: "mensual", ultimoPago: "", proximoPagoAjuste: "", ingresosLog: [], loans: [],
+  ingresoSemanalDefault: "", ingresoSemanalDia: 5, ingresoAutoDisabledDates: [], cashflowPeriod: "week",
   job: { nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false, limiteAlmuerzo: "30" },
   turnos: [], turnoActivo: null, pagosTrabajo: [], workNotifBanner: null,
   editingJob: false, confirmTerminarTrabajo: false, confirmDeleteTurnoId: null, expandedTurnoIds: {},

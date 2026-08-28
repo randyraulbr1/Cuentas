@@ -231,6 +231,28 @@ function renderDonutChart(items) {
   return h;
 }
 
+function renderCashflowChart(buckets) {
+  const maxVal = Math.max(...buckets.map((b) => Math.max(b.ingresos, b.gastos)), 1);
+  const half = 74;
+  let h = '<div style="display:flex;align-items:center;gap:3px;height:' + (half * 2 + 20) + 'px;margin:8px 0;overflow-x:auto;">';
+  buckets.forEach((b) => {
+    const ingH = Math.round((b.ingresos / maxVal) * half);
+    const gasH = Math.round((b.gastos / maxVal) * half);
+    const disabled = b.ingresos === 0 && toNum(state.ingresoSemanalDefault) > 0;
+    h += '<button data-action="toggleIngresoAutoRango" data-start="' + b.rangeStart + '" data-end="' + b.rangeEnd + '" style="all:unset;flex:1;min-width:16px;display:flex;flex-direction:column;align-items:center;cursor:pointer;">';
+    h += '<div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:' + half + 'px;">';
+    h += '<div style="width:100%;max-width:22px;margin:0 auto;height:' + Math.max(ingH, b.ingresos > 0 ? 2 : 0) + 'px;background:#22c55e;border-radius:3px 3px 0 0;' + (disabled ? "opacity:.35;" : "") + '"></div>';
+    h += '</div>';
+    h += '<div style="width:100%;display:flex;flex-direction:column;height:' + half + 'px;">';
+    h += '<div style="width:100%;max-width:22px;margin:0 auto;height:' + Math.max(gasH, b.gastos > 0 ? 2 : 0) + 'px;background:#ef4444;border-radius:0 0 3px 3px;"></div>';
+    h += '</div>';
+    h += '<div style="font-size:8.5px;color:var(--text-muted);margin-top:4px;white-space:nowrap;">' + esc(b.etiqueta) + '</div>';
+    h += '</button>';
+  });
+  h += '</div>';
+  return h;
+}
+
 function renderBarChart(items, height, clickAction) {
   height = height || 90;
   const max = Math.max(...items.map((i) => i.valor), 1);
@@ -894,6 +916,27 @@ function renderApp() {
 
   if (tab === "insights" || tab === "cuentas") {
     if (tab === "cuentas") html += '<div class="section-title-divider"><h2>' + t("tabInsights") + '</h2></div>';
+
+    // Flujo de caja: grafica tipo velas (verde=ingreso, rojo=gasto)
+    html += '<div class="panel">';
+    html += '<div class="panel-head-row"><h2>' + t("flujoCajaTitle") + '</h2></div>';
+    html += '<div class="seg" style="margin-bottom:6px;">';
+    [["day", "periodoDia"], ["week", "periodoSemana"], ["month", "periodoMes"]].forEach((p) => {
+      html += '<button style="flex:1;" class="' + (state.cashflowPeriod === p[0] ? "active" : "") + '" data-action="setCashflowPeriod" data-id="' + p[0] + '">' + t(p[1]) + '</button>';
+    });
+    html += '</div>';
+    html += renderCashflowChart(buildCashflowBuckets(state.cashflowPeriod));
+    html += '<div style="display:flex;gap:14px;font-size:11.5px;color:var(--text-muted);margin-bottom:4px;"><span>\ud83d\udfe2 ' + t("legendIngreso") + '</span><span>\ud83d\udd34 ' + t("legendGasto") + '</span></div>';
+    html += '<p class="hint" style="margin-bottom:10px;">' + t("flujoCajaHint") + '</p>';
+    html += '<div class="goal-field"><label>' + t("ingresoSemanalLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" value="' + esc(state.ingresoSemanalDefault) + '" data-scope="ingresoSemanal"></div>';
+    html += '<label style="font-size:13px;font-weight:600;color:var(--text-muted);display:block;margin:8px 0 6px;">' + t("diaDePagoLbl") + '</label>';
+    html += '<div class="seg">';
+    t("diasSemanaCortos").forEach((dnom, di) => {
+      html += '<button style="flex:1;padding:8px 0;font-size:11px;" class="' + (toNum(state.ingresoSemanalDia) === di ? "active" : "") + '" data-action="setIngresoSemanalDia" data-id="' + di + '">' + dnom + '</button>';
+    });
+    html += '</div>';
+    html += '</div>';
+
     const ins = computeInsights();
     html += '<div class="panel">';
     html += '<h2>' + t("gastoMesTitle") + '</h2>';

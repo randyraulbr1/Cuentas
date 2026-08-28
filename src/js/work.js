@@ -216,6 +216,26 @@ function pendienteDePago() {
 
 function toggleEditJob() { state.editingJob = !state.editingJob; render(); }
 
+function setCashflowPeriod(p) { state.cashflowPeriod = p; render(); }
+
+function toggleIngresoAutoRango(startStr, endStr) {
+  const start = new Date(startStr + "T00:00:00");
+  const end = new Date(endStr + "T00:00:00");
+  const diaSemana = toNum(state.ingresoSemanalDia);
+  const datesInRange = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    if (d.getDay() === diaSemana) datesInRange.push(dateKeyOf(d));
+  }
+  if (!datesInRange.length) return;
+  const anyEnabled = datesInRange.some((dk) => state.ingresoAutoDisabledDates.indexOf(dk) === -1);
+  if (anyEnabled) {
+    datesInRange.forEach((dk) => { if (state.ingresoAutoDisabledDates.indexOf(dk) === -1) state.ingresoAutoDisabledDates.push(dk); });
+  } else {
+    state.ingresoAutoDisabledDates = state.ingresoAutoDisabledDates.filter((dk) => datesInRange.indexOf(dk) === -1);
+  }
+  scheduleSave(); render();
+}
+
 function startPagoTrabajo() {
   state.showPagoTrabajo = true;
   state.pagoTrabajoForm = { fecha: new Date().toISOString().slice(0, 10), montoBruto: "", montoNeto: "", bonos: "", horasExtra: "", descuentos: "", metodo: "", notas: "", turnosSel: {} };

@@ -1,5 +1,60 @@
 "use strict";
 
+function ingresoAutoParaFecha(dateObj) {
+  const monto = toNum(state.ingresoSemanalDefault);
+  if (monto <= 0) return 0;
+  if (dateObj.getDay() !== toNum(state.ingresoSemanalDia)) return 0;
+  if (state.ingresoAutoDisabledDates.indexOf(dateKeyOf(dateObj)) !== -1) return 0;
+  return monto;
+}
+
+function buildCashflowBuckets(period) {
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+
+  function sumaRango(start, end) {
+    let ingresos = 0, gastos = 0;
+    state.cloudTransactions.forEach((tx) => {
+      const d = new Date(String(tx.fecha) + "T00:00:00");
+      if (d >= start && d < end) {
+        const m = toNum(tx.monto);
+        if (m >= 0) ingresos += m; else gastos += Math.abs(m);
+      }
+    });
+    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) ingresos += ingresoAutoParaFecha(d);
+    return { ingresos, gastos };
+  }
+
+  const buckets = [];
+  if (period === "day") {
+    for (let i = 13; i >= 0; i--) {
+      const start = new Date(now); start.setDate(start.getDate() - i);
+      const end = new Date(start); end.setDate(end.getDate() + 1);
+      const r = sumaRango(start, end);
+      buckets.push({ etiqueta: String(start.getDate()), ingresos: r.ingresos, gastos: r.gastos, rangeStart: dateKeyOf(start), rangeEnd: dateKeyOf(start) });
+    }
+  } else if (period === "week") {
+    const dow = now.getDay();
+    const offsetToMonday = dow === 0 ? 6 : dow - 1;
+    const thisMonday = new Date(now); thisMonday.setDate(thisMonday.getDate() - offsetToMonday);
+    for (let i = 7; i >= 0; i--) {
+      const start = new Date(thisMonday); start.setDate(start.getDate() - i * 7);
+      const end = new Date(start); end.setDate(end.getDate() + 7);
+      const r = sumaRango(start, end);
+      const endIncl = new Date(end); endIncl.setDate(endIncl.getDate() - 1);
+      buckets.push({ etiqueta: String(start.getDate()) + "/" + String(start.getMonth() + 1), ingresos: r.ingresos, gastos: r.gastos, rangeStart: dateKeyOf(start), rangeEnd: dateKeyOf(endIncl) });
+    }
+  } else {
+    for (let i = 5; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const r = sumaRango(start, end);
+      const endIncl = new Date(end); endIncl.setDate(endIncl.getDate() - 1);
+      buckets.push({ etiqueta: (LANG === "es" ? MESES_ES : MESES_EN)[start.getMonth()].slice(0, 3), ingresos: r.ingresos, gastos: r.gastos, rangeStart: dateKeyOf(start), rangeEnd: dateKeyOf(endIncl) });
+    }
+  }
+  return buckets;
+}
+
 function computeInsights() {
   const now = new Date();
   const mesActualKey = monthKey();
