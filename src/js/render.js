@@ -251,7 +251,7 @@ function renderCashflowChart(buckets) {
   };
 
   let h = '<div class="trading-chart-shell">';
-  h += '<div class="trading-chart-head"><div><span class="trading-symbol">305 CASH FLOW</span><span class="trading-live"><i></i>' + (LANG === "es" ? "Datos reales" : "Live data") + '</span></div>';
+  h += '<div class="trading-chart-head"><div><span class="trading-symbol">305 CASH FLOW</span><span class="trading-live"><i></i>' + ((totalIncome === 0 && totalExpense === 0) ? (LANG === "es" ? "Esperando movimientos del banco" : "Waiting for bank transactions") : (LANG === "es" ? "Datos reales" : "Live data")) + '</span></div>';
   h += '<div class="trading-net ' + (totalIncome - totalExpense >= 0 ? "positive" : "negative") + '">' +
     (totalIncome - totalExpense >= 0 ? "+" : "\u2212") + sym() + fmt0(Math.abs(totalIncome - totalExpense)) + '</div></div>';
   h += '<div class="trading-totals"><span class="positive-text">▲ ' + (LANG === "es" ? "Ingresos" : "Income") + ' ' + sym() + fmt0(totalIncome) + '</span>';
