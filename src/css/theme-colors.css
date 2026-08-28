@@ -182,3 +182,52 @@
   .theme-color-picker { grid-template-columns: repeat(5, 29px); gap: 6px; }
   .theme-color-btn { width: 29px; height: 29px; }
 }
+
+/* Modo oscuro uniforme: superficies carbon, texto legible y sin paneles blancos. */
+:root[data-theme="dark"] {
+  --bg: #0B0C0E;
+  --card-bg: #15171A;
+  --card-bg-2: #1A1D21;
+  --text: #F4F5F7;
+  --text-muted: #A3A8B0;
+  --border: #2B2F35;
+  --input-bg: #202329;
+  --input-border: #343941;
+  --pill-bg: #262A30;
+  --shadow: 0 1px 2px rgba(0,0,0,.28);
+  --shadow-lift: none;
+}
+:root[data-theme="dark"][data-accent-theme="black"] {
+  --accent: #8D949D;
+  --accent-strong: #24272C;
+  --accent-soft: #202329;
+  --accent-contrast: #FFFFFF;
+}
+:root[data-theme="dark"] .hero-card {
+  background: #181B20;
+  border-color: color-mix(in srgb, var(--accent) 55%, #343941);
+}
+:root[data-theme="dark"] .hero-lbl { color: #AEB4BC; }
+:root[data-theme="dark"] .hero-val { color: #FFFFFF; }
+:root[data-theme="dark"] .hero-sub {
+  background: #23272D;
+  border-color: #383D45;
+  color: #E8EAED;
+}
+:root[data-theme="dark"] .panel,
+:root[data-theme="dark"] .sum-card,
+:root[data-theme="dark"] .result-card,
+:root[data-theme="dark"] .options-sheet,
+:root[data-theme="dark"] .tab-bar {
+  background: var(--card-bg);
+  color: var(--text);
+}
+:root[data-theme="dark"] .seg button.active,
+:root[data-theme="dark"] .pill-btn.confirm,
+:root[data-theme="dark"] .calc-btn,
+:root[data-theme="dark"] .fab-add,
+:root[data-theme="dark"] .preset-chip.active-chip {
+  color: var(--accent-contrast);
+}
+:root[data-theme="dark"] .theme-color-btn[data-accent-choice="black"] { background: #555B63; }
+:root[data-theme="dark"] .theme-color-btn[data-accent-choice="black"].active::after { color: #FFFFFF; }
