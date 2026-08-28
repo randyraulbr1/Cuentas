@@ -144,7 +144,7 @@ function startPago(type, targetId) {
     if (loan && toNum(loan.montoPago) > 0) sugerido = String(toNum(loan.montoPago));
   }
   state.payingTarget = { type: type, id: targetId };
-  state.payFormSource = "debito";
+  state.payFormSource = "ninguno";
   state.payFormMonto = sugerido;
   render();
 }
@@ -170,9 +170,6 @@ function confirmPago() {
   pushUndo();
   if (state.payingTarget.type === "loan") applyLoanPayment(item, monto, new Date().toISOString().slice(0, 10));
   else item[field] = String(Math.max(toNum(item[field]) - monto, 0));
-  if (state.payFormSource === "debito") state.debito = String(Math.max(toNum(state.debito) - monto, 0));
-  else if (state.payFormSource === "ahorro") state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
-  else if (state.payFormSource === "cash") state.cash = String(Math.max(toNum(state.cash) - monto, 0));
   state.payingTarget = null;
   state.payFormMonto = "";
   state.payFlash = true;
