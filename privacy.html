@@ -16,7 +16,6 @@
   .doc p, .doc li { font-size: 14.5px; line-height: 1.6; color: var(--text); }
   .doc ul { padding-left: 20px; margin: 8px 0; }
   .doc .box { background: var(--card-bg); border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow); margin: 14px 0; }
-  .doc .future { border-left: 3px solid #3D5AFE; padding-left: 14px; }
   .doc a { color: #3D5AFE; }
   .back-link { display: inline-block; margin-bottom: 18px; font-size: 13.5px; color: #3D5AFE; text-decoration: none; }
 </style>
@@ -25,47 +24,70 @@
 <div class="page"><div class="doc">
 <a class="back-link" href="index.html">&larr; Volver a la app</a>
 <h1>Política de privacidad</h1>
-<p class="updated">Última actualización: 20 de julio de 2026</p>
+<p class="updated">Última actualización: 28 de agosto de 2026</p>
 
 <div class="box">
-<p><strong>Resumen en una frase:</strong> 305 Save guarda tus datos financieros únicamente en tu propio teléfono (localStorage e IndexedDB del navegador). Hoy no existe ningún servidor: nada de lo que escribes en la app sale de tu dispositivo, ni nosotros ni nadie más lo puede ver.</p>
+<p><strong>Resumen:</strong> 305 Save utiliza datos que introduces en la app y, únicamente con tu autorización, datos financieros obtenidos mediante Plaid para mostrar cuentas, saldos y transacciones y ayudarte a administrar tus finanzas personales.</p>
 </div>
 
-<h2>Qué datos recopila la app hoy</h2>
-<p>Todo lo que tú ingresas manualmente: ingreso, pagos fijos, tarjetas, préstamos, ahorro, turnos de trabajo y, si eliges importarlo, el contenido de un archivo CSV de estado de cuenta que tú mismo descargas de tu banco.</p>
+<h2>Información que recopilamos</h2>
 <ul>
-  <li>Estos datos se guardan solo en tu dispositivo (IndexedDB/localStorage del navegador).</li>
-  <li>Un archivo CSV que importes se procesa dentro del propio navegador y nunca se envía a ningún servidor.</li>
-  <li>No usamos cookies de rastreo, analítica de terceros ni publicidad.</li>
+  <li><strong>Cuenta de 305 Save:</strong> dirección de correo electrónico o identificador técnico del dispositivo, contraseña protegida mediante hash y registro de consentimiento.</li>
+  <li><strong>Información introducida por ti:</strong> ingresos, pagos, tarjetas, préstamos, ahorro, turnos de trabajo, preferencias y datos importados mediante archivos compatibles.</li>
+  <li><strong>Información bancaria autorizada mediante Plaid:</strong> institución, nombres y tipos de cuentas, últimos dígitos de la cuenta, saldos, límites, transacciones, comercios y determinada información de obligaciones financieras cuando la institución la proporciona.</li>
+  <li><strong>Información técnica necesaria:</strong> identificadores de conexión, fechas de sincronización y registros técnicos básicos utilizados para operar y proteger el servicio.</li>
 </ul>
 
-<h2>Para qué se usan tus datos</h2>
-<p>Únicamente para calcular tus resúmenes, sugerencias y categorías dentro de la propia app, en tu propio dispositivo. No se usan para ningún otro fin.</p>
+<h2>Cómo obtenemos tu consentimiento</h2>
+<p>La conexión bancaria es opcional. Antes de conectar una institución, Plaid Link muestra la información solicitada y te permite seleccionar y autorizar las cuentas. No recibimos ni almacenamos el usuario o la contraseña que utilizas para entrar a tu banco. Puedes revocar la conexión desde Opciones → Desconectar banco.</p>
 
-<h2>Qué NO hacemos con tus datos</h2>
+<h2>Cómo utilizamos la información</h2>
 <ul>
-  <li>No vendemos, alquilamos ni compartimos tus datos financieros con nadie.</li>
-  <li>No los usamos para publicidad.</li>
-  <li>No los enviamos a ningún servidor propio ni de terceros mientras la app funcione en su modo actual (100% local).</li>
+  <li>Mostrar cuentas, saldos, transacciones y obligaciones financieras autorizadas.</li>
+  <li>Clasificar movimientos, preparar resúmenes y ayudarte a controlar pagos, gastos, trabajo y ahorro.</li>
+  <li>Sincronizar la información bancaria que hayas autorizado.</li>
+  <li>Autenticar usuarios, prevenir accesos abusivos, diagnosticar errores y mantener el servicio.</li>
 </ul>
 
-<h2>Cómo eliminar tu información</h2>
-<p>Dentro de la app: Opciones → "Restablecer todo" borra todos los datos del perfil activo. También puedes eliminar un perfil completo desde la pantalla de selección de perfiles. Como todo vive en tu dispositivo, desinstalar la app o borrar los datos del sitio en tu navegador elimina absolutamente todo de forma permanente.</p>
-
-<h2 class="future">Si en el futuro conectas tu banco (función planeada, aún no activa)</h2>
-<div class="future">
-<p>Estamos preparando una función opcional para conectar tu cuenta bancaria mediante un proveedor especializado (como Plaid), a través de un servidor propio. Esa función <strong>todavía no está activa</strong>. Cuando lo esté, aplicará lo siguiente:</p>
+<h2>Dónde se guarda y cómo se protege</h2>
+<p>Parte de la información y las preferencias puede guardarse localmente en tu navegador mediante localStorage o IndexedDB. Las cuentas de usuario, conexiones bancarias y datos sincronizados se procesan mediante nuestro servidor y base de datos alojados por proveedores de infraestructura.</p>
 <ul>
-  <li>Nunca vemos ni guardamos tu usuario ni contraseña del banco — eso lo maneja directamente el proveedor de conexión bancaria.</li>
-  <li>Solo se leerán los datos que autorices: cuentas, saldos, tarjetas, préstamos, movimientos y transacciones recurrentes.</li>
-  <li>Los tokens de acceso se guardarán cifrados en el servidor, nunca en tu teléfono ni en el código de la app.</li>
-  <li>Podrás desconectar tu banco cuando quieras desde la app.</li>
-  <li>Te pediremos tu consentimiento explícito antes de conectar cualquier cuenta, y podrás revocarlo en cualquier momento.</li>
+  <li>Las conexiones entre la aplicación, el servidor y Plaid utilizan HTTPS/TLS.</li>
+  <li>Las contraseñas de 305 Save se almacenan mediante hash y no en texto legible.</li>
+  <li>Los tokens de acceso de Plaid se cifran en el servidor mediante AES-256-GCM.</li>
+  <li>Los saldos y transacciones guardados en la base de datos no cuentan actualmente con cifrado individual a nivel de aplicación.</li>
 </ul>
-</div>
 
-<h2>Cómo contactar al desarrollador</h2>
-<p>Para preguntas sobre esta política o tus datos, escribe a: <a href="mailto:soporte@cuentasclaras.app">soporte@cuentasclaras.app</a> (actualiza esta dirección por la tuya real antes de publicar).</p>
+<h2>Proveedores necesarios</h2>
+<p>Utilizamos Plaid para conectar instituciones financieras y proveedores de alojamiento, servidor y base de datos para operar 305 Save. Estos proveedores procesan información solo en la medida necesaria para prestar sus servicios y están sujetos a sus propias condiciones y políticas de privacidad.</p>
+
+<h2>Qué no hacemos</h2>
+<ul>
+  <li>No vendemos ni alquilamos tus datos personales o financieros.</li>
+  <li>No utilizamos tus datos financieros para publicidad.</li>
+  <li>No recibimos ni almacenamos las credenciales de acceso de tu banco.</li>
+</ul>
+
+<h2>Tus opciones y derechos</h2>
+<ul>
+  <li>Puedes decidir no conectar un banco y utilizar las funciones manuales de la aplicación.</li>
+  <li>Puedes desconectar una institución desde la aplicación para detener futuras sincronizaciones y revocar su token de acceso.</li>
+  <li>Al desconectar, puedes eliminar los datos bancarios importados asociados según la opción disponible en la aplicación.</li>
+  <li>Puedes eliminar tu cuenta de 305 Save desde Opciones → Eliminar mi cuenta. Esta acción elimina del servidor el usuario y los datos asociados a su cuenta.</li>
+  <li>Puedes borrar los datos locales eliminando el perfil, restableciendo la aplicación o borrando los datos del sitio en tu navegador.</li>
+</ul>
+
+<h2>Retención de información</h2>
+<p>Los datos se conservan mientras tu cuenta o conexión permanezca activa y hasta que los elimines mediante las opciones disponibles. En este momento no existe un calendario formal de retención con plazos periódicos para cada categoría de datos. Consulta la política de retención y eliminación para obtener más detalles.</p>
+
+<h2>Privacidad infantil</h2>
+<p>305 Save no está dirigido a menores de 13 años y no recopilamos conscientemente información personal de menores de esa edad.</p>
+
+<h2>Cambios en esta política</h2>
+<p>Podemos actualizar esta política cuando cambien las funciones o prácticas del servicio. La fecha de la versión vigente aparece en la parte superior de esta página.</p>
+
+<h2>Contacto</h2>
+<p>Para preguntas o solicitudes relacionadas con esta política o tus datos, escribe a <a href="mailto:randyraulbr1@gmail.com">randyraulbr1@gmail.com</a>.</p>
 
 <p><a href="data-policy.html">Ver política de retención y eliminación de datos &rarr;</a></p>
 </div></div>
