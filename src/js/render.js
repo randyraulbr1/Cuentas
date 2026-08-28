@@ -168,7 +168,7 @@ function renderExportSheet() {
 }
 
 function renderOpcionesTab() {
-  let h = '<p class="opt-row-sub" style="text-align:center;margin:-4px 0 12px;">' + t("optionsTitle") + ' \u00b7 v' + APP_VERSION.replace("v", "") + '</p>';
+  let h = '<p class="opt-row-sub" style="text-align:center;margin:-4px 0 12px;">' + t("optionsTitle") + ' \u00b7 v' + APP_VERSION.replace("v", "") + ' \u00b7 ' + BUILD_DATE + '</p>';
     h += renderBancoNubePanel(true);
 
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
