@@ -1,6 +1,10 @@
 "use strict";
 
-function addSub() { state.subs.push({ id: uid(), nombre: "", monto: "" }); scheduleSave(); rerenderPreservingFocus(); }
+function addSub() {
+  state.subs.push({ id: uid(), nombre: "", monto: "", categoria: "otro", diaPago: "" });
+  state.subPresetPicker = false; state.editingSubs = true;
+  scheduleSave(); rerenderPreservingFocus();
+}
 
 function toggleEditSubs() { state.editingSubs = !state.editingSubs; state.confirmDeleteSubId = null; render(); }
 
@@ -44,6 +48,38 @@ function confirmPagoSub() {
   rerenderPreservingFocus();
 }
 
+function syncFixedPaymentsFromBank() {
+  if (!state.cloudTransactions || !state.cloudTransactions.length || !state.subs.length) return;
+  const currentMonth = monthKey();
+  const expenses = state.cloudTransactions.filter((tx) =>
+    toNum(tx.monto) < 0 && String(tx.fecha || "").slice(0, 7) === currentMonth
+  );
+  let changed = false;
+  state.subs.forEach((sub) => {
+    if (sub.pagadoMes === currentMonth || toNum(sub.monto) <= 0) return;
+    const expected = toNum(sub.monto);
+    const subName = merchantKey(sub.nombre || "");
+    const match = expenses.find((tx) => {
+      const actual = Math.abs(toNum(tx.monto));
+      const tolerance = Math.max(3, expected * 0.10);
+      if (Math.abs(actual - expected) > tolerance) return false;
+      const txName = merchantKey(tx.merchant_name || tx.descripcion || "");
+      const sameMerchant = !!sub.merchantKey && txName === sub.merchantKey;
+      const similarName = subName.length >= 4 && (txName.indexOf(subName) !== -1 || subName.indexOf(txName) !== -1);
+      const sameCategory = !!sub.categoria && sub.categoria !== "otro" && tx.categoria === sub.categoria;
+      return sameMerchant || similarName || sameCategory || Math.abs(actual - expected) < 0.01;
+    });
+    if (!match) return;
+    sub.pagadoMes = currentMonth;
+    sub.pagadoFuente = "banco";
+    sub.pagadoMonto = String(Math.abs(toNum(match.monto)));
+    sub.matchedBankTxId = match.id;
+    if (!sub.diaPago) sub.diaPago = String(Number(String(match.fecha).slice(8, 10)) || "");
+    changed = true;
+  });
+  if (changed) scheduleSave();
+}
+
 function toggleEditIngreso() { state.editingIngreso = !state.editingIngreso; render(); }
 
 function addIngresoEntry() { state.ingresosLog.push({ id: uid(), monto: "", month: monthKey() }); scheduleSave(); rerenderPreservingFocus(); }
@@ -57,8 +93,9 @@ function toggleEditCards() { state.editingCards = !state.editingCards; state.con
 function addSubPreset(key) {
   const preset = SUB_PRESETS.find((p) => p.key === key);
   if (!preset) return;
-  const nuevo = { id: uid(), nombre: t("preset_" + key), monto: "", categoria: preset.cat };
+  const nuevo = { id: uid(), nombre: t("preset_" + key), monto: "", categoria: preset.cat, diaPago: "" };
   state.subs.push(nuevo);
+  state.subPresetPicker = false;
   state.editingSubs = true;
   scheduleSave(); rerenderPreservingFocus();
   setTimeout(() => { const inp = document.getElementById("sub-monto-" + nuevo.id); if (inp) inp.focus(); }, 50);
