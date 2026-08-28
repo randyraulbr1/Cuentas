@@ -39,9 +39,6 @@ async function enterProfile(id) {
   state.ultimoPago = d.ultimoPago || "";
   state.proximoPagoAjuste = d.proximoPagoAjuste || "";
   state.ingresosLog = d.ingresosLog || [];
-  state.ingresoSemanalDefault = d.ingresoSemanalDefault !== undefined ? d.ingresoSemanalDefault : "";
-  state.ingresoSemanalDia = d.ingresoSemanalDia !== undefined ? d.ingresoSemanalDia : 5;
-  state.ingresoAutoDisabledDates = d.ingresoAutoDisabledDates || [];
   state.loans = d.loans || [];
   state.job = Object.assign({ nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false, limiteAlmuerzo: "30" }, d.job || {});
   if (!state.job.pagoHora) state.job.pagoHora = "18";
@@ -212,7 +209,6 @@ root.addEventListener("input", (e) => {
   if (scope === "ingreso") { state.ingreso = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "debito") { state.debito = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
-  if (scope === "ingresoSemanal") { state.ingresoSemanalDefault = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "cash") { state.cash = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "apiBaseUrl") { state.apiBaseUrl = el.value.trim(); saveSettings(); rerenderPreservingFocus(); return; }
   if (scope === "authEmail") { state.authEmail = el.value; rerenderPreservingFocus(); return; }
@@ -339,9 +335,9 @@ root.addEventListener("click", (e) => {
     askDeleteBankTx: () => askDeleteBankTx(id), cancelDeleteBankTx: cancelDeleteBankTx, removeBankTx: () => removeBankTx(id),
     toggleEditJob: toggleEditJob,
     requestWorkNotifPermission: requestWorkNotifPermission,
+    askEmpezarBreak: askEmpezarBreak,
+    cancelEmpezarBreak: cancelEmpezarBreak,
     setCashflowPeriod: () => setCashflowPeriod(id),
-    toggleIngresoAutoRango: () => toggleIngresoAutoRango(btn.dataset.start, btn.dataset.end),
-    setIngresoSemanalDia: () => { state.ingresoSemanalDia = toNum(id); scheduleSave(); render(); },
     setJobFrecuencia: () => updateJobField("frecuenciaPago", freq),
     setDescansoPagadoOn: () => updateJobField("descansoPagado", true),
     setDescansoPagadoOff: () => updateJobField("descansoPagado", false),

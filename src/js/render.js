@@ -238,16 +238,15 @@ function renderCashflowChart(buckets) {
   buckets.forEach((b) => {
     const ingH = Math.round((b.ingresos / maxVal) * half);
     const gasH = Math.round((b.gastos / maxVal) * half);
-    const disabled = b.ingresos === 0 && toNum(state.ingresoSemanalDefault) > 0;
-    h += '<button data-action="toggleIngresoAutoRango" data-start="' + b.rangeStart + '" data-end="' + b.rangeEnd + '" style="all:unset;flex:1;min-width:16px;display:flex;flex-direction:column;align-items:center;cursor:pointer;">';
+    h += '<div style="flex:1;min-width:16px;display:flex;flex-direction:column;align-items:center;">';
     h += '<div style="width:100%;display:flex;flex-direction:column;justify-content:flex-end;height:' + half + 'px;">';
-    h += '<div style="width:100%;max-width:22px;margin:0 auto;height:' + Math.max(ingH, b.ingresos > 0 ? 2 : 0) + 'px;background:#22c55e;border-radius:3px 3px 0 0;' + (disabled ? "opacity:.35;" : "") + '"></div>';
+    h += '<div style="width:100%;max-width:22px;margin:0 auto;height:' + Math.max(ingH, b.ingresos > 0 ? 2 : 0) + 'px;background:#22c55e;border-radius:3px 3px 0 0;"></div>';
     h += '</div>';
     h += '<div style="width:100%;display:flex;flex-direction:column;height:' + half + 'px;">';
     h += '<div style="width:100%;max-width:22px;margin:0 auto;height:' + Math.max(gasH, b.gastos > 0 ? 2 : 0) + 'px;background:#ef4444;border-radius:0 0 3px 3px;"></div>';
     h += '</div>';
     h += '<div style="font-size:8.5px;color:var(--text-muted);margin-top:4px;white-space:nowrap;">' + esc(b.etiqueta) + '</div>';
-    h += '</button>';
+    h += '</div>';
   });
   h += '</div>';
   return h;
@@ -769,9 +768,11 @@ function renderApp() {
         if (state.job.descansoPagado) html += '<div class="opt-row-sub" style="margin:8px 0 0;">' + t("brutoAcumuladoLbl") + ': ' + sym() + fmt0(bruto) + '</div>';
       }
       html += '<div style="display:flex;gap:8px;margin-top:12px;">';
-      if (!enBreak) html += '<button class="pill-btn wide" style="flex:1;" data-action="empezarBreak">' + t("empezarBreakBtn") + '</button>';
-      else html += '<button class="pill-btn wide confirm" style="flex:1;" data-action="terminarBreak">' + t("terminarBreakBtn") + '</button>';
+      if (enBreak) html += '<button class="pill-btn wide confirm" style="flex:1;" data-action="terminarBreak">' + t("terminarBreakBtn") + '</button>';
+      else if (!state.confirmEmpezarBreak) html += '<button class="pill-btn wide" style="flex:1;" data-action="askEmpezarBreak">' + t("empezarBreakBtn") + '</button>';
+      else html += '<div style="flex:1;display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="empezarBreak">' + t("siEmpezar") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelEmpezarBreak">' + t("cancel") + '</button></div>';
       html += '</div>';
+      if (!enBreak && state.confirmEmpezarBreak) html += '<p class="hint" style="text-align:center;margin:6px 0 0;">' + t("confirmEmpezarBreakMsg") + '</p>';
       if (!state.confirmTerminarTrabajo) {
         html += '<button class="pay-trigger" style="margin-top:8px;background:#FF3B30;" data-action="askTerminarTrabajo">' + t("terminarTrabajoBtn") + '</button>';
       } else {
@@ -927,14 +928,7 @@ function renderApp() {
     html += '</div>';
     html += renderCashflowChart(buildCashflowBuckets(state.cashflowPeriod));
     html += '<div style="display:flex;gap:14px;font-size:11.5px;color:var(--text-muted);margin-bottom:4px;"><span>\ud83d\udfe2 ' + t("legendIngreso") + '</span><span>\ud83d\udd34 ' + t("legendGasto") + '</span></div>';
-    html += '<p class="hint" style="margin-bottom:10px;">' + t("flujoCajaHint") + '</p>';
-    html += '<div class="goal-field"><label>' + t("ingresoSemanalLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" value="' + esc(state.ingresoSemanalDefault) + '" data-scope="ingresoSemanal"></div>';
-    html += '<label style="font-size:13px;font-weight:600;color:var(--text-muted);display:block;margin:8px 0 6px;">' + t("diaDePagoLbl") + '</label>';
-    html += '<div class="seg">';
-    t("diasSemanaCortos").forEach((dnom, di) => {
-      html += '<button style="flex:1;padding:8px 0;font-size:11px;" class="' + (toNum(state.ingresoSemanalDia) === di ? "active" : "") + '" data-action="setIngresoSemanalDia" data-id="' + di + '">' + dnom + '</button>';
-    });
-    html += '</div>';
+    html += '<p class="hint" style="margin-bottom:0;">' + t("flujoCajaHint") + '</p>';
     html += '</div>';
 
     const ins = computeInsights();

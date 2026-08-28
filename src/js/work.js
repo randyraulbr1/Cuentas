@@ -109,13 +109,18 @@ function updateJobField(field, value) {
 function empezarTrabajo() {
   pushUndo();
   state.turnoActivo = { id: uid(), horaInicio: new Date().toISOString(), breakActivo: null, breaks: [], propinas: "", bonos: "", notas: "" };
+  state.confirmEmpezarBreak = false;
   startTimerLoop();
   scheduleSave(); render();
 }
 
+function askEmpezarBreak() { state.confirmEmpezarBreak = true; render(); }
+function cancelEmpezarBreak() { state.confirmEmpezarBreak = false; render(); }
+
 function empezarBreak() {
   if (!state.turnoActivo || state.turnoActivo.breakActivo) return;
   state.turnoActivo.breakActivo = { inicio: new Date().toISOString() };
+  state.confirmEmpezarBreak = false;
   resetBreakAlerts();
   scheduleSave(); render();
 }
@@ -134,6 +139,7 @@ function cancelTerminarTrabajo() { state.confirmTerminarTrabajo = false; render(
 function terminarTrabajo() {
   if (!state.turnoActivo) return;
   pushUndo();
+  state.confirmEmpezarBreak = false;
   const t = state.turnoActivo;
   if (t.breakActivo) { t.breaks.push({ inicio: t.breakActivo.inicio, fin: new Date().toISOString() }); t.breakActivo = null; }
   t.horaFin = new Date().toISOString();
@@ -217,24 +223,6 @@ function pendienteDePago() {
 function toggleEditJob() { state.editingJob = !state.editingJob; render(); }
 
 function setCashflowPeriod(p) { state.cashflowPeriod = p; render(); }
-
-function toggleIngresoAutoRango(startStr, endStr) {
-  const start = new Date(startStr + "T00:00:00");
-  const end = new Date(endStr + "T00:00:00");
-  const diaSemana = toNum(state.ingresoSemanalDia);
-  const datesInRange = [];
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    if (d.getDay() === diaSemana) datesInRange.push(dateKeyOf(d));
-  }
-  if (!datesInRange.length) return;
-  const anyEnabled = datesInRange.some((dk) => state.ingresoAutoDisabledDates.indexOf(dk) === -1);
-  if (anyEnabled) {
-    datesInRange.forEach((dk) => { if (state.ingresoAutoDisabledDates.indexOf(dk) === -1) state.ingresoAutoDisabledDates.push(dk); });
-  } else {
-    state.ingresoAutoDisabledDates = state.ingresoAutoDisabledDates.filter((dk) => datesInRange.indexOf(dk) === -1);
-  }
-  scheduleSave(); render();
-}
 
 function startPagoTrabajo() {
   state.showPagoTrabajo = true;

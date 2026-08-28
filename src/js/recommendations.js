@@ -1,11 +1,7 @@
 "use strict";
 
-function ingresoAutoParaFecha(dateObj) {
-  const monto = toNum(state.ingresoSemanalDefault);
-  if (monto <= 0) return 0;
-  if (dateObj.getDay() !== toNum(state.ingresoSemanalDia)) return 0;
-  if (state.ingresoAutoDisabledDates.indexOf(dateKeyOf(dateObj)) !== -1) return 0;
-  return monto;
+function ingresoTrabajoParaFecha(fechaStr) {
+  return state.turnos.filter((tn) => tn.fecha === fechaStr).reduce((a, tn) => a + turnoPagoBruto(tn).bruto, 0);
 }
 
 function buildCashflowBuckets(period) {
@@ -20,7 +16,7 @@ function buildCashflowBuckets(period) {
         if (m >= 0) ingresos += m; else gastos += Math.abs(m);
       }
     });
-    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) ingresos += ingresoAutoParaFecha(d);
+    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) ingresos += ingresoTrabajoParaFecha(dateKeyOf(d));
     return { ingresos, gastos };
   }
 

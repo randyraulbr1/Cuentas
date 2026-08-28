@@ -73,7 +73,6 @@ async function saveUserDataNow() {
     consentimientoAceptado: state.consentimientoAceptado, consentimientoFecha: state.consentimientoFecha,
     payFrequency: state.payFrequency, ultimoPago: state.ultimoPago, proximoPagoAjuste: state.proximoPagoAjuste,
     ingresosLog: state.ingresosLog, loans: state.loans, job: state.job, turnos: state.turnos, turnoActivo: state.turnoActivo, pagosTrabajo: state.pagosTrabajo,
-    ingresoSemanalDefault: state.ingresoSemanalDefault, ingresoSemanalDia: state.ingresoSemanalDia, ingresoAutoDisabledDates: state.ingresoAutoDisabledDates,
   };
   try {
     await idbSet(dataKeyV3(state.activeProfileId), payload);

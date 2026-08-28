@@ -6,8 +6,8 @@ const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es"
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v91";
-const BUILD_DATE = "28/08 13:16 UTC";
+const APP_VERSION = "v92";
+const BUILD_DATE = "28/08 13:37 UTC";
 
 let uidCounter = 1;
 
@@ -98,10 +98,10 @@ const state = {
   historialMesesVisibles: 3, pagosMesesVisibles: 3, historialMesAbierto: null, historialVista: "compras", txDetalleFlash: "",
   cloudErrorMsg: "", cloudBusy: false, cloudFlash: "", confirmDisconnectId: null,
   payFrequency: "mensual", ultimoPago: "", proximoPagoAjuste: "", ingresosLog: [], loans: [],
-  ingresoSemanalDefault: "", ingresoSemanalDia: 5, ingresoAutoDisabledDates: [], cashflowPeriod: "week",
+  cashflowPeriod: "week",
   job: { nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false, limiteAlmuerzo: "30" },
   turnos: [], turnoActivo: null, pagosTrabajo: [], workNotifBanner: null,
-  editingJob: false, confirmTerminarTrabajo: false, confirmDeleteTurnoId: null, expandedTurnoIds: {},
+  editingJob: false, confirmTerminarTrabajo: false, confirmEmpezarBreak: false, confirmDeleteTurnoId: null, expandedTurnoIds: {},
   showPagoTrabajo: false, pagoTrabajoForm: null, workPagoFlash: false, confirmDeletePagoTrabajoId: null,
   resultado: null, confirmReset: false, savedFlash: false, storageError: false,
 };
