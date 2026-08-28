@@ -407,3 +407,13 @@
   .pin-dots span { width: 38px; height: 46px; }
   .pin-keypad button { min-height: 52px; }
 }
+
+/* v110: acceso biométrico con PIN alternativo */
+.biometric-settings { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+.biometric-btn { display: inline-flex; align-items: center; gap: 7px; }
+.biometric-btn svg, .biometric-unlock svg { width: 22px; height: 22px; }
+.biometric-ready { display: inline-flex; align-items: center; gap: 5px; color: var(--positive); font-weight: 700; font-size: 13px; }
+.biometric-ready svg { width: 16px; height: 16px; }
+.biometric-unlock { width: min(100%,310px); min-height: 58px; margin: 8px auto 14px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid color-mix(in srgb,var(--positive) 55%,var(--border)); border-radius: 16px; background: var(--positive-soft); color: var(--positive); font-weight: 800; font-size: 17px; }
+.pin-or { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; color: var(--text-muted); font-size: 12px; }
+.pin-or::before, .pin-or::after { content: ""; height: 1px; flex: 1; background: var(--border); }
