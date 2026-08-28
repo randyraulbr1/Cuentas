@@ -179,7 +179,10 @@ function cacheNubeVencido() {
 async function refrescarDatosNube() {
   const [accRes, txRes, instRes] = await Promise.all([apiGetAccounts(), apiGetTransactions(), apiGetInstitutionsStatus()]);
   if (accRes.ok) state.cloudAccounts = accRes.data.accounts;
-  if (txRes.ok) state.cloudTransactions = txRes.data.transactions;
+  if (txRes.ok) {
+    state.cloudTransactions = txRes.data.transactions;
+    if (typeof syncFixedPaymentsFromBank === "function") syncFixedPaymentsFromBank();
+  }
   if (instRes.ok) state.cloudInstitutions = (instRes.data.items || []).filter((item) => item.status === "active");
   if (instRes.ok && state.cloudInstitutions.length === 0) {
     state.cloudAccounts = [];
