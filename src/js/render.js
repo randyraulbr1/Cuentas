@@ -382,10 +382,17 @@ function renderApp() {
   }
 
   if (tab === "inicio") {
-    const cloudNoCredit = state.cloudAccounts.filter((a) => a.type !== "credit").reduce((a, c) => a + toNum(c.balance_current), 0);
-    const deudaPrestamos = state.loans.reduce((a, l) => a + Math.max(toNum(l.saldoTotal), 0), 0);
-    const patrimonioNeto = toNum(state.ahorroActual) + toNum(state.debito) + cloudNoCredit - t2.totalDeuda - deudaPrestamos;
-    const disponibleHoy = toNum(state.ahorroActual) + toNum(state.debito) + cloudNoCredit;
+    const patrimonioNeto = toNum(state.ahorroActual) + toNum(state.debito);
+    const disponibleHoy = patrimonioNeto;
+    const tarjetasReales = cloudCreditCards();
+    const deudaTarjetas = tarjetasReales.length > 0
+      ? tarjetasReales.reduce((sum, card) => sum + Math.max(toNum(card.balance_current), 0), 0)
+      : t2.totalDeuda;
+    const deudaPrestamos = state.loans.reduce((sum, loan) => sum + Math.max(toNum(loan.saldoTotal), 0), 0);
+    const pagosFijosPendientes = state.subs
+      .filter((sub) => sub.pagadoMes !== monthKey())
+      .reduce((sum, sub) => sum + Math.max(toNum(sub.monto), 0), 0);
+    const deudaTotalReal = deudaTarjetas + deudaPrestamos + pagosFijosPendientes;
     html += '<div class="hero-card">';
     html += '<span class="hero-lbl">' + t("patrimonioNetoLbl") + '</span>';
     html += '<div class="hero-val' + (patrimonioNeto < 0 ? " neg" : "") + '">' + (patrimonioNeto < 0 ? "\u2212" : "") + sym() + fmt0(Math.abs(patrimonioNeto)) + '</div>';
@@ -414,9 +421,10 @@ function renderApp() {
       html += '</div>';
     }
     html += '<div class="summary">';
-    html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("debitoLbl") + ' ' + icon("pencil") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito) + cloudNoCredit) + '</div></button>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(t2.totalDeuda) + '</div></div>';
+    html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("debitoLbl") + ' ' + icon("pencil") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito)) + '</div></button>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("debesTarjetas") + '</div><div class="sum-val red">' + sym() + fmt0(deudaTarjetas) + '</div></div>';
     html += '<div class="sum-card"><button class="sum-card-inner" data-action="toggleSaldosInicio"><div class="sum-label">' + t("ahorradoActual") + ' ' + icon("pencil") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></button>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(deudaTotalReal) + '</div></div>';
     if (state.confirmSumarAhorro) {
       html += '<div class="quick-confirm"><span>' + t("confirmSumar100Msg")(sym()) + '</span><div class="quick-confirm-btns"><button class="pill-btn confirm" data-action="sumarAhorro100">' + t("siSumar") + '</button><button class="pill-btn" data-action="cancelSumarAhorro">' + t("cancel") + '</button></div></div>';
     } else {
