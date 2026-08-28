@@ -988,12 +988,21 @@ function renderApp() {
     // Flujo de caja: grafica tipo velas (verde=ingreso, rojo=gasto)
     html += '<div class="panel">';
     html += '<div class="panel-head-row"><h2>' + t("flujoCajaTitle") + '</h2></div>';
+    html += '<div class="cash-month-picker" aria-label="Mes del gráfico">';
+    for (let monthOffset = 0; monthOffset < 6; monthOffset++) {
+      const monthDate = new Date();
+      monthDate.setDate(1);
+      monthDate.setMonth(monthDate.getMonth() - monthOffset);
+      const monthKey = monthDate.getFullYear() + "-" + String(monthDate.getMonth() + 1).padStart(2, "0");
+      html += '<button class="cash-month-btn' + (Number(state.cashflowMonthOffset || 0) === monthOffset ? " active" : "") + '" data-action="setCashflowMonth" data-id="' + monthOffset + '">' + esc(monthLabel(monthKey)) + '</button>';
+    }
+    html += '</div>';
     html += '<div class="seg" style="margin-bottom:6px;">';
     [["day", "periodoDia"], ["week", "periodoSemana"], ["month", "periodoMes"]].forEach((p) => {
       html += '<button style="flex:1;" class="' + (state.cashflowPeriod === p[0] ? "active" : "") + '" data-action="setCashflowPeriod" data-id="' + p[0] + '">' + t(p[1]) + '</button>';
     });
     html += '</div>';
-    html += renderCashflowChart(buildCashflowBuckets(state.cashflowPeriod));
+    html += renderCashflowChart(buildCashflowBuckets(state.cashflowPeriod, state.cashflowMonthOffset));
     html += '<div style="display:flex;gap:14px;font-size:11.5px;color:var(--text-muted);margin-bottom:4px;"><span>\ud83d\udfe2 ' + t("legendIngreso") + '</span><span>\ud83d\udd34 ' + t("legendGasto") + '</span></div>';
     html += '<p class="hint" style="margin-bottom:0;">' + t("flujoCajaHint") + '</p>';
     html += '</div>';
