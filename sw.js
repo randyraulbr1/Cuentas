@@ -1,4 +1,4 @@
-const CACHE = "cuentas-claras-v83";
+const CACHE = "cuentas-claras-v84";
 const ASSETS = [
   "./",
   "./index.html",
@@ -23,7 +23,7 @@ const ASSETS = [
   "./src/js/payments.js?v=v78",
   "./src/js/bank.js?v=v78",
   "./src/js/api.js?v=v78",
-  "./src/js/plaid-link.js?v=v78",
+  "./src/js/plaid-link.js?v=v84",
   "./src/js/history.js?v=v78",
   "./src/js/recommendations.js?v=v78",
   "./src/js/render.js?v=v78",
