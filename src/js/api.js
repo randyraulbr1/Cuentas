@@ -133,7 +133,7 @@ async function apiGetLiabilitiesAll() {
 }
 
 const CLOUD_CACHE_KEY = "cloud:cache";
-const CLOUD_CACHE_MAX_AGE_MS = 4 * 60 * 60 * 1000; // 4 horas: evita pedir datos de mas y gastar en Plaid sin necesidad
+const CLOUD_CACHE_MAX_AGE_MS = 10 * 60 * 60 * 1000; // 10 horas: como mucho 2 llamadas reales a Plaid por dia, para cuidar la cuota gratis
 
 async function guardarCacheNube() {
   try {
