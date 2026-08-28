@@ -300,7 +300,7 @@ function setObjetivo(v) { state.objetivo = v; saveSettings(); render(); }
 
 function setPayFrequency(f) { state.payFrequency = f; scheduleSave(); render(); }
 
-function setSavingsRate(n) { state.savingsRate = n; scheduleSave(); render(); }
+function setSavingsRate(n) { state.savingsRate = Math.max(0, Math.min(100, Math.round(Number(n) || 0))); scheduleSave(); render(); }
 
 
 function buildExportData() {
@@ -358,6 +358,16 @@ function goTab(id) {
   render();
   requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
 }
+
+/* Los tres modos de ahorro también responden antes que cualquier panel superpuesto. */
+document.addEventListener("click", (event) => {
+  const savingsButton = event.target && event.target.closest ? event.target.closest("[data-savings-rate]") : null;
+  if (!savingsButton) return;
+  event.preventDefault();
+  event.stopPropagation();
+  if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+  setSavingsRate(Number(savingsButton.dataset.savingsRate));
+}, true);
 
 /* La navegación inferior tiene prioridad sobre tarjetas, modales y cualquier otro botón. */
 document.addEventListener("click", (event) => {
@@ -439,6 +449,13 @@ function sanitizeNum(str) {
 root.addEventListener("input", (e) => {
   const el = e.target;
   if (el.id === "new-profile-input") { state.newProfileName = el.value; return; }
+  if (el.id === "savings-rate-input") {
+    state.savingsRate = Math.max(0, Math.min(100, Math.round(Number(el.value) || 0)));
+    const valueLabel = root.querySelector(".opt-slider-val");
+    if (valueLabel) valueLabel.textContent = state.savingsRate + "%";
+    scheduleSave();
+    return;
+  }
   if (el.dataset.scope === "pinSetup") { state.pinSetupInput = el.value.replace(/\D/g, "").slice(0, 6); state.pinError = ""; return; }
   if (el.dataset.scope === "pinUnlock") { state.pinInput = el.value.replace(/\D/g, "").slice(0, 6); state.pinError = ""; return; }
   const scope = el.dataset.scope;
