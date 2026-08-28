@@ -185,9 +185,9 @@ function computeResultado(t2) {
   const restoTrasMinimos = t2.disponibleBruto - t2.totalMinimos;
   if (restoTrasMinimos < 0) return { insuficiente: true, faltante: Math.abs(restoTrasMinimos) };
 
-  let effectiveRate = state.savingsRate;
-  if (state.objetivo === "ahorro") effectiveRate = 100;
-  else if (state.objetivo === "credito") effectiveRate = 0;
+  // El porcentaje elegido siempre manda. El objetivo cambia las recomendaciones,
+  // pero nunca anula los botones ni la barra de ahorro.
+  const effectiveRate = Math.max(0, Math.min(100, toNum(state.savingsRate)));
 
   const ahorroCrudo = restoTrasMinimos * (effectiveRate / 100);
   const ahorro = Math.round(ahorroCrudo / 10) * 10;
