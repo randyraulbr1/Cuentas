@@ -44,6 +44,23 @@ function renderBancoNubePanel(compact) {
   return html;
 }
 
+function renderPinScreen() {
+  let lockUntil = 0;
+  try { lockUntil = Number(localStorage.getItem(PIN_LOCK_KEY)) || 0; } catch (error) {}
+  const remaining = Math.max(0, Math.ceil((lockUntil - Date.now()) / 1000));
+  const minutes = Math.floor(remaining / 60);
+  const seconds = String(remaining % 60).padStart(2, "0");
+  let html = '<div class="page pin-page"><div class="pin-screen"><div class="selector-logo">' + icon("lock") + '</div>';
+  html += '<h1>' + (LANG === "es" ? "Ingresa tu PIN" : "Enter your PIN") + '</h1>';
+  html += '<p class="selector-hint">' + (remaining > 0 ? (LANG === "es" ? "Demasiados intentos. Espera " + minutes + ":" + seconds + "." : "Too many attempts. Wait " + minutes + ":" + seconds + ".") : (LANG === "es" ? "PIN local de 6 dígitos" : "6-digit local PIN")) + '</p>';
+  html += '<input id="pin-unlock-input" data-scope="pinUnlock" class="pin-main-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password" placeholder="••••••" value="' + esc(state.pinInput) + '"' + (remaining > 0 || state.pinBusy ? " disabled" : "") + '>';
+  html += '<button class="pay-trigger" data-action="unlockPin"' + (remaining > 0 || state.pinBusy ? " disabled" : "") + '>' + (LANG === "es" ? "Entrar" : "Unlock") + '</button>';
+  if (state.pinError) html += '<p class="pin-error">' + esc(state.pinError) + '</p>';
+  html += '</div></div>';
+  root.innerHTML = html;
+  if (remaining > 0) setTimeout(() => { if (state.appLocked) render(); }, 1000);
+}
+
 function renderSelector() {
   let html = '<div class="page"><div class="selector-wrap">';
   html += '<div class="selector-logo">' + sym() + '</div>';
@@ -171,8 +188,13 @@ function renderOpcionesTab() {
   let h = renderBancoNubePanel(true);
 
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
-  h += '<div class="panel"><p class="opt-section-title">' + t("secPerfil") + '</p>';
-  h += '<div class="opt-row"><span class="opt-row-label">' + esc(activeProfile ? activeProfile.nombre : "") + '</span><button class="pill-btn" data-action="switchUser">' + t("switchUser") + '</button></div>';
+  let pinConfigured = false;
+  try { pinConfigured = !!localStorage.getItem(PIN_HASH_KEY); } catch (error) {}
+  h += '<div class="panel"><p class="opt-section-title">' + (LANG === "es" ? "Seguridad local" : "Local security") + '</p>';
+  h += '<div class="opt-row"><div><span class="opt-row-label">' + esc(activeProfile ? activeProfile.nombre : "") + '</span><p class="opt-row-sub">' + (pinConfigured ? (LANG === "es" ? "PIN de 6 dígitos activado" : "6-digit PIN enabled") : (LANG === "es" ? "Crea un PIN para bloquear la app en este teléfono." : "Create a PIN to lock the app on this phone.")) + '</p></div></div>';
+  h += '<div class="pin-setup-row"><input id="pin-setup-input" data-scope="pinSetup" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="••••••" value="' + esc(state.pinSetupInput) + '"><button class="pill-btn confirm" data-action="savePin">' + (pinConfigured ? (LANG === "es" ? "Cambiar PIN" : "Change PIN") : (LANG === "es" ? "Crear PIN" : "Create PIN")) + '</button></div>';
+  if (state.pinError) h += '<p class="pin-error">' + esc(state.pinError) + '</p>';
+  if (pinConfigured) h += '<button class="delete-link pin-lock-now" data-action="lockApp">' + (LANG === "es" ? "Bloquear ahora" : "Lock now") + '</button>';
   h += '</div>';
 
   h += '<div class="panel"><p class="opt-section-title">' + t("secPreferencias") + '</p><div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div>';
@@ -336,7 +358,7 @@ function renderApp() {
     html += '</div>';
     const smartAdvice = computeSmartAdvice();
     if (smartAdvice.length) {
-      html += '<div class="panel smart-advice-panel"><div class="panel-head-row"><h2>' + (LANG === "es" ? "Sugerencias para ti" : "Suggestions for you") + '</h2><span class="smart-goal">' + esc(t(state.objetivo === "credito" ? "objCredito" : state.objetivo === "ahorro" ? "objAhorro" : "objEquilibrado")) + '</span></div>';
+      html += '<div class="panel smart-advice-panel"><div class="panel-head-row"><h2>' + (LANG === "es" ? "Estado de tus pagos" : "Payment status") + '</h2></div>';
       smartAdvice.forEach((tip) => { html += '<div class="smart-advice ' + tip.level + '">' + icon(tip.level === "urgent" ? "alert" : tip.level === "credit" ? "card" : tip.level === "save" ? "bills" : "check") + '<span>' + esc(tip.text) + '</span></div>'; });
       html += '</div>';
     }
@@ -1016,7 +1038,7 @@ function renderApp() {
 function render() {
   applyTheme();
   document.documentElement.lang = state.lang;
-  if (state.screen === "selector") renderSelector(); else renderApp();
+  if (state.appLocked) renderPinScreen(); else if (state.screen === "selector") renderSelector(); else renderApp();
 }
 
 function rerenderPreservingFocus() {
