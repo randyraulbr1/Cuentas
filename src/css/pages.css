@@ -333,3 +333,21 @@
 .cash-month-picker::-webkit-scrollbar{display:none}
 .cash-month-btn{flex:0 0 auto;border:1px solid var(--border);border-radius:9px;background:var(--surface);color:var(--text-muted);padding:8px 11px;font:700 12px/1.1 var(--font-body);box-shadow:none}
 .cash-month-btn.active{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast);box-shadow:none}
+
+.real-credit-panel{border-color:#C8EBD8}
+.real-credit-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.real-credit-head h2{margin:0;font-size:19px}
+.real-credit-head p{margin:2px 0 0;color:var(--text-muted);font-size:12px}
+.real-credit-head .sync-badge{margin-left:auto}
+.real-credit-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#20B66B,#087A43);color:#fff}
+.real-credit-icon svg{width:22px;height:22px}
+.real-credit-main{padding:13px;border-radius:12px;background:var(--input-bg)}
+.real-credit-main>div:first-child{display:flex;align-items:center;justify-content:space-between}
+.real-credit-main span,.real-credit-stats span{color:var(--text-muted);font-size:12px}
+.real-credit-main strong{font-size:24px}.real-credit-main strong.good{color:#169B59}.real-credit-main strong.medium{color:#C28700}.real-credit-main strong.high{color:#D63C4A}
+.real-credit-meter{height:8px;margin-top:10px;border-radius:99px;background:var(--border);overflow:hidden}
+.real-credit-meter i{display:block;height:100%;border-radius:inherit}.real-credit-meter i.good{background:#21B66A}.real-credit-meter i.medium{background:#E4A917}.real-credit-meter i.high{background:#E14755}
+.real-credit-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}
+.real-credit-stats>div{padding:10px 8px;border:1px solid var(--border);border-radius:10px;min-width:0}
+.real-credit-stats span,.real-credit-stats b{display:block}.real-credit-stats b{margin-top:4px;font-size:13px;overflow-wrap:anywhere}
+.real-credit-disclaimer{margin:10px 0 0;color:var(--text-muted);font-size:11px;line-height:1.4}
