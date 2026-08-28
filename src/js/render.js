@@ -279,10 +279,9 @@ function renderPagoBlock(type, item, saldoActual) {
 
 function renderTabBar() {
   const tabs = [
-    { id: "inicio", icon: "home", label: t("tabInicio") },
     { id: "cuentas", icon: "receipt", label: t("tabCuentas") },
     { id: "trabajo", icon: "clockmoney", label: t("tabTrabajo") },
-    { id: "historial", icon: "clock", label: t("tabHistorial") },
+    { id: "inicio", icon: "home", label: t("tabInicio") },
     { id: "opciones", icon: "gear", label: t("optionsTitle") },
   ];
   let h = '<div class="tab-bar">';
@@ -830,6 +829,69 @@ function renderApp() {
     }
   }
 
+  if (tab === "historial" || tab === "cuentas") {
+    html += '<div class="panel"><p class="hint">' + t("historialHint") + '</p>';
+    if (state.history.length === 0) html += '<div class="empty-state">' + t("historialEmpty") + '</div>';
+    state.history.forEach((h) => {
+      const label = h.status === "verde" ? t("statusVerde") : h.status === "amarillo" ? t("statusAmarillo") : t("statusRojo");
+      const metaLine = t("comprometidoDe").split("{s}").join(sym()).split("{a}").join(fmt0(h.comprometido)).split("{b}").join(fmt0(h.ingreso)).split("{c}").join(fmt0(h.ahorro));
+      html += '<div class="history-row"><div class="history-top"><span class="history-month">' + esc(monthLabel(h.month)) + '</span><span class="status-pill ' + h.status + '">' + label + '</span></div>';
+      html += '<div class="hbar-track"><div class="hbar-fill util-bar-fill ' + h.status + '" style="width:' + Math.min(h.ratio * 100, 100) + '%"></div></div>';
+      if (state.confirmDeleteHistoryKey === h.month) {
+        html += '<div class="history-meta"><span>' + esc(t("confirmDeleteHistoryMsg")(monthLabel(h.month))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeHistory" data-id="' + h.month + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteHistory">' + t("cancel") + '</button></div></div></div>';
+      } else {
+        html += '<div class="history-meta"><span>' + esc(metaLine) + '</span><button class="history-del" data-action="askDeleteHistory" data-id="' + h.month + '">' + t("eliminar") + '</button></div></div>';
+      }
+    });
+    html += '</div>';
+
+    const comprasBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0);
+    const recibidosBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) > 0);
+    if (comprasBase.length > 0 || recibidosBase.length > 0) {
+      html += '<div class="panel">';
+      html += '<div class="seg" style="width:100%;margin-bottom:10px;"><button style="flex:1;" class="' + (state.historialVista === "compras" ? "active" : "") + '" data-action="setHistorialVista" data-id="compras">' + t("comprasTitle") + '</button><button style="flex:1;" class="' + (state.historialVista === "recibidos" ? "active" : "") + '" data-action="setHistorialVista" data-id="recibidos">' + t("pagosRecibidosBancoTitle") + '</button></div>';
+
+      const listaBase = state.historialVista === "recibidos" ? recibidosBase : comprasBase;
+      const categoriasPresentes = Array.from(new Set(listaBase.map((tx) => tx.categoria || "otros")));
+      html += '<input type="text" placeholder="' + t("buscarPh") + '" id="historial-search" data-scope="historialSearch" value="' + esc(state.historialSearch) + '" style="width:100%;margin-bottom:8px;">';
+      html += '<div class="preset-row">';
+      html += '<button class="preset-chip' + (!state.historialCategoriaFiltro ? " active-chip" : "") + '" data-action="setHistorialFiltro" data-id="">' + t("todasLbl") + '</button>';
+      categoriasPresentes.forEach((c) => {
+        html += '<button class="preset-chip' + (state.historialCategoriaFiltro === c ? " active-chip" : "") + '" data-action="setHistorialFiltro" data-id="' + c + '">' + t("cat_" + c) + '</button>';
+      });
+      html += '</div>';
+
+      let compras = listaBase;
+      if (state.historialCategoriaFiltro) compras = compras.filter((tx) => (tx.categoria || "otros") === state.historialCategoriaFiltro);
+      if (state.historialSearch.trim()) {
+        const q = state.historialSearch.trim().toLowerCase();
+        compras = compras.filter((tx) => (tx.descripcion || "").toLowerCase().indexOf(q) !== -1);
+      }
+
+      if (compras.length === 0) html += '<div class="empty-state">' + t("sinResultadosMsg") + '</div>';
+      const gruposCompras = agruparPorMes(compras);
+      gruposCompras.forEach((grupo, idx) => {
+        if (idx === 0) {
+          html += '<p class="opt-section-title" style="margin-top:4px;">' + esc(grupo.label) + '</p>';
+          grupo.items.forEach((tx) => {
+            html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
+          });
+          return;
+        }
+        const abierto = state.historialMesAbierto === grupo.monthKey;
+        const totalMes = grupo.items.reduce((a, tx) => a + Math.abs(toNum(tx.monto)), 0);
+        html += '<button class="sub-row-locked" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;font:inherit;color:inherit;" data-action="toggleMesHistorial" data-id="' + grupo.monthKey + '"><span class="locked-name" style="display:flex;align-items:center;gap:6px;"><span class="chev' + (abierto ? " open" : "") + '">' + icon("chevron") + '</span>' + esc(grupo.label) + '</span><span class="locked-amount">' + sym() + fmt0(totalMes) + '</span></button>';
+        if (abierto) {
+          grupo.items.forEach((tx) => {
+            html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
+          });
+        }
+      });
+
+      html += '</div>';
+    }
+  }
+
   if (tab === "insights" || tab === "cuentas") {
     if (tab === "cuentas") html += '<div class="section-title-divider"><h2>' + t("tabInsights") + '</h2></div>';
     const ins = computeInsights();
@@ -946,69 +1008,6 @@ function renderApp() {
         });
       }
       html += '</div></div>';
-    }
-  }
-
-  if (tab === "historial") {
-    html += '<div class="panel"><p class="hint">' + t("historialHint") + '</p>';
-    if (state.history.length === 0) html += '<div class="empty-state">' + t("historialEmpty") + '</div>';
-    state.history.forEach((h) => {
-      const label = h.status === "verde" ? t("statusVerde") : h.status === "amarillo" ? t("statusAmarillo") : t("statusRojo");
-      const metaLine = t("comprometidoDe").split("{s}").join(sym()).split("{a}").join(fmt0(h.comprometido)).split("{b}").join(fmt0(h.ingreso)).split("{c}").join(fmt0(h.ahorro));
-      html += '<div class="history-row"><div class="history-top"><span class="history-month">' + esc(monthLabel(h.month)) + '</span><span class="status-pill ' + h.status + '">' + label + '</span></div>';
-      html += '<div class="hbar-track"><div class="hbar-fill util-bar-fill ' + h.status + '" style="width:' + Math.min(h.ratio * 100, 100) + '%"></div></div>';
-      if (state.confirmDeleteHistoryKey === h.month) {
-        html += '<div class="history-meta"><span>' + esc(t("confirmDeleteHistoryMsg")(monthLabel(h.month))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeHistory" data-id="' + h.month + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteHistory">' + t("cancel") + '</button></div></div></div>';
-      } else {
-        html += '<div class="history-meta"><span>' + esc(metaLine) + '</span><button class="history-del" data-action="askDeleteHistory" data-id="' + h.month + '">' + t("eliminar") + '</button></div></div>';
-      }
-    });
-    html += '</div>';
-
-    const comprasBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0);
-    const recibidosBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) > 0);
-    if (comprasBase.length > 0 || recibidosBase.length > 0) {
-      html += '<div class="panel">';
-      html += '<div class="seg" style="width:100%;margin-bottom:10px;"><button style="flex:1;" class="' + (state.historialVista === "compras" ? "active" : "") + '" data-action="setHistorialVista" data-id="compras">' + t("comprasTitle") + '</button><button style="flex:1;" class="' + (state.historialVista === "recibidos" ? "active" : "") + '" data-action="setHistorialVista" data-id="recibidos">' + t("pagosRecibidosBancoTitle") + '</button></div>';
-
-      const listaBase = state.historialVista === "recibidos" ? recibidosBase : comprasBase;
-      const categoriasPresentes = Array.from(new Set(listaBase.map((tx) => tx.categoria || "otros")));
-      html += '<input type="text" placeholder="' + t("buscarPh") + '" id="historial-search" data-scope="historialSearch" value="' + esc(state.historialSearch) + '" style="width:100%;margin-bottom:8px;">';
-      html += '<div class="preset-row">';
-      html += '<button class="preset-chip' + (!state.historialCategoriaFiltro ? " active-chip" : "") + '" data-action="setHistorialFiltro" data-id="">' + t("todasLbl") + '</button>';
-      categoriasPresentes.forEach((c) => {
-        html += '<button class="preset-chip' + (state.historialCategoriaFiltro === c ? " active-chip" : "") + '" data-action="setHistorialFiltro" data-id="' + c + '">' + t("cat_" + c) + '</button>';
-      });
-      html += '</div>';
-
-      let compras = listaBase;
-      if (state.historialCategoriaFiltro) compras = compras.filter((tx) => (tx.categoria || "otros") === state.historialCategoriaFiltro);
-      if (state.historialSearch.trim()) {
-        const q = state.historialSearch.trim().toLowerCase();
-        compras = compras.filter((tx) => (tx.descripcion || "").toLowerCase().indexOf(q) !== -1);
-      }
-
-      if (compras.length === 0) html += '<div class="empty-state">' + t("sinResultadosMsg") + '</div>';
-      const gruposCompras = agruparPorMes(compras);
-      gruposCompras.forEach((grupo, idx) => {
-        if (idx === 0) {
-          html += '<p class="opt-section-title" style="margin-top:4px;">' + esc(grupo.label) + '</p>';
-          grupo.items.forEach((tx) => {
-            html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
-          });
-          return;
-        }
-        const abierto = state.historialMesAbierto === grupo.monthKey;
-        const totalMes = grupo.items.reduce((a, tx) => a + Math.abs(toNum(tx.monto)), 0);
-        html += '<button class="sub-row-locked" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;font:inherit;color:inherit;" data-action="toggleMesHistorial" data-id="' + grupo.monthKey + '"><span class="locked-name" style="display:flex;align-items:center;gap:6px;"><span class="chev' + (abierto ? " open" : "") + '">' + icon("chevron") + '</span>' + esc(grupo.label) + '</span><span class="locked-amount">' + sym() + fmt0(totalMes) + '</span></button>';
-        if (abierto) {
-          grupo.items.forEach((tx) => {
-            html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
-          });
-        }
-      });
-
-      html += '</div>';
     }
   }
 
