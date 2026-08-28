@@ -24,6 +24,14 @@ async function enterProfile(id) {
   state.suscripcionesManuales = d.suscripcionesManuales || [];
   state.suscripcionesFrecuencia = d.suscripcionesFrecuencia || {};
   state.gastosFijosReconocidos = d.gastosFijosReconocidos || [];
+  // Migra los pagos fijos bancarios antiguos a la lista principal editable.
+  state.gastosFijosReconocidos.forEach((gf) => {
+    if (!state.subs.some((sub) => sub.merchantKey === gf.merchantKey)) {
+      state.subs.push({ id: gf.id || uid(), nombre: gf.nombre || "", monto: String(gf.monto || ""),
+        categoria: "otro", icono: "receipt", merchantKey: gf.merchantKey, pagadoMes: "" });
+    }
+  });
+  state.gastosFijosReconocidos = [];
   state.showMarcarGastoFijo = false; state.nombreGastoFijoTemp = "";
   state.historialMesesVisibles = 3; state.pagosMesesVisibles = 3; state.historialMesAbierto = null; state.historialVista = "compras";
   state.editingGoals = false; state.confirmDeleteGoalId = null;
@@ -230,6 +238,11 @@ root.addEventListener("input", (e) => {
   if (scope === "montoConfirmarAhorro") { state.montoConfirmarAhorro = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "extraPagoDeuda") { state.extraPagoDeuda = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "payFormMonto") { state.payFormMonto = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
+  if (scope === "agregarTurno") {
+    if (!state.agregarTurnoForm) return;
+    state.agregarTurnoForm[el.dataset.field] = el.dataset.field === "fecha" ? el.value : sanitizeNum(el.value);
+    rerenderPreservingFocus(); return;
+  }
   if (scope === "metaAhorro") { state.metaAhorro = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "savingsRate") { state.savingsRate = Number(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "ingresoLog") {
