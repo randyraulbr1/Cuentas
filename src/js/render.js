@@ -337,15 +337,8 @@ function renderPagoBlock(type, item, saldoActual) {
   if (!isActive) {
     return '<button class="pay-trigger" data-action="startPago" data-type="' + type + '" data-id="' + item.id + '">' + icon("card") + ' ' + (type === "loan" ? (LANG === "es" ? "Registrar cuota cobrada" : "Record charged payment") : t("pagarBtn")) + '</button>';
   }
-  const ahorroDisp = toNum(state.ahorroActual);
-  const debitoDisp = toNum(state.debito);
   let h = '<div class="pay-form">';
-  h += '<p class="opt-row-sub" style="margin-bottom:6px;">' + t("pagarDesdeLbl") + '</p>';
-  h += '<div class="seg" style="width:100%;flex-wrap:wrap;">';
-  h += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ahorro" ? "active" : "") + '" data-action="setPagoSourceAhorro">' + t("ahorroActualLbl") + ' ' + sym() + fmt0(ahorroDisp) + '</button>';
-  h += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "debito" ? "active" : "") + '" data-action="setPagoSourceDebito">' + t("debitoLbl") + ' ' + sym() + fmt0(debitoDisp) + '</button>';
-  h += '<button style="flex:1 1 30%;" class="' + (state.payFormSource === "ninguno" ? "active" : "") + '" data-action="setPagoSourceNinguno">' + t("noDescontar") + '</button>';
-  h += '</div>';
+  h += '<div class="payment-record-note">' + icon("info") + '<span>' + (LANG === "es" ? "Esto registra el pago en 305 Save. No descuenta del ahorro ni del débito y no envía dinero al banco." : "This records the payment in 305 Save. It does not deduct savings or debit and does not send money to the bank.") + '</span></div>';
   h += '<input type="text" inputmode="decimal" placeholder="0" id="pago-monto-' + item.id + '" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
   h += '<div style="display:flex;gap:8px;margin-top:8px;">';
   h += '<button class="pill-btn confirm" style="flex:1;" data-action="confirmPago">' + t("confirmarPago") + '</button>';
@@ -700,6 +693,19 @@ function renderApp() {
     if (state.payFlash) html += '<div class="flash">' + icon("check") + ' ' + t("pagoRegistrado") + '</div>';
 
     const cloudCards = cloudCreditCards();
+    if (cloudCards.length > 0) {
+      const creditTotalBalance = cloudCards.reduce((sum, card) => sum + Math.max(toNum(card.balance_current), 0), 0);
+      const creditTotalLimit = cloudCards.reduce((sum, card) => sum + Math.max(toNum(card.balance_limit), 0), 0);
+      const creditAvailable = Math.max(creditTotalLimit - creditTotalBalance, 0);
+      const creditUse = creditTotalLimit > 0 ? Math.min((creditTotalBalance / creditTotalLimit) * 100, 100) : null;
+      const creditLevel = creditUse === null || creditUse < 30 ? "good" : creditUse < 70 ? "medium" : "high";
+      html += '<div class="panel real-credit-panel">';
+      html += '<div class="real-credit-head"><span class="real-credit-icon">' + icon("card") + '</span><div><h2>Crédito real</h2><p>Datos de tus tarjetas conectadas</p></div><span class="sync-badge">' + icon("bank") + t("sincronizadoLbl") + '</span></div>';
+      html += '<div class="real-credit-main"><div><span>Utilización total</span><strong class="' + creditLevel + '">' + (creditUse === null ? "—" : Math.round(creditUse) + "%") + '</strong></div><div class="real-credit-meter"><i class="' + creditLevel + '" style="width:' + (creditUse === null ? 0 : creditUse) + '%"></i></div></div>';
+      html += '<div class="real-credit-stats"><div><span>Saldo utilizado</span><b>' + sym() + fmt0(creditTotalBalance) + '</b></div><div><span>Crédito disponible</span><b>' + (creditTotalLimit > 0 ? sym() + fmt0(creditAvailable) : "No informado") + '</b></div><div><span>Límite total</span><b>' + (creditTotalLimit > 0 ? sym() + fmt0(creditTotalLimit) : "No informado") + '</b></div></div>';
+      html += '<p class="real-credit-disclaimer">Solo muestra datos reales recibidos del banco. No es un puntaje FICO porque Plaid no proporciona ese puntaje en esta conexión.</p>';
+      html += '</div>';
+    }
     if (cloudCards.length > 0) {
       html += '<div class="panel"><div class="panel-head-row"><h2 style="margin-bottom:0;">' + t("tarjetasNubeTitle") + '</h2><span class="sync-badge">' + icon("bank") + t("sincronizadoLbl") + '</span></div>';
       const ccGrads = [
