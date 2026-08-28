@@ -329,7 +329,14 @@ root.addEventListener("input", (e) => {
 
 root.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target && e.target.id === "new-profile-input") createProfile(); });
 
+root.addEventListener("scroll", (e) => {
+  if (e.target && e.target.id === "bank-expense-picker") state.bankExpenseScrollTop = e.target.scrollTop;
+}, true);
+
 root.addEventListener("click", (e) => {
+  if (!e.target.closest(".cc-card") && state.expandedCloudCardIds && Object.keys(state.expandedCloudCardIds).some((key) => state.expandedCloudCardIds[key])) {
+    state.expandedCloudCardIds = {};
+  }
   if (e.target.classList && e.target.classList.contains("options-overlay")) {
     if (state.showConsentimiento) { state.showConsentimiento = false; render(); return; }
     if (state.showExport) { state.showExport = false; state.exportCopied = false; render(); return; }
@@ -351,7 +358,14 @@ root.addEventListener("click", (e) => {
     toggleSubPagado: () => toggleSubPagado(id), confirmPagoSub: confirmPagoSub, cancelPagoSub: cancelPagoSub,
     addSubPreset: () => addSubPreset(id),
     addSubFromBankTx: () => addSubFromBankTx(id),
-    toggleSubPresetPicker: () => { state.subPresetPicker = !state.subPresetPicker; render(); },
+    toggleSubPresetPicker: () => {
+      state.subPresetPicker = !state.subPresetPicker;
+      render();
+      if (state.subPresetPicker) setTimeout(() => {
+        const picker = document.getElementById("bank-expense-picker");
+        if (picker) picker.scrollTop = state.bankExpenseScrollTop || 0;
+      }, 30);
+    },
     toggleEditIngreso: toggleEditIngreso, toggleEditAhorro: toggleEditAhorro, toggleEditCards: toggleEditCards,
     addIngresoEntry: addIngresoEntry, removeIngresoEntry: () => removeIngresoEntry(id),
     addCard: addCard, removeCard: () => removeCard(id), askDeleteCard: () => askDeleteCard(id), cancelDeleteCard: cancelDeleteCard,
@@ -435,7 +449,11 @@ root.addEventListener("click", (e) => {
       if (sub) { sub.icono = partes[1]; sub.iconManual = true; state.iconPickerSubId = null; scheduleSave(); render(); }
     },
     toggleSaldosInicio: () => { state.editingSaldosInicio = !state.editingSaldosInicio; render(); if (state.editingSaldosInicio) setTimeout(() => { const i = document.getElementById("debito-input"); if (i) i.focus(); }, 50); },
-    toggleCardNube: () => { state.cardNubeExpandida = state.cardNubeExpandida === id ? null : id; render(); },
+    toggleCardNube: () => {
+      state.expandedCloudCardIds = state.expandedCloudCardIds || {};
+      state.expandedCloudCardIds[id] = !state.expandedCloudCardIds[id];
+      render();
+    },
     abrirConfirmarAhorro: abrirConfirmarAhorro, cancelarConfirmarAhorro: cancelarConfirmarAhorro, confirmarAhorroMes: confirmarAhorroMes,
     setDebtAvalancha: () => { state.debtStrategy = "avalancha"; render(); }, setDebtBolaNieve: () => { state.debtStrategy = "bola_nieve"; render(); },
     setPayMensual: () => setPayFrequency("mensual"),
