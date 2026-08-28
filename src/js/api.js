@@ -135,6 +135,14 @@ async function apiGetLiabilitiesAll() {
 const CLOUD_CACHE_KEY = "cloud:cache";
 const CLOUD_CACHE_MAX_AGE_MS = 10 * 60 * 60 * 1000; // 10 horas: como mucho 2 llamadas reales a Plaid por dia, para cuidar la cuota gratis
 
+async function limpiarCacheNube() {
+  state.cloudAccounts = [];
+  state.cloudTransactions = [];
+  state.cloudInstitutions = [];
+  state.cloudLiabilities = {};
+  state.cloudLastSync = "";
+  try { await idbSet(CLOUD_CACHE_KEY, null); } catch (e) {}
+}
 async function guardarCacheNube() {
   try {
     await idbSet(CLOUD_CACHE_KEY, {
@@ -150,9 +158,14 @@ async function cargarCacheNube() {
     if (!c) return false;
     state.cloudAccounts = c.cloudAccounts || [];
     state.cloudTransactions = c.cloudTransactions || [];
-    state.cloudInstitutions = c.cloudInstitutions || [];
+    state.cloudInstitutions = (c.cloudInstitutions || []).filter((item) => item.status === "active");
     state.cloudLiabilities = c.cloudLiabilities || {};
     state.cloudLastSync = c.cloudLastSync || "";
+    if (state.cloudInstitutions.length === 0) {
+      state.cloudAccounts = [];
+      state.cloudTransactions = [];
+      state.cloudLiabilities = {};
+    }
     return true;
   } catch (e) { return false; }
 }
@@ -165,7 +178,12 @@ async function refrescarDatosNube() {
   const [accRes, txRes, instRes] = await Promise.all([apiGetAccounts(), apiGetTransactions(), apiGetInstitutionsStatus()]);
   if (accRes.ok) state.cloudAccounts = accRes.data.accounts;
   if (txRes.ok) state.cloudTransactions = txRes.data.transactions;
-  if (instRes.ok) state.cloudInstitutions = instRes.data.items;
+  if (instRes.ok) state.cloudInstitutions = (instRes.data.items || []).filter((item) => item.status === "active");
+  if (instRes.ok && state.cloudInstitutions.length === 0) {
+    state.cloudAccounts = [];
+    state.cloudTransactions = [];
+    state.cloudLiabilities = {};
+  }
   state.cloudLastSync = new Date().toISOString();
   await guardarCacheNube();
   if (!accRes.ok) return accRes;
