@@ -1,90 +1,106 @@
-/* Paletas de color opcionales. Mantienen el contraste del tema claro/oscuro. */
+/* Temas visuales v88: el acento nunca reemplaza los colores semanticos. */
+:root {
+  --positive: #168A52;
+  --positive-soft: #E7F6EE;
+  --negative: #C92A2A;
+  --negative-soft: #FDECEC;
+  --warning: #9A6700;
+  --warning-soft: #FFF4D6;
+}
+:root[data-theme="dark"] {
+  --positive: #63D89A;
+  --positive-soft: #10291D;
+  --negative: #FF8585;
+  --negative-soft: #351616;
+  --warning: #FFD166;
+  --warning-soft: #33270A;
+}
+
 :root[data-accent-theme="black"] {
-  --accent: #0A0A0A;
-  --accent-strong: #000000;
-  --accent-soft: #EDEDED;
+  --accent: #111111;
+  --accent-strong: #050505;
+  --accent-soft: #ECECEC;
   --accent-contrast: #FFFFFF;
 }
 :root[data-theme="dark"][data-accent-theme="black"] {
-  --accent: #FFFFFF;
+  --accent: #F4F4F4;
   --accent-strong: #FFFFFF;
-  --accent-soft: #1E1E1E;
-  --accent-contrast: #0A0A0A;
+  --accent-soft: #242424;
+  --accent-contrast: #090909;
 }
 
 :root[data-accent-theme="blue"] {
   --accent: #2563EB;
-  --accent-strong: #1D4ED8;
+  --accent-strong: #1746B3;
   --accent-soft: #E8F0FF;
   --accent-contrast: #FFFFFF;
 }
 :root[data-theme="dark"][data-accent-theme="blue"] {
-  --accent: #60A5FA;
-  --accent-strong: #93C5FD;
+  --accent: #71B0FF;
+  --accent-strong: #3B82F6;
   --accent-soft: #10233F;
   --accent-contrast: #07111F;
 }
 
-:root[data-accent-theme="green"] {
-  --accent: #168A52;
-  --accent-strong: #0F6F41;
-  --accent-soft: #E7F6EE;
+:root[data-accent-theme="teal"] {
+  --accent: #087E8B;
+  --accent-strong: #05606A;
+  --accent-soft: #E3F5F6;
   --accent-contrast: #FFFFFF;
 }
-:root[data-theme="dark"][data-accent-theme="green"] {
-  --accent: #52D68D;
-  --accent-strong: #7AE3A7;
-  --accent-soft: #10291D;
-  --accent-contrast: #07150D;
+:root[data-theme="dark"][data-accent-theme="teal"] {
+  --accent: #55D6E2;
+  --accent-strong: #22A9B6;
+  --accent-soft: #0C2D31;
+  --accent-contrast: #061416;
 }
 
 :root[data-accent-theme="purple"] {
   --accent: #7C3AED;
-  --accent-strong: #6D28D9;
+  --accent-strong: #5B21B6;
   --accent-soft: #F1EAFE;
   --accent-contrast: #FFFFFF;
 }
 :root[data-theme="dark"][data-accent-theme="purple"] {
-  --accent: #A78BFA;
-  --accent-strong: #C4B5FD;
-  --accent-soft: #23183B;
+  --accent: #B9A1FF;
+  --accent-strong: #8B5CF6;
+  --accent-soft: #261A40;
   --accent-contrast: #120B20;
 }
 
-:root[data-accent-theme="red"] {
-  --accent: #D83A3A;
-  --accent-strong: #B91C1C;
-  --accent-soft: #FDECEC;
+:root[data-accent-theme="orange"] {
+  --accent: #C45A12;
+  --accent-strong: #93420C;
+  --accent-soft: #FFF0E5;
   --accent-contrast: #FFFFFF;
 }
-:root[data-theme="dark"][data-accent-theme="red"] {
-  --accent: #FF6B6B;
-  --accent-strong: #FF8A8A;
-  --accent-soft: #351616;
-  --accent-contrast: #1B0909;
+:root[data-theme="dark"][data-accent-theme="orange"] {
+  --accent: #FFAD66;
+  --accent-strong: #E87924;
+  --accent-soft: #38200F;
+  --accent-contrast: #1B0E05;
 }
 
-.theme-color-row {
-  align-items: center;
-  gap: 12px;
-}
+/* Selector compacto, cuadrado y sin brillo. */
+.theme-color-row { align-items: center; gap: 12px; }
 .theme-color-picker {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, 32px);
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: end;
 }
 .theme-color-btn {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  border-radius: 50%;
+  border-radius: 7px;
   border: 2px solid var(--card-bg);
   outline: 1px solid var(--border);
   cursor: pointer;
   position: relative;
-  flex: 0 0 auto;
+  box-shadow: none;
+  background-image: none;
 }
 .theme-color-btn.active {
   outline: 2px solid var(--text);
@@ -99,15 +115,70 @@
   color: #FFFFFF;
   font-size: 15px;
   font-weight: 800;
-  text-shadow: 0 1px 3px rgba(0,0,0,.55);
+  text-shadow: none;
 }
+:root[data-theme="dark"] .theme-color-btn[data-accent-choice="black"].active::after { color: #090909; }
 .theme-color-btn[data-accent-choice="black"] { background: #111111; }
 .theme-color-btn[data-accent-choice="blue"] { background: #2563EB; }
-.theme-color-btn[data-accent-choice="green"] { background: #168A52; }
+.theme-color-btn[data-accent-choice="teal"] { background: #087E8B; }
 .theme-color-btn[data-accent-choice="purple"] { background: #7C3AED; }
-.theme-color-btn[data-accent-choice="red"] { background: #D83A3A; }
+.theme-color-btn[data-accent-choice="orange"] { background: #C45A12; }
+
+/* El panel principal ahora sigue el color elegido. */
+.hero-card {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  box-shadow: none;
+}
+[data-theme="dark"] .hero-card {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+.hero-card::before,
+[data-theme="dark"] .hero-card::before { background: none; }
+.hero-lbl,
+[data-theme="dark"] .hero-lbl { color: color-mix(in srgb, var(--accent-contrast) 66%, transparent); }
+.hero-val,
+[data-theme="dark"] .hero-val { color: var(--accent-contrast); }
+.hero-val.neg,
+[data-theme="dark"] .hero-val.neg { color: var(--negative); }
+.hero-sub,
+[data-theme="dark"] .hero-sub {
+  background: color-mix(in srgb, var(--accent-contrast) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent-contrast) 22%, transparent);
+  color: color-mix(in srgb, var(--accent-contrast) 88%, transparent);
+}
+
+/* Ganancias, perdidas y avisos mantienen identidad independiente del tema. */
+.sum-val.green, .flash { color: var(--positive); }
+.sum-val.red, .debt-cell b.rojo, .debt-warn, .pill-btn.danger,
+.delete-link, .history-del:hover { color: var(--negative); }
+.debt-warn { background: var(--negative-soft); }
+.paid-check.checked, .pay-trigger { background: var(--positive); border-color: var(--positive); }
+.util-bar-fill.verde { background: var(--positive); }
+.util-bar-fill.rojo { background: var(--negative); }
+.status-pill.verde { background: var(--positive); color: #FFFFFF; }
+.status-pill.rojo { background: var(--negative); color: #FFFFFF; }
+.rule-msg.bien { background: var(--positive); color: #FFFFFF; }
+.rule-msg.mal { background: var(--negative); color: #FFFFFF; }
+
+/* Botones planos: sin reflejos, gradientes ni sombras de color. */
+.theme-color-btn,
+.pill-btn.confirm,
+.pill-btn.update,
+.calc-btn,
+.fab-add,
+.pay-trigger,
+.new-profile-row button,
+.quick-add,
+.seg button.active,
+.preset-chip.active-chip {
+  box-shadow: none;
+  background-image: none;
+}
+.progress-fill { background: var(--accent); }
 
 @media (max-width: 380px) {
-  .theme-color-picker { gap: 6px; }
-  .theme-color-btn { width: 27px; height: 27px; }
+  .theme-color-picker { grid-template-columns: repeat(5, 29px); gap: 6px; }
+  .theme-color-btn { width: 29px; height: 29px; }
 }
