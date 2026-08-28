@@ -1,4 +1,4 @@
-const CACHE = "cuentas-claras-v92";
+const CACHE = "cuentas-claras-v93";
 const ASSETS = [
   "./",
   "./index.html",
@@ -14,10 +14,10 @@ const ASSETS = [
   "./src/css/pages.css?v=v86",
   "./src/css/theme-colors.css?v=v88",
   "./src/js/icons.js?v=v86",
-  "./src/js/i18n.js?v=v92",
+  "./src/js/i18n.js?v=v93",
   "./src/js/storage.js?v=v86",
   "./src/js/migrations.js?v=v86",
-  "./src/js/state.js?v=v92",
+  "./src/js/state.js?v=v93",
   "./src/js/calculations.js?v=v86",
   "./src/js/categories.js?v=v86",
   "./src/js/work.js?v=v92",
@@ -27,7 +27,7 @@ const ASSETS = [
   "./src/js/plaid-link.js?v=v86",
   "./src/js/history.js?v=v86",
   "./src/js/recommendations.js?v=v92",
-  "./src/js/render.js?v=v92",
+  "./src/js/render.js?v=v93",
   "./src/js/app.js?v=v92",
   "./src/js/theme-colors.js?v=v88",
 ];

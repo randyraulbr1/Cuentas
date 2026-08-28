@@ -232,9 +232,15 @@ function renderDonutChart(items) {
 }
 
 function renderCashflowChart(buckets) {
+  const hayDatos = buckets.some((b) => b.ingresos > 0 || b.gastos > 0);
   const maxVal = Math.max(...buckets.map((b) => Math.max(b.ingresos, b.gastos)), 1);
   const half = 74;
-  let h = '<div style="display:flex;align-items:center;gap:3px;height:' + (half * 2 + 20) + 'px;margin:8px 0;overflow-x:auto;">';
+  let h = '<div style="position:relative;">';
+  h += '<div style="position:absolute;left:0;right:0;top:' + half + 'px;border-top:1px dashed var(--border);"></div>';
+  h += '<div style="display:flex;align-items:center;gap:3px;height:' + (half * 2 + 20) + 'px;margin:8px 0;overflow-x:auto;position:relative;">';
+  if (!hayDatos) {
+    h += '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12.5px;color:var(--text-muted);padding:0 20px;background:var(--card-bg);">' + t("flujoCajaVacio") + '</div>';
+  }
   buckets.forEach((b) => {
     const ingH = Math.round((b.ingresos / maxVal) * half);
     const gasH = Math.round((b.gastos / maxVal) * half);
@@ -248,7 +254,7 @@ function renderCashflowChart(buckets) {
     h += '<div style="font-size:8.5px;color:var(--text-muted);margin-top:4px;white-space:nowrap;">' + esc(b.etiqueta) + '</div>';
     h += '</div>';
   });
-  h += '</div>';
+  h += '</div></div>';
   return h;
 }
 
