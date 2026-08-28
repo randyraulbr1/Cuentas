@@ -417,3 +417,10 @@
 .biometric-unlock { width: min(100%,310px); min-height: 58px; margin: 8px auto 14px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid color-mix(in srgb,var(--positive) 55%,var(--border)); border-radius: 16px; background: var(--positive-soft); color: var(--positive); font-weight: 800; font-size: 17px; }
 .pin-or { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; color: var(--text-muted); font-size: 12px; }
 .pin-or::before, .pin-or::after { content: ""; height: 1px; flex: 1; background: var(--border); }
+
+/* v112: recuperación del PIN sin borrar datos */
+.pin-reset-link { margin: 16px auto 0; padding: 8px; border: 0; background: transparent; color: var(--text-muted); text-decoration: underline; font-weight: 650; }
+.pin-reset-confirm { margin-top: 16px; padding: 14px; border: 1px solid var(--negative); border-radius: 14px; background: var(--negative-soft); color: var(--text); text-align: left; }
+.pin-reset-confirm p { margin: 0 0 12px; font-size: 13px; line-height: 1.45; }
+.pin-reset-confirm > div { display: flex; gap: 8px; }
+.pin-reset-confirm button { flex: 1; }
