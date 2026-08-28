@@ -270,6 +270,7 @@ root.addEventListener("input", (e) => {
     if (!item) return;
     const f = el.dataset.field;
     item[f] = (f === "nombre" || f === "ultimoPago") ? el.value : sanitizeNum(el.value);
+    if (f === "montoOriginal" && !String(item.saldoTotal || "").trim()) item.saldoTotal = sanitizeNum(el.value);
     scheduleSave(); rerenderPreservingFocus(); return;
   }
   if (scope === "job") {
