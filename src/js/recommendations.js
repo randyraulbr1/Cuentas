@@ -6,56 +6,97 @@ function ingresoTrabajoParaFecha(fechaStr) {
 
 function buildCashflowBuckets(period, monthOffset) {
   monthOffset = Math.max(parseInt(monthOffset, 10) || 0, 0);
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const selectedStart = new Date(today.getFullYear(), today.getMonth() - monthOffset, 1);
-  const selectedEnd = new Date(selectedStart.getFullYear(), selectedStart.getMonth() + 1, 0);
-  selectedEnd.setHours(0, 0, 0, 0);
-  const now = monthOffset === 0 ? today : selectedEnd;
+  const today = new Date(); today.setHours(23, 59, 59, 999);
+  const monthStart = new Date(today.getFullYear(), today.getMonth() - monthOffset, 1);
+  const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59, 999);
+  const effectiveEnd = monthOffset === 0 ? today : monthEnd;
+  const events = [];
 
-  function sumaRango(start, end) {
-    let ingresos = 0, gastos = 0;
-    state.cloudTransactions.forEach((tx) => {
-      const fechaKey = String(tx.fecha || "").slice(0, 10);
-      const d = new Date(fechaKey + "T00:00:00");
-      if (d >= start && d < end) {
-        const m = toNum(tx.monto);
-        if (m >= 0) ingresos += m; else gastos += Math.abs(m);
-      }
+  state.cloudTransactions.forEach((tx, index) => {
+    const rawDate = String(tx.fecha_hora || tx.datetime || tx.fecha || "");
+    const dateKey = rawDate.slice(0, 10);
+    if (!dateKey) return;
+    const hasTime = rawDate.indexOf("T") !== -1;
+    const when = new Date(hasTime ? rawDate : dateKey + "T12:00:00");
+    if (!isFinite(when.getTime()) || when < monthStart || when > effectiveEnd) return;
+    const amount = toNum(tx.monto);
+    if (!amount) return;
+    events.push({
+      when, amount, value: Math.abs(amount), type: amount > 0 ? "income" : "expense",
+      description: tx.descripcion || tx.merchant_name || "", index
     });
-    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) ingresos += ingresoTrabajoParaFecha(dateKeyOf(d));
-    return { ingresos, gastos };
+  });
+  for (let cursor = new Date(monthStart); cursor <= effectiveEnd; cursor.setDate(cursor.getDate() + 1)) {
+    const earned = ingresoTrabajoParaFecha(dateKeyOf(cursor));
+    if (earned > 0) {
+      const when = new Date(cursor); when.setHours(18, 0, 0, 0);
+      events.push({ when, amount: earned, value: earned, type: "income", description: LANG === "es" ? "Trabajo" : "Work", index: 100000 + events.length });
+    }
+  }
+  events.sort((x, y) => x.when - y.when || x.index - y.index);
+
+  let filtered = events;
+  if (period === "week") {
+    const anchor = events.length ? events[events.length - 1].when : effectiveEnd;
+    const day = anchor.getDay();
+    const weekStart = new Date(anchor); weekStart.setDate(anchor.getDate() - (day === 0 ? 6 : day - 1)); weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 7);
+    filtered = events.filter((event) => event.when >= weekStart && event.when < weekEnd);
+  } else if (period === "day") {
+    const anchor = events.length ? events[events.length - 1].when : effectiveEnd;
+    const selectedDay = dateKeyOf(anchor);
+    filtered = events.filter((event) => dateKeyOf(event.when) === selectedDay);
   }
 
-  const buckets = [];
-  if (period === "day") {
-    for (let i = 13; i >= 0; i--) {
-      const start = new Date(now); start.setDate(start.getDate() - i);
-      const end = new Date(start); end.setDate(end.getDate() + 1);
-      const r = sumaRango(start, end);
-      buckets.push({ etiqueta: String(start.getDate()), ingresos: r.ingresos, gastos: r.gastos, rangeStart: dateKeyOf(start), rangeEnd: dateKeyOf(start) });
+  let running = 0;
+  return filtered.map((event) => {
+    const open = running;
+    const close = running + event.amount;
+    running = close;
+    let label;
+    if (period === "day") {
+      const hasRealTime = String(event.when.toISOString()).slice(11, 16) !== "12:00";
+      label = hasRealTime ? event.when.toLocaleTimeString(LANG === "es" ? "es-ES" : "en-US", { hour: "2-digit", minute: "2-digit" }) : String(event.when.getDate());
+    } else {
+      label = String(event.when.getDate()) + "/" + String(event.when.getMonth() + 1);
     }
-  } else if (period === "week") {
-    // Las semanas pertenecen solo al mes seleccionado; no mezclamos meses.
-    let start = new Date(selectedStart);
-    while (start <= now) {
-      const end = new Date(start); end.setDate(end.getDate() + 7);
-      const afterSelectedEnd = new Date(selectedEnd); afterSelectedEnd.setDate(afterSelectedEnd.getDate() + 1);
-      const rangeEnd = end > afterSelectedEnd ? afterSelectedEnd : end;
-      const r = sumaRango(start, rangeEnd);
-      const endIncl = new Date(rangeEnd); endIncl.setDate(endIncl.getDate() - 1);
-      buckets.push({ etiqueta: String(start.getDate()) + "/" + String(start.getMonth() + 1), ingresos: r.ingresos, gastos: r.gastos, rangeStart: dateKeyOf(start), rangeEnd: dateKeyOf(endIncl) });
-      start = end;
-    }
-  } else {
-    for (let i = 5; i >= 0; i--) {
-      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-      const r = sumaRango(start, end);
-      const endIncl = new Date(end); endIncl.setDate(endIncl.getDate() - 1);
-      buckets.push({ etiqueta: (LANG === "es" ? MESES_ES : MESES_EN)[start.getMonth()].slice(0, 3), ingresos: r.ingresos, gastos: r.gastos, rangeStart: dateKeyOf(start), rangeEnd: dateKeyOf(endIncl) });
-    }
+    return {
+      etiqueta: label, open, close, high: Math.max(open, close), low: Math.min(open, close),
+      ingresos: event.type === "income" ? event.value : 0,
+      gastos: event.type === "expense" ? event.value : 0,
+      tipo: event.type, valor: event.value, descripcion: event.description,
+      rangeStart: dateKeyOf(event.when), rangeEnd: dateKeyOf(event.when)
+    };
+  });
+}
+
+function computeSmartAdvice() {
+  const cash = Math.max(toNum(state.ahorroActual) + toNum(state.debito), 0);
+  const income = Math.max(toNum(state.ingreso), 0);
+  const reserve = Math.max(200, Math.min(1000, income > 0 ? income * 0.10 : 300));
+  const unpaid = state.subs.filter((sub) => sub.pagadoMes !== monthKey());
+  const unpaidTotal = unpaid.reduce((sum, sub) => sum + Math.max(toNum(sub.monto), 0), 0);
+  const available = Math.max(cash - reserve, 0);
+  const creditCards = state.cloudAccounts.filter((account) => account.type === "credit" && toNum(account.balance_current) > 0)
+    .sort((x, y) => toNum(y.liab_apr) - toNum(x.liab_apr));
+  const advice = [];
+
+  if (unpaidTotal > 0) {
+    if (available < unpaidTotal) advice.push({ level: "urgent", text: (LANG === "es" ? "Te faltan " : "You need ") + sym() + fmt0(unpaidTotal - available) + (LANG === "es" ? " para cubrir los pagos pendientes del mes sin tocar tu reserva." : " to cover this month's pending bills without using your reserve.") });
+    else advice.push({ level: "priority", text: (LANG === "es" ? "Aparta " : "Set aside ") + sym() + fmt0(unpaidTotal) + (LANG === "es" ? " para renta y pagos pendientes antes de pagar deuda extra." : " for rent and pending bills before making extra debt payments.") });
   }
-  return buckets;
+  if (cash <= reserve) advice.push({ level: "urgent", text: LANG === "es" ? "Pausa gastos no esenciales este mes; estás en el mínimo de dinero disponible." : "Pause non-essential spending this month; you are at your minimum cash level." });
+  else advice.push({ level: "safe", text: (LANG === "es" ? "Mantén al menos " : "Keep at least ") + sym() + fmt0(reserve) + (LANG === "es" ? " disponibles para imprevistos." : " available for unexpected costs.") });
+
+  if (creditCards.length && available > unpaidTotal) {
+    const card = creditCards[0];
+    const extraCapacity = Math.max(available - unpaidTotal, 0);
+    const suggested = Math.min(Math.max(toNum(card.liab_pago_minimo), Math.min(extraCapacity, Math.max(25, toNum(card.balance_current) * 0.05))), extraCapacity);
+    if (suggested > 0) advice.push({ level: "credit", text: (LANG === "es" ? "Después de cubrir el mes, paga " : "After covering this month, pay ") + sym() + fmt0(suggested) + (LANG === "es" ? " a " : " to ") + (card.name || (LANG === "es" ? "la tarjeta con mayor interés" : "the highest-interest card")) + (card.liab_apr ? " (" + card.liab_apr + "% APR)." : ".") });
+  }
+  if (state.objetivo === "ahorro" && available > unpaidTotal) advice.push({ level: "save", text: (LANG === "es" ? "Puedes mover hasta " : "You can move up to ") + sym() + fmt0(Math.max(available - unpaidTotal, 0)) + (LANG === "es" ? " al ahorro sin quedarte sin efectivo." : " to savings without running out of cash.") });
+  if (state.objetivo === "equilibrado" && !unpaidTotal && available > reserve) advice.push({ level: "safe", text: LANG === "es" ? "Divide el dinero libre entre ahorro y la tarjeta con mayor APR; no aceleres deudas largas todavía." : "Split free cash between savings and the highest-APR card; do not accelerate long-term debt yet." });
+  return advice.slice(0, 4);
 }
 
 function computeInsights() {
