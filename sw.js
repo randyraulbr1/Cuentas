@@ -1,4 +1,4 @@
-const CACHE = "cuentas-claras-v103";
+const CACHE = "cuentas-claras-v104";
 const ASSETS = [
   "./",
   "./index.html",
@@ -12,24 +12,24 @@ const ASSETS = [
   "./offline.html",
   "./src/css/base.css?v=v86",
   "./src/css/components.css?v=v102",
-  "./src/css/pages.css?v=v102",
+  "./src/css/pages.css?v=v104",
   "./src/css/theme-colors.css?v=v88",
   "./src/js/icons.js?v=v95",
   "./src/js/i18n.js?v=v103",
   "./src/js/storage.js?v=v86",
   "./src/js/migrations.js?v=v86",
-  "./src/js/state.js?v=v103",
+  "./src/js/state.js?v=v104",
   "./src/js/calculations.js?v=v96",
   "./src/js/categories.js?v=v86",
   "./src/js/work.js?v=v95",
-  "./src/js/payments.js?v=v102",
+  "./src/js/payments.js?v=v104",
   "./src/js/bank.js?v=v86",
-  "./src/js/api.js?v=v100",
+  "./src/js/api.js?v=v104",
   "./src/js/plaid-link.js?v=v86",
   "./src/js/history.js?v=v86",
   "./src/js/recommendations.js?v=v101",
-  "./src/js/render.js?v=v103",
-  "./src/js/app.js?v=v100",
+  "./src/js/render.js?v=v104",
+  "./src/js/app.js?v=v104",
   "./src/js/theme-colors.js?v=v88",
 ];
 
