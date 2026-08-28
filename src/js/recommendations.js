@@ -71,31 +71,42 @@ function buildCashflowBuckets(period, monthOffset) {
 }
 
 function computeSmartAdvice() {
-  const cash = Math.max(toNum(state.ahorroActual) + toNum(state.debito), 0);
-  const income = Math.max(toNum(state.ingreso), 0);
-  const reserve = Math.max(200, Math.min(1000, income > 0 ? income * 0.10 : 300));
-  const unpaid = state.subs.filter((sub) => sub.pagadoMes !== monthKey());
-  const unpaidTotal = unpaid.reduce((sum, sub) => sum + Math.max(toNum(sub.monto), 0), 0);
-  const available = Math.max(cash - reserve, 0);
-  const creditCards = state.cloudAccounts.filter((account) => account.type === "credit" && toNum(account.balance_current) > 0)
-    .sort((x, y) => toNum(y.liab_apr) - toNum(x.liab_apr));
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const currentMonth = monthKey();
+  const unpaid = state.subs.filter((sub) => sub.pagadoMes !== currentMonth).map((sub) => {
+    const day = Math.min(Math.max(parseInt(sub.diaPago, 10) || 1, 1), 31);
+    const due = new Date(today.getFullYear(), today.getMonth(), day);
+    return { sub, due, amount: Math.max(toNum(sub.monto), 0), days: Math.ceil((due - today) / 86400000) };
+  }).sort((a, b) => a.due - b.due);
   const advice = [];
+  const unpaidTotal = unpaid.reduce((sum, item) => sum + item.amount, 0);
+  const available = Math.max(toNum(state.debito) + toNum(state.ahorroActual), 0);
+
+  const overdue = unpaid.filter((item) => item.days < 0);
+  if (overdue.length) {
+    const total = overdue.reduce((sum, item) => sum + item.amount, 0);
+    advice.push({ level: "urgent", text: (LANG === "es" ? "Tienes " : "You have ") + overdue.length + (LANG === "es" ? " pago(s) vencido(s) por " : " overdue payment(s) totaling ") + sym() + fmt0(total) + "." });
+  }
+
+  const next = unpaid.find((item) => item.days >= 0);
+  if (next) {
+    const name = next.sub.nombre || (LANG === "es" ? "Próximo pago" : "Next payment");
+    const when = next.days === 0 ? (LANG === "es" ? "vence hoy" : "is due today") : next.days === 1 ? (LANG === "es" ? "vence mañana" : "is due tomorrow") : (LANG === "es" ? "vence en " + next.days + " días" : "is due in " + next.days + " days");
+    advice.push({ level: next.days <= 2 ? "urgent" : "priority", text: name + ": " + sym() + fmt0(next.amount) + ", " + when + "." });
+  }
 
   if (unpaidTotal > 0) {
-    if (available < unpaidTotal) advice.push({ level: "urgent", text: (LANG === "es" ? "Te faltan " : "You need ") + sym() + fmt0(unpaidTotal - available) + (LANG === "es" ? " para cubrir los pagos pendientes del mes sin tocar tu reserva." : " to cover this month's pending bills without using your reserve.") });
-    else advice.push({ level: "priority", text: (LANG === "es" ? "Aparta " : "Set aside ") + sym() + fmt0(unpaidTotal) + (LANG === "es" ? " para renta y pagos pendientes antes de pagar deuda extra." : " for rent and pending bills before making extra debt payments.") });
+    const gap = unpaidTotal - available;
+    advice.push(gap > 0
+      ? { level: "urgent", text: (LANG === "es" ? "Te faltan " : "You still need ") + sym() + fmt0(gap) + (LANG === "es" ? " para completar todos los pagos pendientes de este mes." : " to cover all remaining payments this month.") }
+      : { level: "safe", text: (LANG === "es" ? "Los pagos pendientes suman " : "Remaining payments total ") + sym() + fmt0(unpaidTotal) + (LANG === "es" ? " y tienes dinero suficiente para cubrirlos." : " and you currently have enough to cover them.") });
+  } else {
+    advice.push({ level: "safe", text: LANG === "es" ? "Todos los pagos fijos de este mes están marcados como pagados." : "All fixed payments for this month are marked paid." });
   }
-  if (cash <= reserve) advice.push({ level: "urgent", text: LANG === "es" ? "Pausa gastos no esenciales este mes; estás en el mínimo de dinero disponible." : "Pause non-essential spending this month; you are at your minimum cash level." });
-  else advice.push({ level: "safe", text: (LANG === "es" ? "Mantén al menos " : "Keep at least ") + sym() + fmt0(reserve) + (LANG === "es" ? " disponibles para imprevistos." : " available for unexpected costs.") });
 
-  if (creditCards.length && available > unpaidTotal) {
-    const card = creditCards[0];
-    const extraCapacity = Math.max(available - unpaidTotal, 0);
-    const suggested = Math.min(Math.max(toNum(card.liab_pago_minimo), Math.min(extraCapacity, Math.max(25, toNum(card.balance_current) * 0.05))), extraCapacity);
-    if (suggested > 0) advice.push({ level: "credit", text: (LANG === "es" ? "Después de cubrir el mes, paga " : "After covering this month, pay ") + sym() + fmt0(suggested) + (LANG === "es" ? " a " : " to ") + (card.name || (LANG === "es" ? "la tarjeta con mayor interés" : "the highest-interest card")) + (card.liab_apr ? " (" + card.liab_apr + "% APR)." : ".") });
-  }
-  if (state.objetivo === "ahorro" && available > unpaidTotal) advice.push({ level: "save", text: (LANG === "es" ? "Puedes mover hasta " : "You can move up to ") + sym() + fmt0(Math.max(available - unpaidTotal, 0)) + (LANG === "es" ? " al ahorro sin quedarte sin efectivo." : " to savings without running out of cash.") });
-  if (state.objetivo === "equilibrado" && !unpaidTotal && available > reserve) advice.push({ level: "safe", text: LANG === "es" ? "Divide el dinero libre entre ahorro y la tarjeta con mayor APR; no aceleres deudas largas todavía." : "Split free cash between savings and the highest-APR card; do not accelerate long-term debt yet." });
+  const cards = state.cloudAccounts.filter((account) => account.type === "credit" && toNum(account.balance_current) > 0);
+  const minimums = cards.reduce((sum, card) => sum + Math.max(toNum(card.liab_pago_minimo), 0), 0);
+  if (minimums > 0) advice.push({ level: "credit", text: (LANG === "es" ? "Pagos mínimos actuales de tarjetas: " : "Current card minimum payments: ") + sym() + fmt0(minimums) + "." });
   return advice.slice(0, 4);
 }
 
