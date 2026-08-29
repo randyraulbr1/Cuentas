@@ -198,7 +198,7 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 /* v115: la navegación siempre queda tocable sobre cualquier panel. */
 .tab-bar { z-index: 10000 !important; pointer-events: auto !important; isolation: isolate; }
 .tab-bar .tab-btn { pointer-events: auto !important; touch-action: manipulation; position: relative; z-index: 1; }
-.tab-bar .tab-btn::before { content: ""; position: absolute; inset: -6px -3px; }
+.tab-bar .tab-btn::before { content: ""; position: absolute; inset: -6px 0; }
 
 /* v116: control de ahorro táctil y siempre accesible. */
 .opt-slider-row input[type="range"] { min-height: 44px; touch-action: pan-x; cursor: pointer; pointer-events: auto !important; }
