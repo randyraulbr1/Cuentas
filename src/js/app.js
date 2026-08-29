@@ -940,8 +940,5 @@ if ("serviceWorker" in navigator) {
       });
       setInterval(() => reg.update().catch(() => {}), 15 * 60 * 1000);
     }).catch(() => {});
-    if (typeof window.__finishAppBoot === "function") {
-      setTimeout(() => window.__finishAppBoot("Lista"), 250);
-    }
   });
 }
