@@ -99,16 +99,22 @@ function computeSmartAdvice() {
 
   if (unpaidTotal > 0) {
     const gap = unpaidTotal - available;
-    advice.push(gap > 0
-      ? { level: "urgent", text: (LANG === "es" ? "Te faltan " : "You still need ") + sym() + fmt0(gap) + (LANG === "es" ? " para completar todos los pagos pendientes de este mes." : " to cover all remaining payments this month.") }
-      : { level: "safe", text: (LANG === "es" ? "Los pagos pendientes suman " : "Remaining payments total ") + sym() + fmt0(unpaidTotal) + (LANG === "es" ? " y tienes dinero suficiente para cubrirlos." : " and you currently have enough to cover them.") });
-  } else {
-    advice.push({ level: "safe", text: LANG === "es" ? "Todos los pagos fijos de este mes están marcados como pagados." : "All fixed payments for this month are marked paid." });
+    if (gap > 0) {
+      advice.push({ level: "urgent", text: (LANG === "es" ? "Te faltan " : "You still need ") + sym() + fmt0(gap) + (LANG === "es" ? " para completar todos los pagos pendientes de este mes." : " to cover all remaining payments this month.") });
+    }
   }
 
   const cards = state.cloudAccounts.filter((account) => account.type === "credit" && toNum(account.balance_current) > 0);
   const cardsDebt = cards.reduce((sum, card) => sum + toNum(card.balance_current), 0);
   if (cardsDebt > 0) {
+    cards.forEach((card) => {
+      const balance = toNum(card.balance_current);
+      const limit = Math.max(toNum(card.balance_limit), 0);
+      const util = limit > 0 ? balance / limit * 100 : null;
+      if (util !== null && util >= 90) {
+        advice.push({ level: "blink", text: (LANG === "es" ? "\u00a1" + (card.name || "Tarjeta") + " est\u00e1 casi al tope (" + Math.round(util) + "%)! Paga " + sym() + fmt0(balance - limit * 0.3) + " ahora para no quemarla." : (card.name || "Card") + " is almost maxed out (" + Math.round(util) + "%)! Pay " + sym() + fmt0(balance - limit * 0.3) + " now before it maxes out.") });
+      }
+    });
     const cardSug = cards.map((card) => {
       const balance = toNum(card.balance_current);
       const apr = Math.max(toNum(card.liab_apr), 0);
@@ -120,7 +126,10 @@ function computeSmartAdvice() {
     cardSug.forEach((c) => {
       advice.push({ level: "credit", text: (LANG === "es" ? "Paga " : "Pay ") + sym() + fmt0(c.sugerido) + (LANG === "es" ? " de " + c.nombre + " este mes." : " on " + c.nombre + " this month.") });
     });
-    advice.push({ level: "credit", text: (LANG === "es" ? "Debes " + sym() + fmt0(cardsDebt) + " en total entre tarjetas." : "You owe " + sym() + fmt0(cardsDebt) + " total across cards."), showBankBtn: true });
+  }
+
+  if (advice.length === 0) {
+    advice.push({ level: "safe", text: LANG === "es" ? "Todos los pagos fijos de este mes están marcados como pagados." : "All fixed payments for this month are marked paid." });
   }
   return advice.slice(0, 9);
 }

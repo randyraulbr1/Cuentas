@@ -308,6 +308,9 @@
 .trade-candle.income line, .trade-candle.income rect { stroke: #2ED573; fill: #2ED573; }
 .trade-candle.expense line, .trade-candle.expense rect { stroke: #FF5263; fill: #FF5263; }
 .trade-candle rect { filter: drop-shadow(0 0 2px rgba(255,255,255,.08)); }
+#cf-crosshair { stroke: rgba(255,255,255,0.55); stroke-width: 1.5; stroke-dasharray: 3 3; pointer-events: none; }
+.trading-svg { touch-action: pan-y; cursor: crosshair; }
+#cf-readout { transition: color .1s ease; }
 .trade-doji { stroke: #3A4553; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .trading-axis-label { fill: #7D8998; font: 500 9px "Inter", sans-serif; }
 .trading-axis-label.zero { fill: #AAB4C0; }
@@ -374,6 +377,9 @@
 .smart-goal{font-size:11px;font-weight:800;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);padding:6px 9px;border-radius:999px}
 .smart-advice{display:flex;align-items:flex-start;gap:9px;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.45}
 .smart-advice:last-child{border-bottom:0}.smart-advice svg{width:18px;height:18px;flex:0 0 auto;margin-top:1px}.smart-advice.urgent{color:#E34B59}.smart-advice.credit{color:#8B6CF6}.smart-advice.save,.smart-advice.safe{color:#1E9D61}
+.smart-advice.blink{color:#fff;background:#E23428;margin:0 -2px 8px;padding:11px 12px;border-radius:12px;border-bottom:none;font-weight:700;animation:advice-blink 1.1s ease-in-out infinite}
+.smart-advice.blink svg{color:#fff}
+@keyframes advice-blink{0%,100%{opacity:1}50%{opacity:.55}}
 .options-footer-meta{text-align:center;color:var(--text-muted);font-size:11px;line-height:1.5;margin:18px 8px calc(18px + env(safe-area-inset-bottom))}
 .real-candle-chart .trading-svg{min-width:720px}.real-candle-chart{overflow:hidden}.real-candle-chart .trading-svg{overflow:visible}
 .trading-empty-label{fill:#77798A;font-size:14px}

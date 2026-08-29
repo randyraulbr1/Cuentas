@@ -324,12 +324,16 @@ function renderCashflowChart(buckets) {
   if(minValue===maxValue){minValue-=1;maxValue+=1;}const padding=Math.max((maxValue-minValue)*.12,1);minValue-=padding;maxValue+=padding;
   const scaleY=(value)=>top+((maxValue-value)/(maxValue-minValue))*plotH,step=plotW/Math.max(buckets.length,1),candleW=Math.max(Math.min(step*.62,13),2.5);
   const moneyShort=(value)=>{const n=Math.abs(toNum(value));return n>=1000?(n/1000).toFixed(n>=10000?0:1)+"k":fmt0(n);};
+  window.__cashflowBuckets = buckets;
+  window.__cashflowGeom = { width, left, right, step };
+  const netDefault=(totalIncome-totalExpense>=0?"+":"\u2212")+sym()+fmt0(Math.abs(totalIncome-totalExpense));
   let h='<div class="trading-chart-shell real-candle-chart"><div class="trading-chart-head"><div><span class="trading-symbol">305 CASH FLOW</span><span class="trading-live"><i></i>'+(buckets.length?(LANG==="es"?"Movimientos reales":"Real transactions"):(LANG==="es"?"Sin actividad":"No activity"))+'</span></div>';
-  h+='<div class="trading-net '+(totalIncome-totalExpense>=0?"positive":"negative")+'">'+(totalIncome-totalExpense>=0?"+":"−")+sym()+fmt0(Math.abs(totalIncome-totalExpense))+'</div></div><div class="trading-totals"><span class="positive-text">▲ '+(LANG==="es"?"Pagos":"Income")+' '+sym()+fmt0(totalIncome)+'</span><span class="negative-text">▼ '+(LANG==="es"?"Compras":"Purchases")+' '+sym()+fmt0(totalExpense)+'</span></div><svg class="trading-svg" viewBox="0 0 '+width+' '+height+'" role="img">';
+  h+='<div class="trading-net '+(totalIncome-totalExpense>=0?"positive":"negative")+'" id="cf-readout" data-default="'+esc(netDefault)+'" data-default-cls="'+(totalIncome-totalExpense>=0?"positive":"negative")+'">'+netDefault+'</div></div><svg class="trading-svg" id="cf-svg" viewBox="0 0 '+width+' '+height+'" role="img">';
   [0,.25,.5,.75,1].forEach((ratio)=>{const y=top+plotH*ratio,value=maxValue-(maxValue-minValue)*ratio;h+='<line class="trading-grid" x1="'+left+'" y1="'+y+'" x2="'+(width-right)+'" y2="'+y+'"></line><text class="trading-axis-label" x="'+(width-7)+'" y="'+(y+4)+'" text-anchor="end">'+(value<0?"−":"")+sym()+moneyShort(value)+'</text>';});
   if(!buckets.length)h+='<text class="trading-empty-label" x="'+(left+plotW/2)+'" y="'+(top+plotH/2)+'" text-anchor="middle">'+(LANG==="es"?"No hubo movimientos en este período":"No transactions in this period")+'</text>';
-  buckets.forEach((item,index)=>{const x=left+step*(index+.5),yOpen=scaleY(item.open),yClose=scaleY(item.close),bodyTop=Math.min(yOpen,yClose),bodyHeight=Math.max(Math.abs(yClose-yOpen),3),cssClass=item.tipo==="income"?"income":"expense";h+='<g class="trade-candle '+cssClass+'"><title>'+esc(item.etiqueta+" · "+item.descripcion+" · "+sym()+fmt0(item.valor))+'</title><line x1="'+x+'" y1="'+Math.min(yOpen,yClose)+'" x2="'+x+'" y2="'+Math.max(yOpen,yClose)+'"></line><rect x="'+(x-candleW/2)+'" y="'+bodyTop+'" width="'+candleW+'" height="'+bodyHeight+'" rx="1.5"></rect></g>';if(index%Math.max(Math.ceil(buckets.length/7),1)===0||index===buckets.length-1)h+='<text class="trading-axis-label date" x="'+x+'" y="'+(height-11)+'" text-anchor="middle">'+esc(item.etiqueta)+'</text>';});
-  h+='</svg><div class="trading-chart-foot"><span><i class="income-box"></i>'+(LANG==="es"?"Pagos e ingresos":"Payments and income")+'</span><span><i class="expense-box"></i>'+(LANG==="es"?"Compras y gastos":"Purchases and expenses")+'</span></div></div>';return h;
+  buckets.forEach((item,index)=>{const x=left+step*(index+.5),yOpen=scaleY(item.open),yClose=scaleY(item.close),bodyTop=Math.min(yOpen,yClose),bodyHeight=Math.max(Math.abs(yClose-yOpen),3),cssClass=item.tipo==="income"?"income":"expense";h+='<g class="trade-candle '+cssClass+'"><line x1="'+x+'" y1="'+Math.min(yOpen,yClose)+'" x2="'+x+'" y2="'+Math.max(yOpen,yClose)+'"></line><rect x="'+(x-candleW/2)+'" y="'+bodyTop+'" width="'+candleW+'" height="'+bodyHeight+'" rx="1.5"></rect></g>';if(index%Math.max(Math.ceil(buckets.length/7),1)===0||index===buckets.length-1)h+='<text class="trading-axis-label date" x="'+x+'" y="'+(height-11)+'" text-anchor="middle">'+esc(item.etiqueta)+'</text>';});
+  if(buckets.length)h+='<line id="cf-crosshair" x1="0" y1="'+top+'" x2="0" y2="'+(height-bottom)+'" style="display:none;"></line>';
+  h+='</svg></div>';return h;
 }
 
 function renderTrabajoCalendar() {
@@ -422,8 +426,7 @@ function renderBarChart(items, height, clickAction) {
 }
 
 function utilBarHtml(uso, usoNivel) {
-  const blink = uso >= 30 ? " blink" : "";
-  return '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + blink + '" style="width:' + uso + '%"></div><div class="util-bar-marker"></div></div>';
+  return '<div class="util-bar-track"><div class="util-bar-fill ' + usoNivel + '" style="width:' + uso + '%"></div><div class="util-bar-marker"></div></div>';
 }
 
 function renderPagoBlock(type, item, saldoActual) {
@@ -514,18 +517,11 @@ function renderApp() {
     html += '<div class="hero-val' + (patrimonioNeto < 0 ? " neg" : "") + '">' + (patrimonioNeto < 0 ? "\u2212" : "") + sym() + fmt0(Math.abs(patrimonioNeto)) + '</div>';
     html += '<div class="hero-sub"><span>' + t("disponibleHoyLbl") + '</span><b>' + sym() + fmt0(disponibleHoy) + '</b></div>';
     html += '</div>';
-    if (toNum(state.job.pagoHora) > 0) {
-      html += '<div class="panel" style="padding:18px;"><div class="panel-head-row"><div><h2>' + (LANG === "es" ? "Dinero en tiempo real" : "Money in real time") + '</h2><p class="hint" style="margin:3px 0 0;">' + (LANG === "es" ? "Mide una compra con tu tiempo neto de trabajo." : "Measure a purchase using your net working time.") + '</p></div>' + icon("clock") + '</div>';
-      html += '<div class="goal-field" style="margin-top:12px;"><label>' + (LANG === "es" ? "Monto de la compra" : "Purchase amount") + ' ' + sym() + '</label><input id="purchase-time-input" type="text" inputmode="decimal" value="' + esc(state.evaluarCompraMonto || "") + '" placeholder="45"></div>';
-      html += '<div id="purchase-time-result" style="font-size:18px;font-weight:800;margin-top:12px;color:var(--positive);">' + esc(textoGastoEnTiempo(state.evaluarCompraMonto)) + '</div>';
-      html += '<p class="hint" style="margin:8px 0 0;">' + (LANG === "es" ? "Basado en " : "Based on ") + sym() + fmt2(tarifaNetaTrabajo()) + '/h ' + (LANG === "es" ? "netos estimados." : "estimated net.") + '</p></div>';
-    }
     const smartAdvice = computeSmartAdvice();
     if (smartAdvice.length) {
-      html += '<div class="panel smart-advice-panel"><div class="panel-head-row"><h2>' + (LANG === "es" ? "Estado de tus pagos" : "Payment status") + '</h2></div>';
+      html += '<div class="panel smart-advice-panel"><div class="panel-head-row"><h2>' + (LANG === "es" ? "Qué hacer ahora" : "What to do now") + '</h2></div>';
       smartAdvice.forEach((tip) => {
-        html += '<div class="smart-advice ' + tip.level + '">' + icon(tip.level === "urgent" ? "alert" : tip.level === "credit" ? "card" : tip.level === "save" ? "bills" : "check") + '<span>' + esc(tip.text) + '</span></div>';
-        if (tip.showBankBtn) html += '<button class="pill-btn" style="margin:2px 0 8px;" data-action="abrirBanco">' + t("abrirBancoBtn") + '</button>';
+        html += '<div class="smart-advice ' + tip.level + '">' + icon(tip.level === "urgent" || tip.level === "blink" ? "alert" : tip.level === "credit" ? "card" : tip.level === "save" ? "bills" : "check") + '<span>' + esc(tip.text) + '</span></div>';
       });
       html += '</div>';
     }
@@ -671,7 +667,7 @@ function renderApp() {
       } else {
         bankExpenses.forEach((tx) => {
           html += '<button class="bank-expense-choice" data-action="addSubFromBankTx" data-id="' + esc(tx.id) + '">';
-          html += '<span class="bank-expense-choice-icon">' + icon(CATEGORY_ICON[tx.categoria] || CATEGORY_ICON.otro) + '</span>';
+          html += renderTxChip(tx.categoria);
           html += '<span class="bank-expense-choice-info"><b>' + esc(tx.merchant_name || tx.descripcion || "") + '</b><small>' + esc(String(tx.fecha || "").slice(0, 10)) + ' · ' + t("cat_" + (tx.categoria || "otro")) + '</small></span>';
           html += '<strong>−' + sym() + fmt0(Math.abs(toNum(tx.monto))) + '</strong></button>';
         });
@@ -800,6 +796,13 @@ function renderApp() {
     if (state.editingLoans) html += '<button class="add-btn" data-action="addLoan">' + t("addLoan") + '</button>';
     const totalPrestamos = state.loans.reduce((a, l) => a + (toNum(l.saldoTotal) > 0 ? toNum(l.montoPago) : 0), 0);
     html += '<div class="mini-total"><span>' + t("totalPrestamos") + '</span><b>' + sym() + fmt0(totalPrestamos) + '</b></div></div>';
+
+    if (toNum(state.job.pagoHora) > 0) {
+      html += '<div class="panel" style="padding:18px;"><div class="panel-head-row"><div><h2>' + (LANG === "es" ? "Dinero en tiempo real" : "Money in real time") + '</h2><p class="hint" style="margin:3px 0 0;">' + (LANG === "es" ? "Mide una compra con tu tiempo neto de trabajo." : "Measure a purchase using your net working time.") + '</p></div>' + icon("clock") + '</div>';
+      html += '<div class="goal-field" style="margin-top:12px;"><label>' + (LANG === "es" ? "Monto de la compra" : "Purchase amount") + ' ' + sym() + '</label><input id="purchase-time-input" type="text" inputmode="decimal" value="' + esc(state.evaluarCompraMonto || "") + '" placeholder="45"></div>';
+      html += '<div id="purchase-time-result" style="font-size:18px;font-weight:800;margin-top:12px;color:var(--positive);">' + esc(textoGastoEnTiempo(state.evaluarCompraMonto)) + '</div>';
+      html += '<p class="hint" style="margin:8px 0 0;">' + (LANG === "es" ? "Basado en " : "Based on ") + sym() + fmt2(tarifaNetaTrabajo()) + '/h ' + (LANG === "es" ? "netos estimados." : "estimated net.") + '</p></div>';
+    }
   }
 
 
@@ -1052,21 +1055,6 @@ function renderApp() {
       html += '<button class="section-collapser" data-action="toggleCuentasHistorial"><span>' + icon("clock") + ' ' + t("tabHistorial") + '</span><span class="chev' + (state.cuentasHistorialAbierto ? " open" : "") + '">' + icon("chevron") + '</span></button>';
     }
     if (tab === "historial" || state.cuentasHistorialAbierto) {
-    html += '<div class="panel"><p class="hint">' + t("historialHint") + '</p>';
-    if (state.history.length === 0) html += '<div class="empty-state">' + t("historialEmpty") + '</div>';
-    state.history.forEach((h) => {
-      const label = h.status === "verde" ? t("statusVerde") : h.status === "amarillo" ? t("statusAmarillo") : t("statusRojo");
-      const metaLine = t("comprometidoDe").split("{s}").join(sym()).split("{a}").join(fmt0(h.comprometido)).split("{b}").join(fmt0(h.ingreso)).split("{c}").join(fmt0(h.ahorro));
-      html += '<div class="history-row"><div class="history-top"><span class="history-month">' + esc(monthLabel(h.month)) + '</span><span class="status-pill ' + h.status + '">' + label + '</span></div>';
-      html += '<div class="hbar-track"><div class="hbar-fill util-bar-fill ' + h.status + '" style="width:' + Math.min(h.ratio * 100, 100) + '%"></div></div>';
-      if (state.confirmDeleteHistoryKey === h.month) {
-        html += '<div class="history-meta"><span>' + esc(t("confirmDeleteHistoryMsg")(monthLabel(h.month))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeHistory" data-id="' + h.month + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteHistory">' + t("cancel") + '</button></div></div></div>';
-      } else {
-        html += '<div class="history-meta"><span>' + esc(metaLine) + '</span><button class="history-del" data-action="askDeleteHistory" data-id="' + h.month + '">' + t("eliminar") + '</button></div></div>';
-      }
-    });
-    html += '</div>';
-
     const comprasBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0);
     const recibidosBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) > 0);
     if (comprasBase.length > 0 || recibidosBase.length > 0) {
@@ -1092,14 +1080,7 @@ function renderApp() {
 
       if (compras.length === 0) html += '<div class="empty-state">' + t("sinResultadosMsg") + '</div>';
       const gruposCompras = agruparPorMes(compras);
-      gruposCompras.forEach((grupo, idx) => {
-        if (idx === 0) {
-          html += '<p class="opt-section-title" style="margin-top:4px;">' + esc(grupo.label) + '</p>';
-          grupo.items.forEach((tx) => {
-            html += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id);
-          });
-          return;
-        }
+      gruposCompras.forEach((grupo) => {
         const abierto = state.historialMesAbierto === grupo.monthKey;
         const totalMes = grupo.items.reduce((a, tx) => a + Math.abs(toNum(tx.monto)), 0);
         html += '<button class="sub-row-locked" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;font:inherit;color:inherit;" data-action="toggleMesHistorial" data-id="' + grupo.monthKey + '"><span class="locked-name" style="display:flex;align-items:center;gap:6px;"><span class="chev' + (abierto ? " open" : "") + '">' + icon("chevron") + '</span>' + esc(grupo.label) + '</span><span class="locked-amount">' + sym() + fmt0(totalMes) + '</span></button>';
@@ -1124,15 +1105,12 @@ function renderApp() {
 
     // Flujo de caja: grafica tipo velas (verde=ingreso, rojo=gasto)
     html += '<div class="panel">';
-    html += '<div class="panel-head-row"><h2>' + t("flujoCajaTitle") + '</h2></div>';
     html += '<div class="seg" style="margin-bottom:6px;">';
     [["day", "periodoDia"], ["week", "periodoSemana"], ["month", "periodoMes"]].forEach((p) => {
       html += '<button style="flex:1;" class="' + (state.cashflowPeriod === p[0] ? "active" : "") + '" data-action="setCashflowPeriod" data-id="' + p[0] + '">' + t(p[1]) + '</button>';
     });
     html += '</div>';
     html += renderCashflowChart(buildCashflowBuckets(state.cashflowPeriod));
-    html += '<div style="display:flex;gap:14px;font-size:11.5px;color:var(--text-muted);margin-bottom:4px;"><span>\ud83d\udfe2 ' + t("legendIngreso") + '</span><span>\ud83d\udd34 ' + t("legendGasto") + '</span></div>';
-    html += '<p class="hint" style="margin-bottom:0;">' + t("flujoCajaHint") + '</p>';
     html += '</div>';
 
   }

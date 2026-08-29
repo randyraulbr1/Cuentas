@@ -639,6 +639,69 @@ function endSlideDrag(e) {
 root.addEventListener("pointerup", endSlideDrag);
 root.addEventListener("pointercancel", endSlideDrag);
 
+/* Linea movil tipo trading en el grafico de Flujo de caja */
+function svgPointFromClientX(svg, clientX) {
+  try {
+    const pt = svg.createSVGPoint();
+    pt.x = clientX; pt.y = 0;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    return pt.matrixTransform(ctm.inverse());
+  } catch (e) { return null; }
+}
+function updateCashflowCrosshair(svg, clientX) {
+  const buckets = window.__cashflowBuckets;
+  const geom = window.__cashflowGeom;
+  if (!buckets || !buckets.length || !geom) return;
+  const pt = svgPointFromClientX(svg, clientX);
+  if (!pt) return;
+  const plotW = geom.width - geom.left - geom.right;
+  let idx = Math.round((pt.x - geom.left - geom.step / 2) / geom.step);
+  idx = Math.max(0, Math.min(buckets.length - 1, idx));
+  const item = buckets[idx];
+  const x = geom.left + geom.step * (idx + 0.5);
+  const line = svg.querySelector("#cf-crosshair");
+  if (line) { line.setAttribute("x1", x); line.setAttribute("x2", x); line.style.display = "block"; }
+  const readout = document.getElementById("cf-readout");
+  if (readout) {
+    const positive = item.tipo === "income";
+    readout.textContent = (positive ? "+" : "\u2212") + sym() + fmt0(item.valor) + "  \u00b7  " + item.etiqueta + (item.descripcion ? " \u00b7 " + item.descripcion : "");
+    readout.classList.remove("positive", "negative");
+    readout.classList.add(positive ? "positive" : "negative");
+  }
+}
+function resetCashflowReadout() {
+  const readout = document.getElementById("cf-readout");
+  if (!readout) return;
+  readout.textContent = readout.dataset.default || "";
+  readout.classList.remove("positive", "negative");
+  readout.classList.add(readout.dataset.defaultCls || "positive");
+  const svg = document.getElementById("cf-svg");
+  const line = svg && svg.querySelector("#cf-crosshair");
+  if (line) line.style.display = "none";
+}
+let cashflowDragging = false;
+root.addEventListener("pointerdown", (e) => {
+  const svg = e.target.closest("#cf-svg");
+  if (!svg) return;
+  cashflowDragging = true;
+  try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+  updateCashflowCrosshair(svg, e.clientX);
+});
+root.addEventListener("pointermove", (e) => {
+  if (!cashflowDragging) return;
+  const svg = document.getElementById("cf-svg");
+  if (svg) updateCashflowCrosshair(svg, e.clientX);
+});
+function endCashflowDrag() {
+  if (!cashflowDragging) return;
+  cashflowDragging = false;
+  resetCashflowReadout();
+}
+root.addEventListener("pointerup", endCashflowDrag);
+root.addEventListener("pointercancel", endCashflowDrag);
+root.addEventListener("pointerleave", endCashflowDrag);
+
 root.addEventListener("scroll", (e) => {
   if (e.target && e.target.id === "bank-expense-picker") {
     state.bankExpenseScrollTop = e.target.scrollTop;
