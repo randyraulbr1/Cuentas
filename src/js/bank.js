@@ -167,3 +167,28 @@ function bankTotalsEsteMes() {
   });
   return { ingresos, gastos, porCategoria };
 }
+
+function abrirBanco() {
+  const inst = (state.cloudInstitutions && state.cloudInstitutions[0]) || null;
+  const name = (inst && (inst.institution_name || inst.name)) || "";
+  const known = {
+    "bank of america": "https://www.bankofamerica.com",
+    "chase": "https://www.chase.com",
+    "wells fargo": "https://www.wellsfargo.com",
+    "citi": "https://www.citibank.com",
+    "capital one": "https://www.capitalone.com",
+    "american express": "https://www.americanexpress.com",
+    "amex": "https://www.americanexpress.com",
+    "discover": "https://www.discover.com",
+    "us bank": "https://www.usbank.com",
+    "pnc": "https://www.pnc.com",
+    "truist": "https://www.truist.com",
+    "navy federal": "https://www.navyfederal.org",
+    "banco popular": "https://www.popular.com",
+  };
+  const key = name.toLowerCase();
+  let url = null;
+  for (const k in known) { if (key.indexOf(k) !== -1) { url = known[k]; break; } }
+  if (!url) url = "https://www.google.com/search?q=" + encodeURIComponent((name || (LANG === "es" ? "mi banco" : "my bank")) + (LANG === "es" ? " iniciar sesi\u00f3n" : " login"));
+  window.open(url, "_blank");
+}

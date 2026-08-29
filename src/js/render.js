@@ -473,7 +473,10 @@ function renderApp() {
     const smartAdvice = computeSmartAdvice();
     if (smartAdvice.length) {
       html += '<div class="panel smart-advice-panel"><div class="panel-head-row"><h2>' + (LANG === "es" ? "Estado de tus pagos" : "Payment status") + '</h2></div>';
-      smartAdvice.forEach((tip) => { html += '<div class="smart-advice ' + tip.level + '">' + icon(tip.level === "urgent" ? "alert" : tip.level === "credit" ? "card" : tip.level === "save" ? "bills" : "check") + '<span>' + esc(tip.text) + '</span></div>'; });
+      smartAdvice.forEach((tip) => {
+        html += '<div class="smart-advice ' + tip.level + '">' + icon(tip.level === "urgent" ? "alert" : tip.level === "credit" ? "card" : tip.level === "save" ? "bills" : "check") + '<span>' + esc(tip.text) + '</span></div>';
+        if (tip.showBankBtn) html += '<button class="pill-btn" style="margin:2px 0 8px;" data-action="abrirBanco">' + t("abrirBancoBtn") + '</button>';
+      });
       html += '</div>';
     }
     const rs = computeResumenSemanal();

@@ -607,7 +607,7 @@ function endSlideDrag(e) {
   const action = slideDrag.wrap.dataset.slideAction;
   const handle = slideDrag.handle;
   window.__slideDragging = false;
-  if (frac >= 0.82) {
+  if (frac >= 0.45) {
     handle.style.transition = "left .12s ease";
     handle.style.left = slideDrag.maxX + "px";
     slideDrag = null;
@@ -718,6 +718,7 @@ root.addEventListener("click", (e) => {
     trabajoCalGuardarHoras: trabajoCalGuardarHoras,
     trabajoCalQuitarTurno: () => trabajoCalQuitarTurno(id),
     dismissBreakLock: () => { state.breakLockDismissed = true; render(); },
+    abrirBanco: abrirBanco,
     requestWorkNotifPermission: requestWorkNotifPermission,
     askEmpezarBreak: askEmpezarBreak,
     cancelEmpezarBreak: cancelEmpezarBreak,

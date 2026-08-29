@@ -107,8 +107,14 @@ function computeSmartAdvice() {
   }
 
   const cards = state.cloudAccounts.filter((account) => account.type === "credit" && toNum(account.balance_current) > 0);
+  const cardsDebt = cards.reduce((sum, card) => sum + toNum(card.balance_current), 0);
   const minimums = cards.reduce((sum, card) => sum + Math.max(toNum(card.liab_pago_minimo), 0), 0);
-  if (minimums > 0) advice.push({ level: "credit", text: (LANG === "es" ? "Pagos mínimos actuales de tarjetas: " : "Current card minimum payments: ") + sym() + fmt0(minimums) + "." });
+  if (cardsDebt > 0) {
+    const text = minimums > 0
+      ? (LANG === "es" ? "Debes " + sym() + fmt0(cardsDebt) + " en tarjetas. M\u00ednimo actual: " + sym() + fmt0(minimums) + "." : "You owe " + sym() + fmt0(cardsDebt) + " on cards. Current minimum: " + sym() + fmt0(minimums) + ".")
+      : (LANG === "es" ? "Debes " + sym() + fmt0(cardsDebt) + " en tarjetas." : "You owe " + sym() + fmt0(cardsDebt) + " on cards.");
+    advice.push({ level: "credit", text: text, showBankBtn: true });
+  }
   return advice.slice(0, 4);
 }
 
