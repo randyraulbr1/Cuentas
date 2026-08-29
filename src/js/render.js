@@ -442,6 +442,7 @@ function renderApp() {
     html += '</div>';
 
     if (t2.disponibleBruto > 0) {
+      const cloudNoCredit = state.cloudAccounts.filter((a) => a.type !== "credit").reduce((sum, a) => sum + toNum(a.balance_current), 0);
       const debitoBase = toNum(state.debito) + cloudNoCredit;
       const sugGustos = debitoBase * 0.2;
       const resultadoMes = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
