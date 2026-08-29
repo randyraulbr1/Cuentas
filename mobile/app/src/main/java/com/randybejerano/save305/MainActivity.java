@@ -97,13 +97,18 @@ public class MainActivity extends FragmentActivity {
 
     private void buildKeypad(String heading, String message, String buttonText, boolean unlockMode) {
         root.removeAllViews();
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.setFillViewport(true);
+        FrameLayout.LayoutParams scrollLp = new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        root.addView(scroll, scrollLp);
+
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
         page.setGravity(Gravity.CENTER_HORIZONTAL);
         page.setPadding(dp(24), dp(30), dp(24), dp(22));
-        FrameLayout.LayoutParams pageLp = new FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        root.addView(page, pageLp);
+        scroll.addView(page, new android.widget.ScrollView.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         TextView logo = new TextView(this);
         logo.setText("$");
