@@ -459,3 +459,9 @@
 .credit-help ol { margin:0; padding-left:20px; }
 .credit-help li { margin:7px 0; line-height:1.4; }
 @media(max-width:390px){.card-stat-grid{grid-template-columns:1fr 1fr}.card-stat{padding:11px}.card-stat b{font-size:17px}.tab-bar .tab-label{font-size:10px}}
+
+/* v147: botones elevados sin brillo */
+button{font-family:inherit;text-transform:none;letter-spacing:normal;border-radius:12px;transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease}
+button:not(.pay-trigger):not(.fab-add):not(.icon-pencil):not(.icon-del):not(.options-close){box-shadow:2px 2px 0 color-mix(in srgb,var(--border) 72%,transparent);}
+button:not(.pay-trigger):not(.fab-add):not(.icon-pencil):not(.icon-del):not(.options-close):active{transform:translateY(1px);box-shadow:inset 1px 1px 0 color-mix(in srgb,var(--border) 65%,transparent)}
+:root[data-theme="dark"] button:not(.pay-trigger):not(.fab-add):not(.icon-pencil):not(.icon-del):not(.options-close){box-shadow:2px 2px 0 rgba(0,0,0,.45)}
