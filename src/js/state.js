@@ -8,8 +8,8 @@ const fmt2 = (n) => (isFinite(Number(n)) ? Number(n) : 0).toLocaleString(LANG ==
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v138";
-const BUILD_DATE = "29/08 20:45 UTC";
+const APP_VERSION = "v139";
+const BUILD_DATE = "29/08 21:30 UTC";
 
 let uidCounter = 1;
 
@@ -69,6 +69,14 @@ function statusFromRatio(ratio, insuficiente) {
 
 function esc(v) { return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
+const DEFAULT_NAV_ORDER = ["cuentas", "trabajo", "inicio", "tarjetas", "opciones"];
+function normalizeNavOrder(value) {
+  const input = Array.isArray(value) ? value : [];
+  const unique = input.filter((id, index) => DEFAULT_NAV_ORDER.indexOf(id) !== -1 && input.indexOf(id) === index);
+  DEFAULT_NAV_ORDER.forEach((id) => { if (unique.indexOf(id) === -1) unique.push(id); });
+  return unique.slice(0, DEFAULT_NAV_ORDER.length);
+}
+
 const settingsInit = loadSettings();
 
 const state = {
@@ -78,6 +86,8 @@ const state = {
   activeProfileId: null,
   confirmDeleteProfileId: null,
   theme: settingsInit.theme || "light", textSize: settingsInit.textSize || "normal", cardNubeExpandida: null, expandedCloudCardIds: {}, bankExpenseScrollTop: 0,
+  navOrder: normalizeNavOrder(settingsInit.navOrder), navOrderDraft: normalizeNavOrder(settingsInit.navOrder), navOrderSelected: "inicio", navOrderSaved: false,
+  bankExpenseSort: settingsInit.bankExpenseSort || "fecha",
   showConfirmarAhorro: false, montoConfirmarAhorro: "", debtStrategy: "avalancha", extraPagoDeuda: "",
   lang: settingsInit.lang || "es",
   currency: settingsInit.currency || "usd",
