@@ -4,10 +4,12 @@ const toNum = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
 
 const fmt0 = (n) => Math.round(isFinite(n) ? n : 0).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
+const fmt2 = (n) => (isFinite(Number(n)) ? Number(n) : 0).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v133";
-const BUILD_DATE = "29/08 18:45 UTC";
+const APP_VERSION = "v134";
+const BUILD_DATE = "29/08 19:10 UTC";
 
 let uidCounter = 1;
 
