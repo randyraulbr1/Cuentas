@@ -303,6 +303,79 @@ function renderCashflowChart(buckets) {
   h+='</svg><div class="trading-chart-foot"><span><i class="income-box"></i>'+(LANG==="es"?"Pagos e ingresos":"Payments and income")+'</span><span><i class="expense-box"></i>'+(LANG==="es"?"Compras y gastos":"Purchases and expenses")+'</span></div></div>';return h;
 }
 
+function renderTrabajoCalendar() {
+  const year = state.trabajoCalYear, month = state.trabajoCalMonth;
+  const first = new Date(year, month, 1);
+  const dowEs = ["Dom", "Lun", "Mar", "Mi\u00e9", "Jue", "Vie", "S\u00e1b"];
+  const dowEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dowLabels = LANG === "es" ? dowEs : dowEn;
+  const startOffset = first.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = dateKeyOf(new Date());
+  const monthName = first.toLocaleDateString(LANG === "es" ? "es-ES" : "en-US", { month: "long", year: "numeric" });
+
+  const byDay = {};
+  state.turnos.forEach((tn) => {
+    if (!byDay[tn.fecha]) byDay[tn.fecha] = { horas: 0, bruto: 0, ids: [] };
+    const r = turnoPagoBruto(tn);
+    byDay[tn.fecha].horas += r.horas;
+    byDay[tn.fecha].bruto += r.bruto;
+    byDay[tn.fecha].ids.push(tn.id);
+  });
+
+  let h = '<div class="panel">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">';
+  h += '<button class="icon-pencil" data-action="trabajoCalPrevMonth" style="transform:rotate(180deg);">' + icon("chevron") + '</button>';
+  h += '<h2 style="margin:0;text-transform:capitalize;font-size:16px;">' + esc(monthName) + '</h2>';
+  h += '<button class="icon-pencil" data-action="trabajoCalNextMonth">' + icon("chevron") + '</button>';
+  h += '</div>';
+
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;">';
+  dowLabels.forEach((d) => { h += '<div style="text-align:center;font-size:10px;font-weight:700;color:var(--text-muted);padding-bottom:4px;">' + d + '</div>'; });
+  h += '</div>';
+
+  h += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">';
+  for (let i = 0; i < startOffset; i++) h += '<div></div>';
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = year + "-" + String(month + 1).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+    const agg = byDay[ds];
+    const worked = !!agg;
+    const isToday = ds === todayStr;
+    const isSelected = state.trabajoCalSelectedDate === ds;
+    let style = "aspect-ratio:1/1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;background:var(--bg);border:none;font-family:inherit;color:var(--text);position:relative;";
+    if (worked) style += "background:rgba(52,199,89,0.16);color:#248A3D;";
+    if (isToday) style += "outline:2px solid var(--accent);outline-offset:-2px;";
+    if (isSelected) style += "outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent);color:var(--accent-contrast);";
+    h += '<button type="button" style="' + style + '" data-action="trabajoCalSelectDay" data-id="' + ds + '">';
+    h += '<span>' + day + '</span>';
+    if (worked) h += '<span style="font-size:7.5px;font-weight:700;margin-top:1px;">' + fmt0(agg.bruto) + '</span>';
+    h += '</button>';
+  }
+  h += '</div>';
+
+  if (state.trabajoCalSelectedDate) {
+    const ds = state.trabajoCalSelectedDate;
+    const agg = byDay[ds];
+    h += '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">';
+    h += '<p class="hint" style="margin-bottom:8px;">' + esc(new Date(ds + "T00:00:00").toLocaleDateString(LANG === "es" ? "es-ES" : "en-US", { weekday: "long", day: "numeric", month: "long" })) + '</p>';
+    if (agg) {
+      agg.ids.forEach((id) => {
+        const tn = state.turnos.find((t) => t.id === id);
+        if (!tn) return;
+        const r = turnoPagoBruto(tn);
+        h += '<div class="history-row" style="padding:8px 0;"><div class="history-top"><span>' + fmtHoras(r.horas) + '</span><span class="locked-amount">' + sym() + fmt0(r.bruto) + '</span></div>';
+        h += '<button class="delete-link" data-action="trabajoCalQuitarTurno" data-id="' + id + '">' + t("eliminarTurnoLink") + '</button></div>';
+      });
+    }
+    h += '<div class="goal-field" style="margin-top:6px;"><label>' + t("horasTrabajadasLbl") + '</label><input type="text" inputmode="decimal" placeholder="8" id="cal-horas" value="' + esc(state.trabajoCalHorasInput) + '" data-scope="trabajoCalHoras"></div>';
+    h += '<button class="pill-btn confirm" style="width:100%;margin-top:8px;" data-action="trabajoCalGuardarHoras">' + t("agregarTurnoBtn") + '</button>';
+    h += '</div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
 function renderBarChart(items, height, clickAction) {
   height = height || 90;
   const max = Math.max(...items.map((i) => i.valor), 1);
@@ -806,6 +879,8 @@ function renderApp() {
     if (toNum(state.job.pagoHora) > 0) {
       html += '<div class="panel" style="text-align:center;padding:14px 18px;"><p class="hint" style="margin:0;">' + esc(horarioStatusText()) + '</p></div>';
     }
+
+    html += renderTrabajoCalendar();
 
     // panel configuracion del trabajo
     html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("miTrabajoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("miTrabajoHint") + '</p></div><button class="icon-pencil' + (state.editingJob ? " done" : "") + '" data-action="toggleEditJob">' + (state.editingJob ? icon("check") : icon("pencil")) + '</button></div>';

@@ -295,6 +295,44 @@ function pendienteDePago() {
 
 function toggleEditJob() { state.editingJob = !state.editingJob; render(); }
 
+function trabajoCalPrevMonth() {
+  state.trabajoCalMonth--;
+  if (state.trabajoCalMonth < 0) { state.trabajoCalMonth = 11; state.trabajoCalYear--; }
+  state.trabajoCalSelectedDate = null;
+  render();
+}
+function trabajoCalNextMonth() {
+  state.trabajoCalMonth++;
+  if (state.trabajoCalMonth > 11) { state.trabajoCalMonth = 0; state.trabajoCalYear++; }
+  state.trabajoCalSelectedDate = null;
+  render();
+}
+function trabajoCalSelectDay(dateStr) {
+  state.trabajoCalSelectedDate = state.trabajoCalSelectedDate === dateStr ? null : dateStr;
+  state.trabajoCalHorasInput = "";
+  render();
+}
+function trabajoCalGuardarHoras() {
+  const fecha = state.trabajoCalSelectedDate;
+  const horas = toNum(state.trabajoCalHorasInput);
+  if (!fecha || horas <= 0) return;
+  pushUndo();
+  const inicio = new Date(fecha + "T09:00:00");
+  const fin = new Date(inicio.getTime() + horas * 3600000);
+  state.turnos.push({
+    id: uid(), fecha: fecha, horaInicio: inicio.toISOString(), horaFin: fin.toISOString(),
+    breaks: [], propinas: "", bonos: "", notas: "", estado: "trabajado",
+  });
+  state.turnos.sort((a, b) => (a.horaInicio < b.horaInicio ? 1 : -1));
+  state.trabajoCalHorasInput = "";
+  scheduleSave(); render();
+}
+function trabajoCalQuitarTurno(id) {
+  pushUndo();
+  state.turnos = state.turnos.filter((t) => t.id !== id);
+  scheduleSave(); render();
+}
+
 function startAgregarTurno() {
   const hoy = dateKeyOf(new Date());
   state.agregarTurnoForm = { fecha: hoy, horas: "" };

@@ -474,6 +474,7 @@ root.addEventListener("input", (e) => {
   if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); return; }
   if (scope === "debito") { state.debito = sanitizeNum(el.value); scheduleSave(); return; }
   if (scope === "agregarTurno") { state.agregarTurnoForm[el.dataset.field] = el.value; rerenderPreservingFocus(); return; }
+  if (scope === "trabajoCalHoras") { state.trabajoCalHorasInput = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "cash") { state.cash = sanitizeNum(el.value); scheduleSave(); return; }
   if (scope === "apiBaseUrl") { state.apiBaseUrl = el.value.trim(); saveSettings(); rerenderPreservingFocus(); return; }
   if (scope === "authEmail") { state.authEmail = el.value; rerenderPreservingFocus(); return; }
@@ -663,6 +664,11 @@ root.addEventListener("click", (e) => {
     startAgregarTurno: startAgregarTurno,
     cancelAgregarTurno: cancelAgregarTurno,
     confirmAgregarTurno: confirmAgregarTurno,
+    trabajoCalPrevMonth: trabajoCalPrevMonth,
+    trabajoCalNextMonth: trabajoCalNextMonth,
+    trabajoCalSelectDay: () => trabajoCalSelectDay(id),
+    trabajoCalGuardarHoras: trabajoCalGuardarHoras,
+    trabajoCalQuitarTurno: () => trabajoCalQuitarTurno(id),
     requestWorkNotifPermission: requestWorkNotifPermission,
     askEmpezarBreak: askEmpezarBreak,
     cancelEmpezarBreak: cancelEmpezarBreak,
