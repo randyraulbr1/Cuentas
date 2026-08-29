@@ -226,18 +226,29 @@ function renderOpcionesTab() {
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
   let pinConfigured = false;
   try { pinConfigured = !!localStorage.getItem(PIN_HASH_KEY); } catch (error) {}
-  h += '<div class="panel"><p class="opt-section-title">' + (LANG === "es" ? "Seguridad local" : "Local security") + '</p>';
-  h += '<div class="opt-row"><div><span class="opt-row-label">' + esc(activeProfile ? activeProfile.nombre : "") + '</span><p class="opt-row-sub">' + (pinConfigured ? (LANG === "es" ? "PIN de 6 dígitos activado" : "6-digit PIN enabled") : (LANG === "es" ? "Crea un PIN para bloquear la app en este teléfono." : "Create a PIN to lock the app on this phone.")) + '</p></div></div>';
-  h += '<div class="pin-setup-row"><input id="pin-setup-input" data-scope="pinSetup" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="••••••" value="' + esc(state.pinSetupInput) + '"><button class="pill-btn confirm" data-action="savePin">' + (pinConfigured ? (LANG === "es" ? "Cambiar PIN" : "Change PIN") : (LANG === "es" ? "Crear PIN" : "Create PIN")) + '</button></div>';
+  h += '<div class="panel security-compact"><div class="security-compact-head"><span class="security-compact-icon">' + icon("lock") + '</span><div><p class="opt-section-title">' + (LANG === "es" ? "Seguridad local" : "Local security") + '</p><p class="opt-row-sub">' + (pinConfigured ? (LANG === "es" ? "PIN activo en este teléfono" : "PIN active on this phone") : (LANG === "es" ? "Protege esta cuenta con 6 dígitos" : "Protect this account with 6 digits")) + '</p></div></div>';
+  h += '<div class="pin-setup-row compact"><input aria-label="' + (LANG === "es" ? "PIN de 6 dígitos" : "6-digit PIN") + '" id="pin-setup-input" data-scope="pinSetup" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="••••••" value="' + esc(state.pinSetupInput) + '"><button class="pill-btn confirm" data-action="savePin">' + (pinConfigured ? (LANG === "es" ? "Cambiar" : "Change") : (LANG === "es" ? "Crear PIN" : "Create PIN")) + '</button></div>';
   if (state.pinError) h += '<p class="pin-error">' + esc(state.pinError) + '</p>';
   if (pinConfigured) {
     let biometricConfigured = false;
     try { biometricConfigured = !!localStorage.getItem(BIOMETRIC_CRED_KEY); } catch (error) {}
-    h += '<div class="biometric-settings"><button class="pill-btn biometric-btn" data-action="setupBiometric"' + (state.biometricBusy ? " disabled" : "") + '>' + icon("lock") + ' ' + (biometricConfigured ? (LANG === "es" ? "Configurar huella otra vez" : "Set up biometrics again") : (LANG === "es" ? "Activar huella del teléfono" : "Enable phone biometrics")) + '</button>';
-    if (biometricConfigured) h += '<span class="biometric-ready">' + icon("check") + ' ' + (LANG === "es" ? "Huella activada" : "Biometrics enabled") + '</span>';
-    h += '</div>';
-    h += '<button class="delete-link pin-lock-now" data-action="lockApp">' + (LANG === "es" ? "Bloquear ahora" : "Lock now") + '</button>';
+    h += '<div class="security-compact-actions"><button class="pill-btn biometric-btn" data-action="setupBiometric"' + (state.biometricBusy ? " disabled" : "") + '>' + icon("lock") + ' ' + (biometricConfigured ? (LANG === "es" ? "Huella activa" : "Biometrics active") : (LANG === "es" ? "Activar huella" : "Enable biometrics")) + '</button>';
+    h += '<button class="pill-btn" data-action="lockApp">' + (LANG === "es" ? "Bloquear" : "Lock") + '</button></div>';
   }
+  h += '</div>';
+
+  const navDefinitions = navTabDefinitions();
+  const navDraft = normalizeNavOrder(state.navOrderDraft);
+  h += '<div class="panel nav-order-panel"><div class="panel-head-row"><div><p class="opt-section-title">' + (LANG === "es" ? "Orden de los botones" : "Button order") + '</p><p class="opt-row-sub">' + (LANG === "es" ? "Toca uno y muévelo con las flechas." : "Tap one and move it with the arrows.") + '</p></div></div>';
+  h += '<div class="nav-order-strip">';
+  navDraft.forEach((navId, index) => {
+    const item = navDefinitions[navId];
+    h += '<button class="nav-order-item' + (state.navOrderSelected === navId ? " selected" : "") + '" data-action="selectNavOrder" data-id="' + navId + '"><span>' + icon(item.icon) + '</span><small>' + esc(item.label) + '</small><i>' + (index + 1) + '</i></button>';
+  });
+  h += '</div>';
+  const selectedIndex = navDraft.indexOf(state.navOrderSelected);
+  h += '<div class="nav-order-controls"><button class="pill-btn" data-action="moveNavLeft"' + (selectedIndex <= 0 ? " disabled" : "") + '>← ' + (LANG === "es" ? "Izquierda" : "Left") + '</button><button class="pill-btn" data-action="moveNavRight"' + (selectedIndex < 0 || selectedIndex >= navDraft.length - 1 ? " disabled" : "") + '>' + (LANG === "es" ? "Derecha" : "Right") + ' →</button></div>';
+  h += '<button class="pill-btn confirm wide" data-action="confirmNavOrder">' + (state.navOrderSaved ? (LANG === "es" ? "Orden guardado" : "Order saved") : (LANG === "es" ? "Confirmar orden" : "Confirm order")) + '</button>';
   h += '</div>';
 
   h += '<div class="panel"><p class="opt-section-title">' + t("secPreferencias") + '</p><div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div>';
@@ -431,14 +442,19 @@ function renderPagoBlock(type, item, saldoActual) {
   return h;
 }
 
+function navTabDefinitions() {
+  return {
+    cuentas: { id: "cuentas", icon: "receipt", label: t("tabCuentas") },
+    trabajo: { id: "trabajo", icon: "clockmoney", label: t("tabTrabajo") },
+    inicio: { id: "inicio", icon: "home", label: t("tabInicio") },
+    tarjetas: { id: "tarjetas", icon: "card", label: LANG === "es" ? "Tarjetas" : "Cards" },
+    opciones: { id: "opciones", icon: "gear", label: t("optionsTitle") },
+  };
+}
+
 function renderTabBar() {
-  const tabs = [
-    { id: "cuentas", icon: "receipt", label: t("tabCuentas") },
-    { id: "trabajo", icon: "clockmoney", label: t("tabTrabajo") },
-    { id: "inicio", icon: "home", label: t("tabInicio") },
-    { id: "tarjetas", icon: "card", label: LANG === "es" ? "Tarjetas" : "Cards" },
-    { id: "opciones", icon: "gear", label: t("optionsTitle") },
-  ];
+  const definitions = navTabDefinitions();
+  const tabs = normalizeNavOrder(state.navOrder).map((id) => definitions[id]);
   let h = '<div class="tab-bar">';
   tabs.forEach((tb) => {
     h += '<button class="tab-btn' + (state.activeTab === tb.id ? " active" : "") + '" data-action="goTab" data-id="' + tb.id + '"><span class="tab-icon">' + icon(tb.icon) + (tb.id === "opciones" && UPDATE_AVAILABLE ? '<span class="dot" style="top:2px;right:14px;"></span>' : '') + '</span><span class="tab-label">' + esc(tb.label) + '</span></button>';
@@ -550,7 +566,11 @@ function renderApp() {
       const debitoBase = debitoBanco;
       const sugGustos = debitoBase * 0.2;
       const resultadoMes = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
-      const sugAhorro = resultadoMes && !resultadoMes.insuficiente ? resultadoMes.ahorro : t2.disponibleBruto * (state.savingsRate / 100);
+      const ahorroBase = resultadoMes && !resultadoMes.insuficiente ? resultadoMes.ahorro : t2.disponibleBruto * (state.savingsRate / 100);
+      const pendienteObjetivos = state.goals.reduce((sum, goal) => sum + Math.max(toNum(goal.montoObjetivo) - toNum(goal.montoActual), 0), 0);
+      const aporteObjetivosMensual = pendienteObjetivos > 0 ? pendienteObjetivos / 12 : 0;
+      const pesoObjetivo = state.objetivo === "ahorro" ? 1 : state.objetivo === "credito" ? 0.35 : 0.7;
+      const sugAhorro = Math.min(Math.max(ahorroBase, aporteObjetivosMensual * pesoObjetivo), Math.max(t2.disponibleBruto, 0));
       const insGustos = computeInsights();
       const mkActual = monthKey();
       const fijosPagadosEsteMes = state.subs.filter((sub) => sub.merchantKey && gastoFijoPagadoEsteMes(sub)).reduce((a, sub) => { const ux = gastoFijoUltimaTx(sub); return a + (ux ? Math.abs(toNum(ux.monto)) : toNum(sub.monto)); }, 0);
@@ -565,6 +585,7 @@ function renderApp() {
       html += '<p class="opt-row-sub" style="margin-top:6px;margin-bottom:10px;">' + t("sugGustosHint") + '</p>';
 
       html += '<div class="mini-total"><span>' + t("sugAhorroLbl") + '</span><b>' + sym() + fmt0(sugAhorro) + '</b></div>';
+      html += '<p class="opt-row-sub" style="margin:5px 0 0;">' + (LANG === "es" ? "Modo de ahorro: " : "Savings mode: ") + state.savingsRate + '%' + (pendienteObjetivos > 0 ? ' · ' + (LANG === "es" ? "Objetivos pendientes: " : "Goals remaining: ") + sym() + fmt0(pendienteObjetivos) : '') + '</p>';
       if (!state.showConfirmarAhorro) {
         html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="abrirConfirmarAhorro">' + (LANG === "es" ? "Agregar ahorro en efectivo" : "Add cash savings") + '</button>';
       } else {
@@ -633,11 +654,18 @@ function renderApp() {
     if (state.subPresetPicker) {
       const bankExpenses = state.cloudTransactions
         .filter((tx) => toNum(tx.monto) < 0 && !state.subs.some((sub) => String(sub.matchedBankTxId || "") === String(tx.id)))
-        .slice()
-        .sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")))
-        .slice(0, 80);
+        .slice();
+      if (state.bankExpenseSort === "monto") {
+        bankExpenses.sort((a, b) => Math.abs(toNum(a.monto)) - Math.abs(toNum(b.monto)) || String(b.fecha || "").localeCompare(String(a.fecha || "")));
+      } else if (state.bankExpenseSort === "nombre") {
+        bankExpenses.sort((a, b) => String(a.merchant_name || a.descripcion || "").localeCompare(String(b.merchant_name || b.descripcion || ""), LANG === "es" ? "es" : "en", { sensitivity: "base" }) || String(b.fecha || "").localeCompare(String(a.fecha || "")));
+      } else {
+        bankExpenses.sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")));
+      }
+      bankExpenses.splice(80);
       html += '<div class="sub-add-picker bank-expense-picker" id="bank-expense-picker">';
       html += '<div class="bank-expense-picker-head"><b>' + (LANG === "es" ? "Selecciona un gasto del banco" : "Select a bank expense") + '</b><button class="icon-del" data-action="toggleSubPresetPicker">' + icon("close") + '</button></div>';
+      html += '<div class="bank-expense-sort"><button class="' + (state.bankExpenseSort === "fecha" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="fecha">' + (LANG === "es" ? "Recientes" : "Recent") + '</button><button class="' + (state.bankExpenseSort === "monto" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="monto">' + (LANG === "es" ? "Menor a mayor" : "Low to high") + '</button><button class="' + (state.bankExpenseSort === "nombre" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="nombre">' + (LANG === "es" ? "Por nombre" : "By name") + '</button></div>';
       if (bankExpenses.length === 0) {
         html += '<div class="empty-state">' + (LANG === "es" ? "No hay gastos bancarios disponibles." : "No bank expenses are available.") + '</div>';
       } else {
