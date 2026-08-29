@@ -317,3 +317,37 @@ function applyLoanPayment(loan, amount, paymentDate) {
   if (loan.pagosRealizados.length > 120) loan.pagosRealizados.length = 120;
   return { aplicado, interes: Math.min(interes, aplicado), principal };
 }
+
+
+/* v133: convierte dinero a tiempo de trabajo usando el ingreso neto real configurado. */
+function porcentajeRetencionTrabajo() {
+  const explicit = toNum(state.job && state.job.impuestoPct);
+  if (explicit >= 0 && explicit <= 60 && String(state.job.impuestoPct || "").trim() !== "") return explicit;
+  return state.job && state.job.tipoLaboral === "1099" ? 28 : 18;
+}
+
+function tarifaNetaTrabajo() {
+  const brutoHora = Math.max(toNum(state.job && state.job.pagoHora), 0);
+  if (!brutoHora) return 0;
+  return brutoHora * (1 - porcentajeRetencionTrabajo() / 100);
+}
+
+function gastoEnTiempoTrabajo(monto) {
+  const tarifa = tarifaNetaTrabajo();
+  const total = Math.abs(toNum(monto));
+  if (!tarifa || !total) return null;
+  const horas = total / tarifa;
+  const minutosTotal = Math.max(1, Math.round(horas * 60));
+  return { horas: minutosTotal / 60, horasEnteras: Math.floor(minutosTotal / 60), minutos: minutosTotal % 60, tarifaNeta: tarifa };
+}
+
+function textoGastoEnTiempo(monto) {
+  const r = gastoEnTiempoTrabajo(monto);
+  if (!r) return LANG === "es" ? "Configura tu tarifa en Trabajo para ver el costo en tiempo." : "Set your hourly rate in Work to see the time cost.";
+  let tiempo = "";
+  if (r.horasEnteras > 0) tiempo += r.horasEnteras + (LANG === "es" ? (r.horasEnteras === 1 ? " hora" : " horas") : (r.horasEnteras === 1 ? " hour" : " hours"));
+  if (r.minutos > 0) tiempo += (tiempo ? " " : "") + r.minutos + " min";
+  return LANG === "es"
+    ? "Necesitas trabajar " + tiempo + " para pagar esto."
+    : "You need to work " + tiempo + " to pay for this.";
+}
