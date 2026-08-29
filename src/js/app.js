@@ -932,20 +932,16 @@ setInterval(checkHorarioReminder, 60000);
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => {
-      const activarNuevo = (w) => { if (w) w.postMessage("SKIP_WAITING"); };
-      if (reg.waiting) { UPDATE_AVAILABLE = true; activarNuevo(reg.waiting); render(); }
-      reg.addEventListener("updatefound", () => {
-        const nw = reg.installing;
-        if (!nw) return;
-        nw.addEventListener("statechange", () => {
-          if (nw.state === "installed" && navigator.serviceWorker.controller) { UPDATE_AVAILABLE = true; activarNuevo(nw); render(); }
-        });
+    const registrationPromise = window.__swRegistrationPromise || navigator.serviceWorker.register("sw.js", { updateViaCache: "none" });
+    registrationPromise.then((reg) => {
+      if (!reg) return;
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") reg.update().catch(() => {});
       });
-      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
-      reg.update().catch(() => {});
+      setInterval(() => reg.update().catch(() => {}), 15 * 60 * 1000);
     }).catch(() => {});
-    let ccReloaded = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => { if (ccReloaded) return; ccReloaded = true; UPDATE_AVAILABLE = true; if (!state.appLocked) render(); });
+    if (typeof window.__finishAppBoot === "function") {
+      setTimeout(() => window.__finishAppBoot("Lista"), 250);
+    }
   });
 }
