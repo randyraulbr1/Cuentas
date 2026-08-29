@@ -90,12 +90,12 @@ function computeSmartAdvice() {
     advice.push({ level: "urgent", text: (LANG === "es" ? "Tienes " : "You have ") + overdue.length + (LANG === "es" ? " pago(s) vencido(s) por " : " overdue payment(s) totaling ") + sym() + fmt0(total) + "." });
   }
 
-  const next = unpaid.find((item) => item.days >= 0);
-  if (next) {
-    const name = next.sub.nombre || (LANG === "es" ? "Próximo pago" : "Next payment");
-    const when = next.days === 0 ? (LANG === "es" ? "vence hoy" : "is due today") : next.days === 1 ? (LANG === "es" ? "vence mañana" : "is due tomorrow") : (LANG === "es" ? "vence en " + next.days + " días" : "is due in " + next.days + " days");
-    advice.push({ level: next.days <= 2 ? "urgent" : "priority", text: name + ": " + sym() + fmt0(next.amount) + ", " + when + "." });
-  }
+  const next3 = unpaid.filter((item) => item.days >= 0).slice(0, 3);
+  next3.forEach((item) => {
+    const name = item.sub.nombre || (LANG === "es" ? "Próximo pago" : "Next payment");
+    const when = item.days === 0 ? (LANG === "es" ? "vence hoy" : "is due today") : item.days === 1 ? (LANG === "es" ? "vence mañana" : "is due tomorrow") : (LANG === "es" ? "vence en " + item.days + " días" : "is due in " + item.days + " days");
+    advice.push({ level: item.days <= 2 ? "urgent" : "priority", text: name + ": " + sym() + fmt0(item.amount) + ", " + when + "." });
+  });
 
   if (unpaidTotal > 0) {
     const gap = unpaidTotal - available;
@@ -108,14 +108,21 @@ function computeSmartAdvice() {
 
   const cards = state.cloudAccounts.filter((account) => account.type === "credit" && toNum(account.balance_current) > 0);
   const cardsDebt = cards.reduce((sum, card) => sum + toNum(card.balance_current), 0);
-  const minimums = cards.reduce((sum, card) => sum + Math.max(toNum(card.liab_pago_minimo), 0), 0);
   if (cardsDebt > 0) {
-    const text = minimums > 0
-      ? (LANG === "es" ? "Debes " + sym() + fmt0(cardsDebt) + " en tarjetas. M\u00ednimo actual: " + sym() + fmt0(minimums) + "." : "You owe " + sym() + fmt0(cardsDebt) + " on cards. Current minimum: " + sym() + fmt0(minimums) + ".")
-      : (LANG === "es" ? "Debes " + sym() + fmt0(cardsDebt) + " en tarjetas." : "You owe " + sym() + fmt0(cardsDebt) + " on cards.");
-    advice.push({ level: "credit", text: text, showBankBtn: true });
+    const cardSug = cards.map((card) => {
+      const balance = toNum(card.balance_current);
+      const apr = Math.max(toNum(card.liab_apr), 0);
+      const minimo = Math.max(toNum(card.liab_pago_minimo), 0);
+      const interesMes = apr > 0 ? balance * apr / 1200 : 0;
+      const sugerido = Math.max(minimo, interesMes + balance / 36, balance * 0.03);
+      return { nombre: card.name || (LANG === "es" ? "Tarjeta" : "Card"), sugerido };
+    }).sort((a, b) => b.sugerido - a.sugerido).slice(0, 3);
+    cardSug.forEach((c) => {
+      advice.push({ level: "credit", text: (LANG === "es" ? "Paga " : "Pay ") + sym() + fmt0(c.sugerido) + (LANG === "es" ? " de " + c.nombre + " este mes." : " on " + c.nombre + " this month.") });
+    });
+    advice.push({ level: "credit", text: (LANG === "es" ? "Debes " + sym() + fmt0(cardsDebt) + " en total entre tarjetas." : "You owe " + sym() + fmt0(cardsDebt) + " total across cards."), showBankBtn: true });
   }
-  return advice.slice(0, 4);
+  return advice.slice(0, 9);
 }
 
 function computeInsights() {
