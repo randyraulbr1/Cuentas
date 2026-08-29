@@ -2,7 +2,7 @@
 
 (function () {
   const KEY = "cuentas-claras:accent-theme";
-  const THEMES = ["black", "blue", "teal", "purple", "orange"];
+  const THEMES = ["black","slate","blue","sky","teal","mint","green","lime","yellow","amber","orange","coral","red","rose","pink","magenta","purple","violet","indigo","cyan"]; const COLORS={black:"#3B3F46",slate:"#64748B",blue:"#2563EB",sky:"#0284C7",teal:"#0F8B8D",mint:"#14B8A6",green:"#16A34A",lime:"#65A30D",yellow:"#CA8A04",amber:"#D97706",orange:"#EA580C",coral:"#F97316",red:"#DC2626",rose:"#E11D48",pink:"#DB2777",magenta:"#C026D3",purple:"#7C3AED",violet:"#8B5CF6",indigo:"#4F46E5",cyan:"#0891B2"};
 
   function loadAccentTheme() {
     try {
@@ -17,7 +17,7 @@
 
   function applyAccentTheme(name, shouldSave) {
     const theme = THEMES.indexOf(name) !== -1 ? name : "black";
-    document.documentElement.setAttribute("data-accent-theme", theme);
+    document.documentElement.setAttribute("data-accent-theme", theme); document.documentElement.style.setProperty("--accent", COLORS[theme] || COLORS.black); document.documentElement.style.setProperty("--accent-strong", COLORS[theme] || COLORS.black); document.documentElement.style.setProperty("--accent-soft", (COLORS[theme] || COLORS.black) + "22");
     if (shouldSave) {
       try { localStorage.setItem(KEY, theme); } catch (e) {}
     }
@@ -73,7 +73,7 @@
       btn.className = "theme-color-btn" + (name === current ? " active" : "");
       btn.dataset.accentChoice = name;
       btn.title = choiceLabel(name);
-      btn.setAttribute("aria-label", choiceLabel(name));
+      btn.setAttribute("aria-label", choiceLabel(name)); btn.style.background = COLORS[name] || COLORS.black;
       btn.setAttribute("aria-pressed", name === current ? "true" : "false");
       picker.appendChild(btn);
     });
