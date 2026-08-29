@@ -614,6 +614,7 @@ function endSlideDrag(e) {
     setTimeout(() => {
       if (action === "empezarBreak") empezarBreak();
       else if (action === "terminarTrabajo") terminarTrabajo();
+      else if (action === "terminarBreak") terminarBreak();
     }, 110);
   } else {
     handle.style.transition = "left .2s ease";
@@ -715,6 +716,7 @@ root.addEventListener("click", (e) => {
     trabajoCalSelectDay: () => trabajoCalSelectDay(id),
     trabajoCalGuardarHoras: trabajoCalGuardarHoras,
     trabajoCalQuitarTurno: () => trabajoCalQuitarTurno(id),
+    dismissBreakLock: () => { state.breakLockDismissed = true; render(); },
     requestWorkNotifPermission: requestWorkNotifPermission,
     askEmpezarBreak: askEmpezarBreak,
     cancelEmpezarBreak: cancelEmpezarBreak,

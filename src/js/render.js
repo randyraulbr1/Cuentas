@@ -1210,11 +1210,48 @@ function renderApp() {
   root.innerHTML = html;
 }
 
+function renderBreakLockScreen() {
+  const turno = state.turnoActivo;
+  const limiteMin = toNum(state.job.limiteAlmuerzo) || 30;
+  const breakMs = breakDurationMs(turno.breakActivo);
+  const limiteMs = limiteMin * 60000;
+  const frac = Math.min(1, breakMs / limiteMs);
+  const circ = 2 * Math.PI * 88;
+  const offset = circ * (1 - frac);
+  const ringColor = breakMs >= limiteMs ? "#FF3B30" : breakMs >= limiteMs * 0.8 ? "#FF9F0A" : "#34C759";
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString(LANG === "es" ? "es-ES" : "en-US", { hour: "numeric", minute: "2-digit" });
+  const dateStr = now.toLocaleDateString(LANG === "es" ? "es-ES" : "en-US", { weekday: "long", day: "numeric", month: "long" });
+
+  let h = '<div style="position:fixed;inset:0;background:#0A0A0A;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top,20px) 24px calc(env(safe-area-inset-bottom,20px) + 20px);z-index:5000;font-family:inherit;">';
+  h += '<button data-action="dismissBreakLock" style="align-self:flex-end;background:none;border:none;color:rgba(255,255,255,0.5);font-size:13px;font-weight:700;font-family:inherit;padding:10px;">' + t("verAppLbl") + '</button>';
+  h += '<div style="text-align:center;">';
+  h += '<div style="font-size:15px;font-weight:600;color:rgba(255,255,255,0.6);text-transform:capitalize;margin-bottom:2px;">' + esc(dateStr) + '</div>';
+  h += '<div style="font-size:56px;font-weight:800;letter-spacing:-0.02em;margin-bottom:28px;">' + esc(timeStr) + '</div>';
+  h += '<div style="position:relative;width:200px;height:200px;margin:0 auto;">';
+  h += '<svg width="200" height="200" viewBox="0 0 200 200" style="transform:rotate(-90deg);">';
+  h += '<circle cx="100" cy="100" r="88" stroke="rgba(255,255,255,0.12)" stroke-width="12" fill="none"/>';
+  h += '<circle cx="100" cy="100" r="88" stroke="' + ringColor + '" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="' + circ + '" stroke-dashoffset="' + offset + '"/>';
+  h += '</svg>';
+  h += '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">';
+  h += '<div style="font-family:monospace;font-size:32px;font-weight:800;">' + fmtBreakMS(breakMs) + '</div>';
+  h += '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);margin-top:2px;">' + t("enBreakLbl") + ' \u00b7 ' + limiteMin + ' min</div>';
+  h += '</div></div>';
+  h += '<p style="font-size:13px;color:rgba(255,255,255,0.55);margin-top:22px;max-width:260px;">' + t("pantallaBloqueadaHint") + '</p>';
+  h += '</div>';
+  h += '<div class="slide-confirm" style="width:100%;max-width:340px;" data-slide-action="terminarBreak"><div class="slide-track" style="background:rgba(52,199,89,0.18);"><span class="slide-label" style="color:rgba(255,255,255,0.75);">' + t("terminarBreakBtn") + '</span><div class="slide-handle">' + icon("chevron") + '</div></div></div>';
+  h += '</div>';
+  root.innerHTML = h;
+}
+
 function render() {
   try {
     applyTheme();
     document.documentElement.lang = state.lang;
-    if (state.appLocked) renderPinScreen(); else if (state.screen === "selector") renderSelector(); else renderApp();
+    if (state.appLocked) renderPinScreen();
+    else if (state.screen === "selector") renderSelector();
+    else if (state.turnoActivo && state.turnoActivo.breakActivo && !state.breakLockDismissed) renderBreakLockScreen();
+    else renderApp();
   } catch (e) {
     console.error("render() error:", e);
     try {

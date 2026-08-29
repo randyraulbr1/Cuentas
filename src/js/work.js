@@ -4,7 +4,11 @@ let timerHandle = null;
 
 function startTimerLoop() {
   if (timerHandle) return;
-  timerHandle = setInterval(() => { checkBreakAlerts(); if (state.activeTab === "trabajo" && !window.__slideDragging) render(); }, 1000);
+  timerHandle = setInterval(() => {
+    checkBreakAlerts();
+    const showingLock = state.turnoActivo && state.turnoActivo.breakActivo && !state.breakLockDismissed;
+    if ((state.activeTab === "trabajo" || showingLock) && !window.__slideDragging) render();
+  }, 1000);
 }
 
 function stopTimerLoop() {
@@ -180,6 +184,7 @@ function empezarBreak() {
   if (!state.turnoActivo || state.turnoActivo.breakActivo) return;
   state.turnoActivo.breakActivo = { inicio: new Date().toISOString() };
   state.confirmEmpezarBreak = false;
+  state.breakLockDismissed = false;
   resetBreakAlerts();
   scheduleSave(); render();
 }
