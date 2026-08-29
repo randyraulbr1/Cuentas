@@ -682,7 +682,9 @@ function renderApp() {
       if (sub.pagadoMes === monthKey()) due = new Date(todayFixed.getFullYear(), todayFixed.getMonth() + 1, day);
       return due;
     }
-    const seenFixed = {};\n    const uniqueSubs = state.subs.filter((sub) => { const key = String(sub.merchantKey || sub.nombre || "").trim().toLowerCase(); if (!key || seenFixed[key]) return false; seenFixed[key] = true; return true; });\n    const unifiedFixed = uniqueSubs.map((sub) => ({ kind: "manual", due: fixedDueDate(sub), item: sub }))
+    const seenFixed = {};
+    const uniqueSubs = state.subs.filter((sub) => { const key = String(sub.merchantKey || sub.nombre || "").trim().toLowerCase(); if (!key || seenFixed[key]) return false; seenFixed[key] = true; return true; });
+    const unifiedFixed = uniqueSubs.map((sub) => ({ kind: "manual", due: fixedDueDate(sub), item: sub }))
       .sort((a, b) => a.due - b.due);
 
     unifiedFixed.forEach((entry) => {
