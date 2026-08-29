@@ -208,3 +208,14 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 /* v117: cinco accesos principales */
 .tab-bar { display:grid !important; grid-template-columns:repeat(5,minmax(0,1fr)); }
 .tab-bar .tab-btn { min-width:0; padding-left:2px; padding-right:2px; }
+
+/* Grilla de 4 botones de trabajo/break + deslizar para confirmar */
+.work-btn-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+.work-btn { padding:14px 8px; border-radius:14px; border:none; background:var(--pill-bg); color:var(--text); font-weight:700; font-size:12.5px; font-family:inherit; cursor:pointer; min-height:48px; }
+.work-btn:disabled { opacity:.32; cursor:default; }
+.slide-confirm { position:relative; }
+.slide-track { position:relative; height:48px; border-radius:14px; background:rgba(52,199,89,0.14); overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.slide-danger .slide-track { background:rgba(255,59,48,0.14); }
+.slide-label { font-size:11px; font-weight:700; color:var(--text-muted); pointer-events:none; padding:0 44px 0 6px; text-align:center; }
+.slide-handle { position:absolute; left:3px; top:3px; width:42px; height:42px; border-radius:11px; background:#34C759; color:#fff; display:flex; align-items:center; justify-content:center; touch-action:none; cursor:grab; }
+.slide-danger .slide-handle { background:#FF3B30; }

@@ -4,7 +4,7 @@ let timerHandle = null;
 
 function startTimerLoop() {
   if (timerHandle) return;
-  timerHandle = setInterval(() => { checkBreakAlerts(); if (state.activeTab === "trabajo") render(); }, 1000);
+  timerHandle = setInterval(() => { checkBreakAlerts(); if (state.activeTab === "trabajo" && !window.__slideDragging) render(); }, 1000);
 }
 
 function stopTimerLoop() {

@@ -578,6 +578,52 @@ root.addEventListener("input", (e) => {
 
 root.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target && e.target.id === "new-profile-input") createProfile(); });
 
+/* Deslizar para confirmar (empezar break / terminar trabajo) */
+let slideDrag = null;
+root.addEventListener("pointerdown", (e) => {
+  const handle = e.target.closest(".slide-handle");
+  if (!handle) return;
+  const track = handle.closest(".slide-track");
+  const wrap = handle.closest(".slide-confirm");
+  if (!track || !wrap) return;
+  const trackRect = track.getBoundingClientRect();
+  const maxX = Math.max(trackRect.width - handle.offsetWidth - 6, 10);
+  slideDrag = { handle, track, wrap, maxX, startX: e.clientX };
+  handle.style.transition = "";
+  try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+  window.__slideDragging = true;
+});
+root.addEventListener("pointermove", (e) => {
+  if (!slideDrag) return;
+  const dx = e.clientX - slideDrag.startX;
+  const left = Math.min(Math.max(3 + dx, 3), slideDrag.maxX);
+  slideDrag.handle.style.left = left + "px";
+});
+function endSlideDrag(e) {
+  if (!slideDrag) return;
+  const dx = e.clientX - slideDrag.startX;
+  const left = Math.min(Math.max(3 + dx, 3), slideDrag.maxX);
+  const frac = slideDrag.maxX > 3 ? (left - 3) / (slideDrag.maxX - 3) : 0;
+  const action = slideDrag.wrap.dataset.slideAction;
+  const handle = slideDrag.handle;
+  window.__slideDragging = false;
+  if (frac >= 0.82) {
+    handle.style.transition = "left .12s ease";
+    handle.style.left = slideDrag.maxX + "px";
+    slideDrag = null;
+    setTimeout(() => {
+      if (action === "empezarBreak") empezarBreak();
+      else if (action === "terminarTrabajo") terminarTrabajo();
+    }, 110);
+  } else {
+    handle.style.transition = "left .2s ease";
+    handle.style.left = "3px";
+    slideDrag = null;
+  }
+}
+root.addEventListener("pointerup", endSlideDrag);
+root.addEventListener("pointercancel", endSlideDrag);
+
 root.addEventListener("scroll", (e) => {
   if (e.target && e.target.id === "bank-expense-picker") {
     state.bankExpenseScrollTop = e.target.scrollTop;

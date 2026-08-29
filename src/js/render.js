@@ -956,18 +956,21 @@ function renderApp() {
         html += '</svg><div class="break-ring-text"><div class="break-ring-time">' + fmtBreakMS(breakMs) + '</div><div class="break-ring-limit">' + t("enBreakLbl") + ' \u00b7 ' + limiteMin + ' min</div></div></div>';
         if (state.job.descansoPagado) html += '<div class="opt-row-sub" style="margin:8px 0 0;">' + t("brutoAcumuladoLbl") + ': ' + sym() + fmt0(bruto) + '</div>';
       }
-      html += '<div style="display:flex;gap:8px;margin-top:12px;">';
-      if (enBreak) html += '<button class="pill-btn wide confirm" style="flex:1;" data-action="terminarBreak">' + t("terminarBreakBtn") + '</button>';
-      else if (!state.confirmEmpezarBreak) html += '<button class="pill-btn wide" style="flex:1;" data-action="askEmpezarBreak">' + t("empezarBreakBtn") + '</button>';
-      else html += '<div style="flex:1;display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="empezarBreak">' + t("siEmpezar") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelEmpezarBreak">' + t("cancel") + '</button></div>';
-      html += '</div>';
-      if (!enBreak && state.confirmEmpezarBreak) html += '<p class="hint" style="text-align:center;margin:6px 0 0;">' + t("confirmEmpezarBreakMsg") + '</p>';
-      if (!state.confirmTerminarTrabajo) {
-        html += '<button class="pay-trigger" style="margin-top:8px;background:#FF3B30;" data-action="askTerminarTrabajo">' + t("terminarTrabajoBtn") + '</button>';
+      html += '<div class="work-btn-grid">';
+      html += '<button class="work-btn" data-action="empezarTrabajo"' + (state.turnoActivo ? " disabled" : "") + '>' + t("empezarTrabajoBtn") + '</button>';
+      if (state.turnoActivo && !enBreak) {
+        html += '<div class="slide-confirm" data-slide-action="empezarBreak"><div class="slide-track"><span class="slide-label">' + t("empezarBreakBtn") + '</span><div class="slide-handle">' + icon("chevron") + '</div></div></div>';
       } else {
-        html += '<div class="confirm-row" style="margin-top:8px;justify-content:center;"><span>' + t("confirmTerminarMsg") + '</span></div>';
-        html += '<div style="display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="terminarTrabajo">' + t("yesDelete") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelTerminarTrabajo">' + t("cancel") + '</button></div>';
+        html += '<button class="work-btn" disabled>' + t("empezarBreakBtn") + '</button>';
       }
+      html += '<button class="work-btn" data-action="terminarBreak"' + (enBreak ? "" : " disabled") + '>' + t("terminarBreakBtn") + '</button>';
+      if (state.turnoActivo) {
+        html += '<div class="slide-confirm slide-danger" data-slide-action="terminarTrabajo"><div class="slide-track"><span class="slide-label">' + t("terminarTrabajoBtn") + '</span><div class="slide-handle">' + icon("chevron") + '</div></div></div>';
+      } else {
+        html += '<button class="work-btn" disabled>' + t("terminarTrabajoBtn") + '</button>';
+      }
+      html += '</div>';
+      html += '<p class="hint" style="text-align:center;margin:8px 0 0;">' + t("deslizaHint") + '</p>';
       html += '</div>';
     } else {
       html += '<button class="calc-btn" data-action="empezarTrabajo">' + t("empezarTrabajoBtn") + '</button>';
