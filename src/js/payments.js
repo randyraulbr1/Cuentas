@@ -421,9 +421,9 @@ function abrirConfirmarAhorro() { state.showConfirmarAhorro = true; state.montoC
 function cancelarConfirmarAhorro() { state.showConfirmarAhorro = false; render(); }
 function confirmarAhorroMes() {
   const monto = toNum(state.montoConfirmarAhorro);
-  if (monto <= 0) return;
+  if (!isFinite(monto) || monto === 0) return;
   pushUndo();
-  state.ahorroActual = toNum(state.ahorroActual) + monto;
+  state.ahorroActual = Math.max(0, toNum(state.ahorroActual) + monto);
   state.showConfirmarAhorro = false;
   state.montoConfirmarAhorro = "";
   scheduleSave();
