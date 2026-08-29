@@ -19,8 +19,93 @@
 <link rel="stylesheet" href="src/css/components.css?v=v129" />
 <link rel="stylesheet" href="src/css/pages.css?v=v117" />
 <link rel="stylesheet" href="src/css/theme-colors.css?v=v107" />
+<style>
+#app-boot{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;background:#f5f5f4;color:#111;font-family:Manrope,Inter,system-ui,sans-serif;transition:opacity .24s ease,visibility .24s ease}
+html[data-theme="dark"] #app-boot{background:#0b0b0f;color:#f7f7f8}
+#app-boot.is-ready{opacity:0;visibility:hidden;pointer-events:none}
+.app-boot-logo{display:grid;place-items:center;width:72px;height:72px;border-radius:22px;background:#111;color:#fff;font-size:38px;font-weight:800;box-shadow:0 12px 28px rgba(0,0,0,.14)}
+html[data-theme="dark"] .app-boot-logo{background:#1d1d24}
+.app-boot-spinner{width:28px;height:28px;border:3px solid rgba(128,128,128,.24);border-top-color:#22a06b;border-radius:50%;animation:app-boot-spin .75s linear infinite}
+#app-boot-title{font-size:19px}
+#app-boot-message{font-size:13px;color:#707070}
+html[data-theme="dark"] #app-boot-message{color:#aaaab4}
+@keyframes app-boot-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.app-boot-spinner{animation-duration:1.6s}}
+</style>
 </head>
 <body>
+<div id="app-boot" role="status" aria-live="polite" aria-label="Preparando 305 Save">
+  <div class="app-boot-logo">$</div>
+  <div class="app-boot-spinner" aria-hidden="true"></div>
+  <strong id="app-boot-title">Preparando 305 Save</strong>
+  <span id="app-boot-message">Buscando la actualización más reciente…</span>
+</div>
+<script>
+(function () {
+  var boot = document.getElementById("app-boot");
+  var message = document.getElementById("app-boot-message");
+  var finished = false;
+  var reloading = false;
+  var reloadKey = "cuentas-claras:boot-reload-v135";
+  function finish(text) {
+    if (finished) return;
+    finished = true;
+    if (message && text) message.textContent = text;
+    setTimeout(function () {
+      if (!boot) return;
+      boot.classList.add("is-ready");
+      setTimeout(function () { if (boot) boot.remove(); }, 260);
+    }, 180);
+  }
+  function activate(worker) {
+    if (!worker) return false;
+    if (message) message.textContent = "Instalando actualización…";
+    worker.postMessage("SKIP_WAITING");
+    return true;
+  }
+  function reloadOnce() {
+    if (reloading) return;
+    reloading = true;
+    try {
+      if (sessionStorage.getItem(reloadKey) !== "1") {
+        sessionStorage.setItem(reloadKey, "1");
+        location.reload();
+        return;
+      }
+    } catch (error) {}
+    finish("Aplicación actualizada");
+  }
+  window.__finishAppBoot = finish;
+  if (!("serviceWorker" in navigator)) {
+    window.__swRegistrationPromise = Promise.resolve(null);
+    finish("Lista");
+    return;
+  }
+  navigator.serviceWorker.addEventListener("controllerchange", reloadOnce);
+  window.__swRegistrationPromise = navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(function (reg) {
+    if (reg.waiting && activate(reg.waiting)) return reg;
+    reg.addEventListener("updatefound", function () {
+      var worker = reg.installing;
+      if (!worker) return;
+      if (message) message.textContent = "Descargando actualización…";
+      worker.addEventListener("statechange", function () {
+        if (worker.state === "installed") {
+          if (navigator.serviceWorker.controller) activate(worker);
+          else finish("Lista");
+        }
+      });
+    });
+    return reg.update().catch(function () { return null; }).then(function () {
+      if (!reg.installing && !reg.waiting) finish(navigator.onLine ? "Lista" : "Lista sin conexión");
+      return reg;
+    });
+  }).catch(function () {
+    finish("Lista sin conexión");
+    return null;
+  });
+  setTimeout(function () { if (!reloading) finish(navigator.onLine ? "Abriendo aplicación…" : "Abriendo sin conexión…"); }, 4500);
+})();
+</script>
 <div id="root"></div>
 <input type="file" id="bank-file-input" accept=".csv,text/csv" style="display:none" onchange="handleBankFile(this)" />
 
@@ -28,7 +113,7 @@
 <script src="src/js/i18n.js?v=v129"></script>
 <script src="src/js/storage.js?v=v86"></script>
 <script src="src/js/migrations.js?v=v86"></script>
-<script src="src/js/state.js?v=v134"></script>
+<script src="src/js/state.js?v=v135"></script>
 <script src="src/js/calculations.js?v=v133"></script>
 <script src="src/js/categories.js?v=v86"></script>
 <script src="src/js/work.js?v=v126"></script>
@@ -39,7 +124,7 @@
 <script src="src/js/history.js?v=v86"></script>
 <script src="src/js/recommendations.js?v=v133"></script>
 <script src="src/js/render.js?v=v133"></script>
-<script src="src/js/app.js?v=v133"></script>
+<script src="src/js/app.js?v=v135"></script>
 <script src="src/js/theme-colors.js?v=v88"></script>
 </body>
 </html>
