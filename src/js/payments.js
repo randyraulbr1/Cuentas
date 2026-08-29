@@ -138,7 +138,7 @@ function addDetectedSubscription(key) {
     frecuencia: item.frecuencia || "mensual",
   });
   state.subPresetPicker = false;
-  state.editingSubs = true;
+  state.editingSubs = false;
   state.subscriptionReviewOpen = true;
   state.subscriptionAssistKey = null;
   scheduleSave();
