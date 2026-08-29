@@ -9,7 +9,7 @@ on:
       - ".github/workflows/android-test-apk.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -32,15 +32,35 @@ jobs:
         with:
           gradle-version: "8.10.2"
 
+      - name: Create persistent test signing key
+        run: |
+          mkdir -p test-signing
+          if [ ! -f test-signing/debug.keystore ]; then
+            keytool -genkeypair -v -keystore test-signing/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=305 Save Test,O=305 Save,C=US"
+          fi
+
       - name: Build debug APK
         run: gradle :app:assembleDebug --no-daemon --stacktrace
 
       - name: Prepare APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk 305-Save-prueba.apk
+        run: |
+          mkdir -p ../downloads
+          cp app/build/outputs/apk/debug/app-debug.apk ../downloads/305-Save-prueba.apk
 
-      - name: Upload APK
+      - name: Upload workflow copy
         uses: actions/upload-artifact@v4
         with:
           name: 305-Save-prueba
-          path: mobile/305-Save-prueba.apk
+          path: downloads/305-Save-prueba.apk
           retention-days: 30
+
+      - name: Publish direct test download
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add downloads/305-Save-prueba.apk mobile/test-signing/debug.keystore
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish latest 305 Save test APK"
+            git push
+          fi
