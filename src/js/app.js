@@ -48,8 +48,10 @@ async function enterProfile(id) {
   state.proximoPagoAjuste = d.proximoPagoAjuste || "";
   state.ingresosLog = d.ingresosLog || [];
   state.loans = d.loans || [];
-  state.job = Object.assign({ nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false, limiteAlmuerzo: "30", horarioDias: [false, false, false, false, false, false, false], horarioInicio: "09:00", horarioFin: "17:00", horarioRecordar: false, horarioUltimoRecordatorio: "", horarioUltimoRecordatorioSalida: "" }, d.job || {});
+  state.job = Object.assign({ nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", tipoLaboral: "w2", impuestoPct: "18", descansoPagado: false, limiteAlmuerzo: "30", horarioDias: [false, false, false, false, false, false, false], horarioInicio: "09:00", horarioFin: "17:00", horarioRecordar: false, horarioUltimoRecordatorio: "", horarioUltimoRecordatorioSalida: "" }, d.job || {});
   if (!state.job.pagoHora) state.job.pagoHora = "18";
+  if (!state.job.tipoLaboral) state.job.tipoLaboral = "w2";
+  if (String(state.job.impuestoPct || "").trim() === "") state.job.impuestoPct = state.job.tipoLaboral === "1099" ? "28" : "18";
   if (!state.job.limiteAlmuerzo) state.job.limiteAlmuerzo = "30";
   state.turnos = d.turnos || [];
   state.turnoActivo = d.turnoActivo || null;
@@ -459,6 +461,19 @@ function sanitizeNum(str) {
 root.addEventListener("input", (e) => {
   const el = e.target;
   if (el.id === "new-profile-input") { state.newProfileName = el.value; return; }
+  if (el.id === "purchase-time-input") {
+    state.evaluarCompraMonto = sanitizeNum(el.value);
+    const output = root.querySelector("#purchase-time-result");
+    if (output) output.textContent = textoGastoEnTiempo(state.evaluarCompraMonto);
+    return;
+  }
+  if (el.id === "job-tax-slider") {
+    state.job.impuestoPct = String(Math.max(0, Math.min(60, Math.round(Number(el.value) || 0))));
+    const output = root.querySelector("#job-tax-value");
+    if (output) output.textContent = state.job.impuestoPct + "%";
+    scheduleSave();
+    return;
+  }
   if (el.id === "savings-rate-input") {
     state.savingsRate = Math.max(0, Math.min(100, Math.round(Number(el.value) || 0)));
     const valueLabel = root.querySelector(".opt-slider-val");
@@ -663,6 +678,13 @@ root.addEventListener("click", (e) => {
   const payType = btn.dataset.type;
   const map = {
     actualizar: actualizarApp, undo: undo,
+    setJobW2: () => { state.job.tipoLaboral = "w2"; state.job.impuestoPct = "18"; scheduleSave(); render(); },
+    setJob1099: () => { state.job.tipoLaboral = "1099"; state.job.impuestoPct = "28"; scheduleSave(); render(); },
+    toggleSubscriptionReview: () => { state.subscriptionReviewOpen = !state.subscriptionReviewOpen; render(); },
+    openSubscriptionAssist: () => { state.subscriptionAssistKey = id; state.subscriptionAssistCopied = false; render(); },
+    closeSubscriptionAssist: () => { state.subscriptionAssistKey = null; state.subscriptionAssistCopied = false; render(); },
+    copySubscriptionDraft: () => { const box = root.querySelector("#subscription-draft"); if (box && navigator.clipboard) navigator.clipboard.writeText(box.value).then(() => { state.subscriptionAssistCopied = true; render(); }).catch(() => { box.select(); }); },
+    markSubscriptionCanceled: () => { toggleSuscripcionCancelada(id); state.subscriptionAssistKey = null; render(); },
     confirmReset: () => { state.confirmReset = true; render(); },
     cancelReset: () => { state.confirmReset = false; render(); },
     resetAll: resetAll,
