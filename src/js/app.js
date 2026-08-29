@@ -486,8 +486,6 @@ root.addEventListener("input", (e) => {
   const scope = el.dataset.scope;
   if (!scope) return;
   if (scope === "ingreso") { state.ingreso = sanitizeNum(el.value); scheduleSave(); return; }
-  if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); return; }
-  if (scope === "debito") { state.debito = sanitizeNum(el.value); scheduleSave(); return; }
   if (scope === "agregarTurno") { state.agregarTurnoForm[el.dataset.field] = el.value; rerenderPreservingFocus(); return; }
   if (scope === "trabajoCalHoras") { state.trabajoCalHorasInput = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "cash") { state.cash = sanitizeNum(el.value); scheduleSave(); return; }
@@ -782,9 +780,6 @@ root.addEventListener("click", (e) => {
     setTrabajoPeriodo: () => { state.trabajoPeriodoDefault = id; scheduleSave(); render(); },
     setTextSizeChico: () => setTextSize("pequeno"), setTextSizeNormal: () => setTextSize("normal"), setTextSizeGrande: () => setTextSize("grande"),
     aplicarSugerenciaExtra: () => { state.extraPagoDeuda = String(id); scheduleSave(); render(); },
-    pedirSumarAhorro: () => { state.confirmSumarAhorro = true; render(); },
-    cancelSumarAhorro: () => { state.confirmSumarAhorro = false; render(); },
-    sumarAhorro100: () => { pushUndo(); state.ahorroActual = String(toNum(state.ahorroActual) + 100); state.confirmSumarAhorro = false; scheduleSave(); render(); },
     verDiaSemana: () => { state.diaSemanaSel = state.diaSemanaSel === Number(id) ? null : Number(id); render(); },
     abrirIconPicker: () => { state.iconPickerSubId = state.iconPickerSubId === id ? null : id; render(); },
     cerrarIconPicker: () => { state.iconPickerSubId = null; render(); },
@@ -793,7 +788,6 @@ root.addEventListener("click", (e) => {
       const sub = state.subs.find((x) => x.id === partes[0]);
       if (sub) { sub.icono = partes[1]; sub.iconManual = true; state.iconPickerSubId = null; scheduleSave(); render(); }
     },
-    toggleSaldosInicio: () => { state.editingSaldosInicio = !state.editingSaldosInicio; render(); if (state.editingSaldosInicio) setTimeout(() => { const i = document.getElementById("debito-input"); if (i) i.focus(); }, 50); },
     toggleCardNube: () => {
       state.expandedCloudCardIds = state.expandedCloudCardIds || {};
       state.expandedCloudCardIds[id] = !state.expandedCloudCardIds[id];
