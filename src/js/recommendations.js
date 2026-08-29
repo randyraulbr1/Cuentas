@@ -167,7 +167,16 @@ function computeInsights() {
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
   const suscripcionesAuto = Object.keys(porComercio)
     .map((k) => ({ key: k, txs: porComercio[k] }))
-    .filter(({ txs }) => txs.length >= 2 && (txs[0].categoria === "suscripciones" || txs[0].categoria === "streaming"))
+    .filter(({ txs }) => {
+      if (txs.length < 2) return false;
+      const categoriasRecurrentes = ["suscripciones", "streaming", "gym", "telefono", "wifi", "entretenimiento"];
+      const nombre = String(txs[0].descripcion || "").toLowerCase();
+      const palabras = ["netflix", "hulu", "spotify", "disney", "amazon prime", "openai", "chatgpt", "adobe", "apple.com/bill", "google", "gym", "fitness", "internet", "wireless"];
+      const montos = txs.map((t) => Math.abs(toNum(t.monto))).filter((v) => v > 0);
+      const promedio = montos.reduce((a, v) => a + v, 0) / Math.max(montos.length, 1);
+      const variacion = promedio > 0 ? Math.max.apply(null, montos.map((v) => Math.abs(v - promedio) / promedio)) : 1;
+      return categoriasRecurrentes.indexOf(txs[0].categoria) !== -1 || palabras.some((p) => nombre.indexOf(p) !== -1) || (txs.length >= 3 && variacion <= 0.12);
+    })
     .map(({ key, txs }) => {
       const ordenadas = txs.slice().sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
       const ultimaFecha = ordenadas[0].fecha;
