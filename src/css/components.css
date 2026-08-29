@@ -249,3 +249,27 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .bank-expense-sort::-webkit-scrollbar{display:none}
 .bank-expense-sort button{flex:0 0 auto;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text-muted);padding:8px 11px;font:700 11px/1 inherit;white-space:nowrap}
 .bank-expense-sort button.active{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast)}
+
+
+/* v140: gráfico de flujo interactivo y barras de utilización */
+.interactive-chart-wrap{position:relative;width:100%;overflow:hidden;border-radius:18px;background:#0b0d13}
+.interactive-cashflow{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
+.trade-candle{cursor:crosshair;transition:opacity .16s,filter .16s}
+.trade-candle.income{fill:#18c978;stroke:#18c978}
+.trade-candle.expense{fill:#ff4d5f;stroke:#ff4d5f}
+.trade-candle:hover,.trade-candle.selected{filter:brightness(1.25);stroke:#fff;stroke-width:1.5}
+.chart-crosshair{pointer-events:none;stroke:#9ca3af;stroke-width:1;stroke-dasharray:4 4;opacity:.8}
+.chart-cursor-card{position:absolute;top:12px;right:12px;min-width:150px;padding:9px 11px;border:1px solid rgba(255,255,255,.16);border-radius:10px;background:rgba(18,20,28,.94);color:#f7f7f8;font-size:11px;line-height:1.35;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.chart-cursor-card strong{display:block;font-size:14px;margin-bottom:2px}
+.chart-cursor-card.positive strong{color:#28d980}.chart-cursor-card.negative strong{color:#ff6271}
+.chart-cursor-card[hidden]{display:none}
+.cc-detail .util-bar-track.life-bar{height:10px;background:rgba(127,135,151,.2);border:1px solid rgba(127,135,151,.45);border-radius:999px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.18)}
+.cc-detail .util-bar-track.life-bar .util-bar-fill{position:relative;min-width:2px;height:100%;border-radius:999px;overflow:hidden;transition:width .42s ease,background-color .25s ease}
+.cc-detail .util-bar-track.life-bar .util-bar-fill.verde{background:#20c77a}
+.cc-detail .util-bar-track.life-bar .util-bar-fill.amarillo{background:#ff9f0a}
+.cc-detail .util-bar-track.life-bar .util-bar-fill.rojo{background:#ff5265}
+.cc-detail .util-bar-track.life-bar .util-bar-fill span{position:absolute;inset:0;background:linear-gradient(110deg,transparent 15%,rgba(255,255,255,.3) 48%,transparent 78%);background-size:220% 100%;animation:life-bar-shimmer 2.4s linear infinite}
+@keyframes life-bar-shimmer{to{background-position:-220% 0}}
+.smart-advice.pulse-alert{border-radius:12px;padding:11px 12px;margin:0 -2px 8px;background:color-mix(in srgb,var(--negative) 13%,transparent);border:1px solid color-mix(in srgb,var(--negative) 42%,var(--border));animation:advice-pulse 1.35s ease-in-out infinite}
+@keyframes advice-pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--negative) 0%,transparent)}50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--negative) 14%,transparent)}}
+@media(prefers-reduced-motion:reduce){.chart-cursor-card,.smart-advice.pulse-alert{animation:none}.cc-detail .util-bar-track.life-bar .util-bar-fill span{animation:none}}
