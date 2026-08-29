@@ -500,6 +500,7 @@ root.addEventListener("input", (e) => {
     scheduleSave(); rerenderPreservingFocus(); return;
   }
   if (scope === "historialSearch") { state.historialSearch = el.value; rerenderPreservingFocus(); return; }
+  if (scope === "bankExpenseSearch") { state.bankExpenseSearch = el.value; rerenderPreservingFocus(); return; }
   if (scope === "txNota") {
     state.notasTransacciones[el.dataset.id] = el.value;
     scheduleSave(); rerenderPreservingFocus(); return;
@@ -759,7 +760,7 @@ root.addEventListener("click", (e) => {
     },
     setBankExpenseSort: () => {
       state.bankExpenseSort = id === "monto" || id === "nombre" ? id : "fecha";
-      state.bankExpenseScrollTop = 0;
+      state.bankExpenseScrollTop = 0; state.bankExpenseSearch = "";
       try { sessionStorage.setItem("bankExpenseScrollTop", "0"); } catch (error) {}
       saveSettings(); render();
     },
