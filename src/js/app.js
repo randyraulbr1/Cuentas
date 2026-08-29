@@ -778,6 +778,7 @@ root.addEventListener("click", (e) => {
     addSubPreset: () => addSubPreset(id),
     addSubFromBankTx: () => addSubFromBankTx(id),
     addDetectedSubscription: () => addDetectedSubscription(id),
+    marcarNoSuscripcion: () => marcarNoSuscripcion(id),
     toggleSubPresetPicker: () => {
       state.subPresetPicker = !state.subPresetPicker;
       render();
