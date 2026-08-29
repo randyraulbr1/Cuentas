@@ -914,47 +914,6 @@ function renderApp() {
       html += '<div class="panel" style="text-align:center;padding:14px 18px;"><p class="hint" style="margin:0;">' + esc(horarioStatusText()) + '</p></div>';
     }
 
-    html += renderTrabajoCalendar();
-
-    // panel configuracion del trabajo
-    html += '<div class="panel" id="trabajo-job-panel"><div class="panel-head-row"><div><h2>' + t("miTrabajoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("miTrabajoHint") + '</p></div><button class="icon-pencil' + (state.editingJob ? " done" : "") + '" data-action="toggleEditJob">' + (state.editingJob ? icon("check") : icon("pencil")) + '</button></div>';
-    if (!state.editingJob) {
-      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + esc(state.job.nombre || t("trabajoNombrePh")) + '<small style="display:block;color:var(--text-muted);font-weight:600;margin-top:3px;">' + (state.job.tipoLaboral === "1099" ? "1099" : "W-2") + ' · ' + porcentajeRetencionTrabajo() + '% · ' + sym() + fmt2(tarifaNetaTrabajo()) + '/h ' + (LANG === "es" ? "netos" : "net") + '</small></span><span class="locked-amount">' + sym() + fmt0(toNum(state.job.pagoHora)) + '/h</span></div>';
-    } else {
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("trabajoNombreLbl") + '</label><input type="text" placeholder="' + t("trabajoNombrePh") + '" id="job-nombre" value="' + esc(state.job.nombre) + '" data-scope="job" data-field="nombre"></div>';
-      html += '<div class="goal-field"><label>' + t("pagoHoraLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="18" id="job-pagoHora" value="' + esc(state.job.pagoHora) + '" data-scope="job" data-field="pagoHora"></div>';
-      html += '</div>';
-      html += '<div class="goal-field" style="margin-top:10px;"><label>' + (LANG === "es" ? "Tipo de ingreso" : "Income type") + '</label><div class="seg" style="width:100%;"><button style="flex:1;" class="' + (state.job.tipoLaboral !== "1099" ? "active" : "") + '" data-action="setJobW2">W-2</button><button style="flex:1;" class="' + (state.job.tipoLaboral === "1099" ? "active" : "") + '" data-action="setJob1099">1099</button></div></div>';
-      html += '<div class="goal-field" style="margin-top:12px;"><label>' + (LANG === "es" ? "Retención estimada" : "Estimated withholding") + ' <b id="job-tax-value">' + porcentajeRetencionTrabajo() + '%</b></label><input id="job-tax-slider" type="range" min="0" max="60" step="1" value="' + porcentajeRetencionTrabajo() + '" style="width:100%;accent-color:var(--positive);"><p class="hint" style="margin:5px 0 0;">' + (LANG === "es" ? "Estimación manual; ajústala según tu recibo de pago." : "Manual estimate; adjust it to your paystub.") + '</p></div>';
-      html += '<div class="goal-field" style="margin-top:10px;"><label>' + t("pagoDiaLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="job-pagoDia" value="' + esc(state.job.pagoDia) + '" data-scope="job" data-field="pagoDia"></div>';
-      html += '<div class="pay-config"><label>' + t("frecuenciaPagoLbl") + '</label><div class="seg" style="width:100%;">';
-      [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["dosVecesMes", "freqDosVecesMes"], ["mensual", "payMensual"]].forEach((f) => { html += '<button style="flex:1;" class="' + (state.job.frecuenciaPago === f[0] ? "active" : "") + '" data-action="setJobFrecuencia" data-freq="' + f[0] + '">' + t(f[1]) + '</button>'; });
-      html += '</div></div>';
-      html += '<div class="goal-grid" style="margin-top:8px;">';
-      html += '<div class="goal-field"><label>' + t("horasExtraDespuesLbl") + '</label><input type="text" inputmode="decimal" placeholder="40" id="job-horasExtraDespues" value="' + esc(state.job.horasExtraDespues) + '" data-scope="job" data-field="horasExtraDespues"></div>';
-      html += '<div class="goal-field"><label>' + t("multiplicadorExtraLbl") + '</label><input type="text" inputmode="decimal" placeholder="1.5" id="job-multiplicadorExtra" value="' + esc(state.job.multiplicadorExtra) + '" data-scope="job" data-field="multiplicadorExtra"></div>';
-      html += '</div>';
-      html += '<div class="goal-grid" style="margin-top:8px;">';
-      html += '<div class="goal-field"><label>' + t("limiteAlmuerzoLbl") + '</label><input type="text" inputmode="numeric" placeholder="30" id="job-limiteAlmuerzo" value="' + esc(state.job.limiteAlmuerzo) + '" data-scope="job" data-field="limiteAlmuerzo"></div>';
-      html += '</div>';
-      html += '<label style="font-size:13px;font-weight:600;color:var(--text-muted);display:block;margin:10px 0 6px;">' + t("horarioTrabajoLbl") + '</label>';
-      html += '<div class="seg" style="margin-bottom:8px;">';
-      t("diasSemanaCortos").forEach((dnom, di) => {
-        html += '<button style="flex:1;padding:8px 0;font-size:11px;" class="' + (state.job.horarioDias[di] ? "active" : "") + '" data-action="toggleHorarioDia" data-id="' + di + '">' + dnom + '</button>';
-      });
-      html += '</div>';
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("horarioInicioLbl") + '</label><input type="text" inputmode="numeric" maxlength="5" placeholder="09:00" id="job-horarioInicio" value="' + esc(state.job.horarioInicio) + '" data-scope="job" data-field="horarioInicio"></div>';
-      html += '<div class="goal-field"><label>' + t("horarioFinLbl") + '</label><input type="text" inputmode="numeric" maxlength="5" placeholder="17:00" id="job-horarioFin" value="' + esc(state.job.horarioFin) + '" data-scope="job" data-field="horarioFin"></div>';
-      html += '</div>';
-      html += '<div class="opt-row" style="margin-top:2px;"><span class="opt-row-label">' + t("horarioRecordarLbl") + '</span><div class="seg"><button class="' + (!state.job.horarioRecordar ? "active" : "") + '" data-action="setHorarioRecordarOff">' + t("off") + '</button><button class="' + (state.job.horarioRecordar ? "active" : "") + '" data-action="setHorarioRecordarOn">' + t("on") + '</button></div></div>';
-      html += '<div class="opt-row" style="margin-top:8px;"><span class="opt-row-label">' + t("descansoPagadoLbl") + '</span><div class="seg"><button class="' + (!state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOff">' + t("off") + '</button><button class="' + (state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOn">' + t("on") + '</button></div></div>';
-      html += '<button class="pill-btn wide" style="margin-top:10px;" data-action="requestWorkNotifPermission">' + t("notifBtnLbl") + '</button>';
-      html += '<p class="opt-row-sub" style="margin-top:6px;">' + notifStatusText() + '</p>';
-    }
-    html += '</div>';
-
     // resumen del mes/semana
     const tm = totalesMes(); const ts = totalesSemana();
     html += '<div class="summary">';
@@ -1003,32 +962,47 @@ function renderApp() {
       html += '</div>';
     }
 
-    // registrar pago recibido
-    if (state.showPagoTrabajo) {
-      const f = state.pagoTrabajoForm;
-      const sinPagar = state.turnos.filter((x) => x.estado !== "pagado");
-      html += '<div class="panel"><h2>' + t("agregarPagoTrabajoTitle") + '</h2>';
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("fechaLbl") + '</label><input type="date" id="pt-fecha" value="' + esc(f.fecha) + '" data-scope="pagoTrabajo" data-field="fecha"></div>';
-      html += '<div class="goal-field"><label>' + t("montoNetoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="pt-neto" value="' + esc(f.montoNeto) + '" data-scope="pagoTrabajo" data-field="montoNeto"></div>';
-      html += '</div>';
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("montoBrutoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="pt-bruto" value="' + esc(f.montoBruto) + '" data-scope="pagoTrabajo" data-field="montoBruto"></div>';
-      html += '<div class="goal-field"><label>' + t("metodoLbl") + '</label><input type="text" placeholder="' + t("metodoPh") + '" id="pt-metodo" value="' + esc(f.metodo) + '" data-scope="pagoTrabajo" data-field="metodo"></div>';
-      html += '</div>';
-      if (sinPagar.length > 0) {
-        html += '<p class="opt-row-sub" style="margin:8px 0 6px;">' + t("turnosIncluidosLbl") + '</p>';
-        sinPagar.forEach((tn) => {
-          const r = turnoPagoBruto(tn);
-          const checked = !!f.turnosSel[tn.id];
-          html += '<div class="opt-row" style="padding:6px 0;"><span class="opt-row-label" style="font-weight:500;font-size:12.5px;">' + esc(tn.fecha) + ' \u00b7 ' + fmtHoras(r.horas) + ' \u00b7 ' + sym() + fmt0(r.bruto) + '</span><button class="paid-check' + (checked ? " checked" : "") + '" data-action="toggleTurnoSel" data-id="' + tn.id + '">' + (checked ? icon("check") : "") + '</button></div>';
-        });
-      }
-      html += '<div style="display:flex;gap:8px;margin-top:10px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmPagoTrabajo">' + t("confirmarPago") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelPagoTrabajo">' + t("cancel") + '</button></div>';
-      html += '</div>';
+    // calendario de turnos
+    html += renderTrabajoCalendar();
+
+    // panel configuracion del trabajo
+    html += '<div class="panel" id="trabajo-job-panel"><div class="panel-head-row"><div><h2>' + t("miTrabajoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("miTrabajoHint") + '</p></div><button class="icon-pencil' + (state.editingJob ? " done" : "") + '" data-action="toggleEditJob">' + (state.editingJob ? icon("check") : icon("pencil")) + '</button></div>';
+    if (!state.editingJob) {
+      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + esc(state.job.nombre || t("trabajoNombrePh")) + '<small style="display:block;color:var(--text-muted);font-weight:600;margin-top:3px;">' + (state.job.tipoLaboral === "1099" ? "1099" : "W-2") + ' · ' + porcentajeRetencionTrabajo() + '% · ' + sym() + fmt2(tarifaNetaTrabajo()) + '/h ' + (LANG === "es" ? "netos" : "net") + '</small></span><span class="locked-amount">' + sym() + fmt0(toNum(state.job.pagoHora)) + '/h</span></div>';
     } else {
-      html += '<button class="save-month-btn" data-action="startPagoTrabajo">' + t("agregarPagoTrabajoBtn") + '</button>';
+      html += '<div class="goal-grid">';
+      html += '<div class="goal-field"><label>' + t("trabajoNombreLbl") + '</label><input type="text" placeholder="' + t("trabajoNombrePh") + '" id="job-nombre" value="' + esc(state.job.nombre) + '" data-scope="job" data-field="nombre"></div>';
+      html += '<div class="goal-field"><label>' + t("pagoHoraLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="18" id="job-pagoHora" value="' + esc(state.job.pagoHora) + '" data-scope="job" data-field="pagoHora"></div>';
+      html += '</div>';
+      html += '<div class="goal-field" style="margin-top:10px;"><label>' + (LANG === "es" ? "Tipo de ingreso" : "Income type") + '</label><div class="seg" style="width:100%;"><button style="flex:1;" class="' + (state.job.tipoLaboral !== "1099" ? "active" : "") + '" data-action="setJobW2">W-2</button><button style="flex:1;" class="' + (state.job.tipoLaboral === "1099" ? "active" : "") + '" data-action="setJob1099">1099</button></div></div>';
+      html += '<div class="goal-field" style="margin-top:12px;"><label>' + (LANG === "es" ? "Retención estimada" : "Estimated withholding") + ' <b id="job-tax-value">' + porcentajeRetencionTrabajo() + '%</b></label><input id="job-tax-slider" type="range" min="0" max="60" step="1" value="' + porcentajeRetencionTrabajo() + '" style="width:100%;accent-color:var(--positive);"><p class="hint" style="margin:5px 0 0;">' + (LANG === "es" ? "Estimación manual; ajústala según tu recibo de pago." : "Manual estimate; adjust it to your paystub.") + '</p></div>';
+      html += '<div class="goal-field" style="margin-top:10px;"><label>' + t("pagoDiaLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="job-pagoDia" value="' + esc(state.job.pagoDia) + '" data-scope="job" data-field="pagoDia"></div>';
+      html += '<div class="pay-config"><label>' + t("frecuenciaPagoLbl") + '</label><div class="seg" style="width:100%;">';
+      [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["dosVecesMes", "freqDosVecesMes"], ["mensual", "payMensual"]].forEach((f) => { html += '<button style="flex:1;" class="' + (state.job.frecuenciaPago === f[0] ? "active" : "") + '" data-action="setJobFrecuencia" data-freq="' + f[0] + '">' + t(f[1]) + '</button>'; });
+      html += '</div></div>';
+      html += '<div class="goal-grid" style="margin-top:8px;">';
+      html += '<div class="goal-field"><label>' + t("horasExtraDespuesLbl") + '</label><input type="text" inputmode="decimal" placeholder="40" id="job-horasExtraDespues" value="' + esc(state.job.horasExtraDespues) + '" data-scope="job" data-field="horasExtraDespues"></div>';
+      html += '<div class="goal-field"><label>' + t("multiplicadorExtraLbl") + '</label><input type="text" inputmode="decimal" placeholder="1.5" id="job-multiplicadorExtra" value="' + esc(state.job.multiplicadorExtra) + '" data-scope="job" data-field="multiplicadorExtra"></div>';
+      html += '</div>';
+      html += '<div class="goal-grid" style="margin-top:8px;">';
+      html += '<div class="goal-field"><label>' + t("limiteAlmuerzoLbl") + '</label><input type="text" inputmode="numeric" placeholder="30" id="job-limiteAlmuerzo" value="' + esc(state.job.limiteAlmuerzo) + '" data-scope="job" data-field="limiteAlmuerzo"></div>';
+      html += '</div>';
+      html += '<label style="font-size:13px;font-weight:600;color:var(--text-muted);display:block;margin:10px 0 6px;">' + t("horarioTrabajoLbl") + '</label>';
+      html += '<div class="seg" style="margin-bottom:8px;">';
+      t("diasSemanaCortos").forEach((dnom, di) => {
+        html += '<button style="flex:1;padding:8px 0;font-size:11px;" class="' + (state.job.horarioDias[di] ? "active" : "") + '" data-action="toggleHorarioDia" data-id="' + di + '">' + dnom + '</button>';
+      });
+      html += '</div>';
+      html += '<div class="goal-grid">';
+      html += '<div class="goal-field"><label>' + t("horarioInicioLbl") + '</label><input type="text" inputmode="numeric" maxlength="5" placeholder="09:00" id="job-horarioInicio" value="' + esc(state.job.horarioInicio) + '" data-scope="job" data-field="horarioInicio"></div>';
+      html += '<div class="goal-field"><label>' + t("horarioFinLbl") + '</label><input type="text" inputmode="numeric" maxlength="5" placeholder="17:00" id="job-horarioFin" value="' + esc(state.job.horarioFin) + '" data-scope="job" data-field="horarioFin"></div>';
+      html += '</div>';
+      html += '<div class="opt-row" style="margin-top:2px;"><span class="opt-row-label">' + t("horarioRecordarLbl") + '</span><div class="seg"><button class="' + (!state.job.horarioRecordar ? "active" : "") + '" data-action="setHorarioRecordarOff">' + t("off") + '</button><button class="' + (state.job.horarioRecordar ? "active" : "") + '" data-action="setHorarioRecordarOn">' + t("on") + '</button></div></div>';
+      html += '<div class="opt-row" style="margin-top:8px;"><span class="opt-row-label">' + t("descansoPagadoLbl") + '</span><div class="seg"><button class="' + (!state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOff">' + t("off") + '</button><button class="' + (state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOn">' + t("on") + '</button></div></div>';
+      html += '<button class="pill-btn wide" style="margin-top:10px;" data-action="requestWorkNotifPermission">' + t("notifBtnLbl") + '</button>';
+      html += '<p class="opt-row-sub" style="margin-top:6px;">' + notifStatusText() + '</p>';
     }
+    html += '</div>';
 
     // lista de pagos recibidos
     if (state.pagosTrabajo.length > 0) {
