@@ -2,6 +2,18 @@
 
 const root = document.getElementById("root");
 
+function saldoDebitoBanco() {
+  const cuentas = state.cloudAccounts.filter((account) => {
+    const type = String(account.type || "").toLowerCase();
+    const subtype = String(account.subtype || "").toLowerCase();
+    return type === "depository" && (!subtype || subtype === "checking" || subtype === "cash management" || subtype === "prepaid");
+  });
+  return cuentas.reduce((sum, account) => {
+    const disponible = account.balance_available;
+    return sum + Math.max(toNum(disponible != null ? disponible : account.balance_current), 0);
+  }, 0);
+}
+
 function renderBancoNubePanel(compact) {
   let html = '<div class="panel">';
   html += '<div class="panel-head-row"><div><h2>' + t("bancoNubeTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("bancoNubeHint") + '</p></div></div>';
@@ -474,17 +486,13 @@ function renderApp() {
   }
 
   if (tab === "inicio") {
-    const patrimonioNeto = toNum(state.ahorroActual) + toNum(state.debito);
+    const debitoBanco = saldoDebitoBanco();
+    const patrimonioNeto = debitoBanco + toNum(state.ahorroActual);
     const disponibleHoy = patrimonioNeto;
     const tarjetasReales = cloudCreditCards();
     const deudaTarjetas = tarjetasReales.length > 0
       ? tarjetasReales.reduce((sum, card) => sum + Math.max(toNum(card.balance_current), 0), 0)
       : t2.totalDeuda;
-    const deudaPrestamos = state.loans.reduce((sum, loan) => sum + Math.max(toNum(loan.saldoTotal), 0), 0);
-    const pagosFijosPendientes = state.subs
-      .filter((sub) => sub.pagadoMes !== monthKey())
-      .reduce((sum, sub) => sum + Math.max(toNum(sub.monto), 0), 0);
-    const deudaTotalReal = deudaTarjetas + deudaPrestamos + pagosFijosPendientes;
     html += '<div class="hero-card">';
     html += '<span class="hero-lbl">' + t("patrimonioNetoLbl") + '</span>';
     html += '<div class="hero-val' + (patrimonioNeto < 0 ? " neg" : "") + '">' + (patrimonioNeto < 0 ? "\u2212" : "") + sym() + fmt0(Math.abs(patrimonioNeto)) + '</div>';
@@ -528,25 +536,10 @@ function renderApp() {
       html += '</div>';
     }
     html += '<div class="summary">';
-    html += '<button class="sum-card sum-card-btn" data-action="toggleSaldosInicio"><div class="sum-label">' + t("debitoLbl") + ' ' + icon("pencil") + '</div><div class="sum-val blue">' + sym() + fmt0(toNum(state.debito)) + '</div></button>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("debitoLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(debitoBanco) + '</div><div class="opt-row-sub">' + (state.authToken ? (LANG === "es" ? "Saldo automático del banco" : "Automatic bank balance") : (LANG === "es" ? "Conecta el banco para cargarlo" : "Connect the bank to load it")) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("debesTarjetas") + '</div><div class="sum-val red">' + sym() + fmt0(deudaTarjetas) + '</div></div>';
-    html += '<div class="sum-card"><button class="sum-card-inner" data-action="toggleSaldosInicio"><div class="sum-label">' + t("ahorradoActual") + ' ' + icon("pencil") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div></button>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("debesTotal") + '</div><div class="sum-val red">' + sym() + fmt0(deudaTotalReal) + '</div></div>';
-    if (state.confirmSumarAhorro) {
-      html += '<div class="quick-confirm"><span>' + t("confirmSumar100Msg")(sym()) + '</span><div class="quick-confirm-btns"><button class="pill-btn confirm" data-action="sumarAhorro100">' + t("siSumar") + '</button><button class="pill-btn" data-action="cancelSumarAhorro">' + t("cancel") + '</button></div></div>';
-    } else {
-      html += '<button class="quick-add" data-action="pedirSumarAhorro">+' + sym() + '100</button>';
-    }
+    html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div><div class="opt-row-sub">' + (LANG === "es" ? "Ahorro en efectivo" : "Cash savings") + '</div></div>';
     html += '</div>';
-    html += '</div>';
-
-    if (state.editingSaldosInicio) {
-      html += '<div class="panel"><h2>' + t("saldosManualesTitle") + '</h2>';
-      html += '<div class="goal-field"><label>' + t("debitoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="debito-input" data-scope="debito" value="' + esc(state.debito) + '" style="width:100%;"></div>';
-      html += '<div class="goal-field" style="margin-top:10px;"><label>' + t("ahorroActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="0" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '" style="width:100%;"></div>';
-      html += '<button class="pill-btn confirm" style="width:100%;margin-top:10px;" data-action="toggleSaldosInicio">' + t("listoBtn") + '</button>';
-      html += '</div>';
-    }
     html += '<div class="summary">';
     html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
     if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
@@ -554,8 +547,7 @@ function renderApp() {
     html += '</div>';
 
     if (t2.disponibleBruto > 0) {
-      const cloudNoCredit = state.cloudAccounts.filter((a) => a.type !== "credit").reduce((sum, a) => sum + toNum(a.balance_current), 0);
-      const debitoBase = toNum(state.debito) + cloudNoCredit;
+      const debitoBase = debitoBanco;
       const sugGustos = debitoBase * 0.2;
       const resultadoMes = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
       const sugAhorro = resultadoMes && !resultadoMes.insuficiente ? resultadoMes.ahorro : t2.disponibleBruto * (state.savingsRate / 100);
@@ -574,10 +566,10 @@ function renderApp() {
 
       html += '<div class="mini-total"><span>' + t("sugAhorroLbl") + '</span><b>' + sym() + fmt0(sugAhorro) + '</b></div>';
       if (!state.showConfirmarAhorro) {
-        html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="abrirConfirmarAhorro">' + t("confirmarAhorroBtn") + '</button>';
+        html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="abrirConfirmarAhorro">' + (LANG === "es" ? "Agregar ahorro en efectivo" : "Add cash savings") + '</button>';
       } else {
-        html += '<div class="goal-field" style="margin-top:8px;"><label>' + t("montoAhorradoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="confirmar-ahorro-input" placeholder="0" data-scope="montoConfirmarAhorro" value="' + esc(state.montoConfirmarAhorro) + '" style="width:100%;"></div>';
-        html += '<div style="display:flex;gap:8px;margin-top:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmarAhorroMes">' + t("guardarBtn") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelarConfirmarAhorro">' + t("cancel") + '</button></div>';
+        html += '<div class="goal-field" style="margin-top:8px;"><label>' + (LANG === "es" ? "¿Cuánto guardaste este mes?" : "How much did you save this month?") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="confirmar-ahorro-input" placeholder="0" data-scope="montoConfirmarAhorro" value="' + esc(state.montoConfirmarAhorro) + '" style="width:100%;"></div>';
+        html += '<div style="display:flex;gap:8px;margin-top:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmarAhorroMes">' + t("siSumar") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelarConfirmarAhorro">' + t("cancel") + '</button></div>';
       }
 
       const historialAhorro = state.history.slice().sort((a, b) => (a.month < b.month ? 1 : -1)).slice(0, 6);
@@ -589,13 +581,6 @@ function renderApp() {
       }
       html += '</div>';
 
-      const resultadoConsejos = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
-      const consejosHome = buildSugerencias(t2, resultadoConsejos);
-      if (consejosHome.length > 0) {
-        html += '<div class="panel"><h2>' + t("consejosTitle") + '</h2>';
-        consejosHome.forEach((c) => { html += '<p class="opt-row-sub" style="margin-bottom:8px;">\u2022 ' + esc(c) + '</p>'; });
-        html += '</div>';
-      }
     }
 
     const pagosProximos = proximosPagos();
@@ -809,7 +794,7 @@ function renderApp() {
     const totalInterestMonth = cardStats.reduce((sum, item) => sum + item.monthlyInterest, 0);
     const overallUtilization = totalCardLimit > 0 ? totalCardBalance / totalCardLimit * 100 : null;
     const unpaidBills = state.subs.filter((sub) => sub.pagadoMes !== monthKey()).reduce((sum, sub) => sum + Math.max(toNum(sub.monto), 0), 0);
-    const safeExtra = Math.max(toNum(state.debito) + toNum(state.ahorroActual) - unpaidBills - 300, 0);
+    const safeExtra = Math.max(saldoDebitoBanco() + toNum(state.ahorroActual) - unpaidBills - 300, 0);
     const rankedCards = cardStats.slice().sort((a, b) => {
       const aHigh = a.utilization != null && a.utilization > 30 ? 1 : 0;
       const bHigh = b.utilization != null && b.utilization > 30 ? 1 : 0;
