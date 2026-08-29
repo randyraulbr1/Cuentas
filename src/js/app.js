@@ -615,6 +615,7 @@ function endSlideDrag(e) {
       if (action === "empezarBreak") empezarBreak();
       else if (action === "terminarTrabajo") terminarTrabajo();
       else if (action === "terminarBreak") terminarBreak();
+      else if (action === "empezarTrabajo") empezarTrabajo();
     }, 110);
   } else {
     handle.style.transition = "left .2s ease";

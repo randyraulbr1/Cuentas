@@ -288,6 +288,11 @@ function renderDonutChart(items) {
   return h;
 }
 
+function slideOrDisabled(enabled, action, label, danger) {
+  if (!enabled) return '<button class="work-btn" disabled>' + label + '</button>';
+  return '<div class="slide-confirm' + (danger ? " slide-danger" : "") + '" data-slide-action="' + action + '"><div class="slide-track"><span class="slide-label">' + label + '</span><div class="slide-handle">' + icon("chevron") + '</div></div></div>';
+}
+
 function renderCashflowChart(buckets) {
   const width=720,height=300,left=20,right=72,top=24,bottom=42,plotW=width-left-right,plotH=height-top-bottom;
   const totalIncome=buckets.reduce((sum,item)=>sum+toNum(item.ingresos),0),totalExpense=buckets.reduce((sum,item)=>sum+toNum(item.gastos),0);
@@ -932,17 +937,19 @@ function renderApp() {
     html += '</div>';
 
     // turno activo o boton empezar
-    if (state.turnoActivo) {
+    {
       const t2live = state.turnoActivo;
-      const enBreak = !!t2live.breakActivo;
-      const ms = turnoDurationMs(Object.assign({}, t2live, { breaks: t2live.breaks.concat(t2live.breakActivo ? [{ inicio: t2live.breakActivo.inicio }] : []) }), true);
-      const bruto = toNum(state.job.pagoHora) * (ms / 3600000);
+      const enBreak = !!(t2live && t2live.breakActivo);
       html += '<div class="panel" style="text-align:center;">';
-      if (!enBreak) {
+      if (t2live && !enBreak) {
+        const ms = turnoDurationMs(Object.assign({}, t2live, { breaks: t2live.breaks.concat(t2live.breakActivo ? [{ inicio: t2live.breakActivo.inicio }] : []) }), true);
+        const bruto = toNum(state.job.pagoHora) * (ms / 3600000);
         html += '<p class="hint" style="margin-bottom:4px;">' + t("trabajandoAhoraLbl") + '</p>';
         html += '<div style="font-size:34px;font-weight:800;letter-spacing:-0.01em;font-family:monospace;">' + fmtCronometro(ms) + '</div>';
-        html += '<div class="opt-row-sub" style="margin:4px 0 12px;">' + t("brutoAcumuladoLbl") + ': ' + sym() + fmt0(bruto) + '</div>';
-      } else {
+        html += '<div class="opt-row-sub" style="margin:4px 0 12px;">' + t("brutoAcumuladoLbl") + ': ' + sym() + bruto.toFixed(2) + '</div>';
+      } else if (t2live && enBreak) {
+        const ms = turnoDurationMs(Object.assign({}, t2live, { breaks: t2live.breaks.concat(t2live.breakActivo ? [{ inicio: t2live.breakActivo.inicio }] : []) }), true);
+        const bruto = toNum(state.job.pagoHora) * (ms / 3600000);
         const limiteMin = toNum(state.job.limiteAlmuerzo) || 30;
         const breakMs = breakDurationMs(t2live.breakActivo);
         const limiteMs = limiteMin * 60000;
@@ -954,26 +961,18 @@ function renderApp() {
         html += '<circle cx="66" cy="66" r="54" stroke="var(--pill-bg)" stroke-width="10" fill="none"/>';
         html += '<circle cx="66" cy="66" r="54" stroke="' + ringColor + '" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="' + circ + '" stroke-dashoffset="' + offset + '"/>';
         html += '</svg><div class="break-ring-text"><div class="break-ring-time">' + fmtBreakMS(breakMs) + '</div><div class="break-ring-limit">' + t("enBreakLbl") + ' \u00b7 ' + limiteMin + ' min</div></div></div>';
-        if (state.job.descansoPagado) html += '<div class="opt-row-sub" style="margin:8px 0 0;">' + t("brutoAcumuladoLbl") + ': ' + sym() + fmt0(bruto) + '</div>';
+        if (state.job.descansoPagado) html += '<div class="opt-row-sub" style="margin:8px 0 0;">' + t("brutoAcumuladoLbl") + ': ' + sym() + bruto.toFixed(2) + '</div>';
+      } else {
+        html += '<p class="hint" style="margin-bottom:4px;">' + t("empezarTrabajoBtn") + '</p>';
       }
       html += '<div class="work-btn-grid">';
-      html += '<button class="work-btn" data-action="empezarTrabajo"' + (state.turnoActivo ? " disabled" : "") + '>' + t("empezarTrabajoBtn") + '</button>';
-      if (state.turnoActivo && !enBreak) {
-        html += '<div class="slide-confirm" data-slide-action="empezarBreak"><div class="slide-track"><span class="slide-label">' + t("empezarBreakBtn") + '</span><div class="slide-handle">' + icon("chevron") + '</div></div></div>';
-      } else {
-        html += '<button class="work-btn" disabled>' + t("empezarBreakBtn") + '</button>';
-      }
-      html += '<button class="work-btn" data-action="terminarBreak"' + (enBreak ? "" : " disabled") + '>' + t("terminarBreakBtn") + '</button>';
-      if (state.turnoActivo) {
-        html += '<div class="slide-confirm slide-danger" data-slide-action="terminarTrabajo"><div class="slide-track"><span class="slide-label">' + t("terminarTrabajoBtn") + '</span><div class="slide-handle">' + icon("chevron") + '</div></div></div>';
-      } else {
-        html += '<button class="work-btn" disabled>' + t("terminarTrabajoBtn") + '</button>';
-      }
+      html += slideOrDisabled(!t2live, "empezarTrabajo", t("empezarTrabajoBtn"), false);
+      html += slideOrDisabled(!!t2live && !enBreak, "empezarBreak", t("empezarBreakBtn"), false);
+      html += slideOrDisabled(enBreak, "terminarBreak", t("terminarBreakBtn"), false);
+      html += slideOrDisabled(!!t2live, "terminarTrabajo", t("terminarTrabajoBtn"), true);
       html += '</div>';
       html += '<p class="hint" style="text-align:center;margin:8px 0 0;">' + t("deslizaHint") + '</p>';
       html += '</div>';
-    } else {
-      html += '<button class="calc-btn" data-action="empezarTrabajo">' + t("empezarTrabajoBtn") + '</button>';
     }
 
     // registrar pago recibido
@@ -1002,39 +1001,6 @@ function renderApp() {
     } else {
       html += '<button class="save-month-btn" data-action="startPagoTrabajo">' + t("agregarPagoTrabajoBtn") + '</button>';
     }
-
-    // lista de turnos
-    html += '<div class="panel"><div class="panel-head-row"><h2>' + t("turnosTitle") + '</h2><button class="icon-pencil' + (state.showAgregarTurno ? " done" : "") + '" data-action="' + (state.showAgregarTurno ? "cancelAgregarTurno" : "startAgregarTurno") + '">' + (state.showAgregarTurno ? icon("close") : icon("plus")) + '</button></div><p class="hint">' + t("turnosHint") + '</p>';
-    if (state.showAgregarTurno) {
-      html += '<div class="goal-grid" style="margin-bottom:10px;">';
-      html += '<div class="goal-field"><label>' + t("fechaLbl") + '</label><input type="date" id="at-fecha" value="' + esc(state.agregarTurnoForm.fecha) + '" data-scope="agregarTurno" data-field="fecha"></div>';
-      html += '<div class="goal-field"><label>' + t("horasTrabajadasLbl") + '</label><input type="text" inputmode="decimal" placeholder="8" id="at-horas" value="' + esc(state.agregarTurnoForm.horas) + '" data-scope="agregarTurno" data-field="horas"></div>';
-      html += '</div>';
-      html += '<button class="pill-btn wide confirm" data-action="confirmAgregarTurno">' + t("agregarTurnoBtn") + '</button>';
-    }
-    const turnosRecientes = state.turnos.slice(0, 15);
-    turnosRecientes.forEach((tn) => {
-      const r = turnoPagoBruto(tn);
-      if (state.confirmDeleteTurnoId === tn.id) {
-        html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteTurnoMsg")(tn.fecha)) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeTurno" data-id="' + tn.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteTurno">' + t("cancel") + '</button></div></div>';
-        return;
-      }
-      const expanded = !!state.expandedTurnoIds[tn.id];
-      html += '<div class="card-entry">';
-      html += '<div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(tn.fecha) + ' \u00b7 ' + fmtHoras(r.horas) + '</span><span class="status-pill ' + (tn.estado === "pagado" ? "verde" : "amarillo") + '">' + (tn.estado === "pagado" ? t("estadoPagado") : t("estadoTrabajado")) + '</span></div>';
-      html += '<div class="history-meta"><span>' + sym() + fmt0(r.bruto) + ' ' + t("brutoLbl") + '</span><button class="icon-pencil" data-action="toggleExpandTurno" data-id="' + tn.id + '">' + (expanded ? icon("check") : icon("pencil")) + '</button></div>';
-      if (expanded) {
-        html += '<div class="card-fields" style="margin-top:8px;">';
-        html += '<div><span class="field-label">' + t("propinasLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" data-scope="turno" data-id="' + tn.id + '" data-field="propinas" value="' + esc(tn.propinas) + '"></div>';
-        html += '<div><span class="field-label">' + t("bonosLbl") + ' ' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" data-scope="turno" data-id="' + tn.id + '" data-field="bonos" value="' + esc(tn.bonos) + '"></div>';
-        html += '</div>';
-        html += '<div class="goal-field" style="margin-top:8px;"><label>' + t("notasLbl") + '</label><input type="text" placeholder="' + t("notasPh") + '" data-scope="turno" data-id="' + tn.id + '" data-field="notas" value="' + esc(tn.notas) + '"></div>';
-        html += '<button class="delete-link" data-action="askDeleteTurno" data-id="' + tn.id + '">' + t("eliminarTurnoLink") + '</button>';
-      }
-      html += '</div>';
-    });
-    if (state.turnos.length === 0) html += '<div class="empty-state">' + t("turnosEmpty") + '</div>';
-    html += '</div>';
 
     // lista de pagos recibidos
     if (state.pagosTrabajo.length > 0) {
@@ -1186,7 +1152,7 @@ function renderBreakLockScreen() {
   h += '</div></div>';
   h += '<p style="font-size:13px;color:rgba(255,255,255,0.55);margin-top:22px;max-width:260px;">' + t("pantallaBloqueadaHint") + '</p>';
   h += '</div>';
-  h += '<div class="slide-confirm" style="width:100%;max-width:340px;" data-slide-action="terminarBreak"><div class="slide-track" style="background:rgba(52,199,89,0.18);"><span class="slide-label" style="color:rgba(255,255,255,0.75);">' + t("terminarBreakBtn") + '</span><div class="slide-handle">' + icon("chevron") + '</div></div></div>';
+  h += '<div class="slide-confirm slide-big" style="width:100%;max-width:340px;" data-slide-action="terminarBreak"><div class="slide-track" style="background:rgba(52,199,89,0.18);"><span class="slide-label" style="color:rgba(255,255,255,0.75);">' + t("terminarBreakBtn") + '</span><div class="slide-handle">' + icon("chevron") + '</div></div></div>';
   h += '</div>';
   root.innerHTML = h;
 }
