@@ -62,5 +62,11 @@ jobs:
           git add downloads/305-Save-prueba.apk mobile/test-signing/debug.keystore
           if ! git diff --cached --quiet; then
             git commit -m "Publish latest 305 Save test APK"
+            for i in 1 2 3 4 5; do
+              git fetch origin main
+              git rebase origin/main && break
+              git rebase --abort || true
+              sleep 5
+            done
             git push
           fi
