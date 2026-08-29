@@ -172,23 +172,30 @@ function abrirBanco() {
   const inst = (state.cloudInstitutions && state.cloudInstitutions[0]) || null;
   const name = (inst && (inst.institution_name || inst.name)) || "";
   const known = {
-    "bank of america": "https://www.bankofamerica.com",
-    "chase": "https://www.chase.com",
-    "wells fargo": "https://www.wellsfargo.com",
-    "citi": "https://www.citibank.com",
-    "capital one": "https://www.capitalone.com",
-    "american express": "https://www.americanexpress.com",
-    "amex": "https://www.americanexpress.com",
-    "discover": "https://www.discover.com",
-    "us bank": "https://www.usbank.com",
-    "pnc": "https://www.pnc.com",
-    "truist": "https://www.truist.com",
-    "navy federal": "https://www.navyfederal.org",
-    "banco popular": "https://www.popular.com",
+    "bank of america": { pkg: "com.infonow.bofa", web: "https://www.bankofamerica.com" },
+    "chase": { pkg: "com.chase.sig.android", web: "https://www.chase.com" },
+    "wells fargo": { pkg: "com.wf.wellsfargomobile", web: "https://www.wellsfargo.com" },
+    "citi": { pkg: "com.citi.citimobile", web: "https://www.citibank.com" },
+    "capital one": { pkg: "com.konylabs.capitalone", web: "https://www.capitalone.com" },
+    "american express": { pkg: "com.americanexpress.android.acctsvcs.us", web: "https://www.americanexpress.com" },
+    "amex": { pkg: "com.americanexpress.android.acctsvcs.us", web: "https://www.americanexpress.com" },
+    "discover": { pkg: "com.discoverfinancial.mobile", web: "https://www.discover.com" },
+    "us bank": { pkg: "com.usbank.mobilebanking", web: "https://www.usbank.com" },
+    "pnc": { pkg: "com.pnc.ecommerce.mobile", web: "https://www.pnc.com" },
+    "truist": { pkg: "com.truist.mobile", web: "https://www.truist.com" },
+    "navy federal": { pkg: "com.navyfederal.android.nfcumobile", web: "https://www.navyfederal.org" },
+    "banco popular": { pkg: "com.evertec.bppr", web: "https://www.popular.com" },
   };
   const key = name.toLowerCase();
-  let url = null;
-  for (const k in known) { if (key.indexOf(k) !== -1) { url = known[k]; break; } }
-  if (!url) url = "https://www.google.com/search?q=" + encodeURIComponent((name || (LANG === "es" ? "mi banco" : "my bank")) + (LANG === "es" ? " iniciar sesi\u00f3n" : " login"));
-  window.open(url, "_blank");
+  let match = null;
+  for (const k in known) { if (key.indexOf(k) !== -1) { match = known[k]; break; } }
+  const fallbackWeb = match ? match.web : "https://www.google.com/search?q=" + encodeURIComponent((name || (LANG === "es" ? "mi banco" : "my bank")) + (LANG === "es" ? " app" : " app"));
+
+  const isAndroidApp = /305SaveAndroid\//.test(navigator.userAgent) || new URLSearchParams(location.search).get("app") === "android";
+  if (isAndroidApp && match) {
+    const intentUrl = "intent://#Intent;package=" + match.pkg + ";S.browser_fallback_url=" + encodeURIComponent(fallbackWeb) + ";end";
+    location.href = intentUrl;
+    return;
+  }
+  window.open(fallbackWeb, "_blank");
 }

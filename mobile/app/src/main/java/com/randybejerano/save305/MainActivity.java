@@ -406,7 +406,7 @@ public class MainActivity extends FragmentActivity {
                         }
                         String scheme = uri.getScheme();
                         if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
-                            try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) {}
+                            handleNonHttpUri(uri, webView);
                             return true;
                         }
                         return false;
@@ -426,7 +426,7 @@ public class MainActivity extends FragmentActivity {
                 Uri uri = request.getUrl();
                 String scheme = uri.getScheme();
                 if ("https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme)) return false;
-                try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) {}
+                handleNonHttpUri(uri, view);
                 return true;
             }
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
@@ -437,6 +437,27 @@ public class MainActivity extends FragmentActivity {
                     "</body></html>", "text/html", "UTF-8", null);
             }
         });
+    }
+
+    /**
+     * Abre un URI que no es http/https. Soporta el esquema "intent://" (usado para
+     * abrir apps nativas como la de un banco, con S.browser_fallback_url incluido)
+     * ademas de otros esquemas simples (tel:, mailto:, etc).
+     */
+    private void handleNonHttpUri(Uri uri, WebView fallbackWebView) {
+        try {
+            if ("intent".equalsIgnoreCase(uri.getScheme())) {
+                Intent intent = Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME);
+                try {
+                    startActivity(intent);
+                } catch (Exception notInstalled) {
+                    String fallbackUrl = intent.getStringExtra("browser_fallback_url");
+                    if (fallbackUrl != null && fallbackWebView != null) fallbackWebView.loadUrl(fallbackUrl);
+                }
+            } else {
+                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+            }
+        } catch (Exception ignored) {}
     }
 
     private String sha256(String value) {
