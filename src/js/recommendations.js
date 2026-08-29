@@ -176,7 +176,8 @@ function computeInsights() {
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
   const suscripcionesAuto = Object.keys(porComercio)
     .map((k) => ({ key: k, txs: porComercio[k] }))
-    .filter(({ txs }) => {\n      if (state.suscripcionesIgnoradas && state.suscripcionesIgnoradas.indexOf(merchantKey(txs[0].merchant_name || txs[0].descripcion || "")) !== -1) return false;
+    .filter(({ txs }) => {
+      if (state.suscripcionesIgnoradas && state.suscripcionesIgnoradas.indexOf(merchantKey(txs[0].merchant_name || txs[0].descripcion || "")) !== -1) return false;
       if (txs.length < 2) return false;
       const categoriasRecurrentes = ["suscripciones", "streaming", "gym", "telefono", "wifi", "entretenimiento"];
       const nombre = String(txs[0].descripcion || "").toLowerCase();
@@ -203,7 +204,9 @@ function computeInsights() {
     return { key: s.id, origen: "manual", id: s.id, nombre: s.nombre, monto: toNum(s.monto), frecuencia: s.frecuencia, proxima, diasFaltan, cancelada: state.suscripcionesCanceladas.indexOf(s.id) !== -1 };
   });
 
-  const añadidas = state.subs || [];\n  const suscripcionesAutoDisponibles = suscripcionesAuto.filter((s) => !añadidas.some((sub) => String(sub.merchantKey || "") === String(s.key)));\n  const suscripcionesDetectadas = suscripcionesAutoDisponibles.concat(suscripcionesManualesCalc).sort((a, b) => a.proxima - b.proxima);
+  const añadidas = state.subs || [];
+  const suscripcionesAutoDisponibles = suscripcionesAuto.filter((s) => !añadidas.some((sub) => String(sub.merchantKey || "") === String(s.key)));
+  const suscripcionesDetectadas = suscripcionesAutoDisponibles.concat(suscripcionesManualesCalc).sort((a, b) => a.proxima - b.proxima);
 
   const suscripcionesTotalMensual = suscripcionesDetectadas
     .filter((s) => !s.cancelada)
