@@ -362,6 +362,16 @@ function goTab(id) {
   state.showExport = false;
   state.showTxDetalle = null;
   state.showConsentimiento = false;
+  state.subPresetPicker = false;
+  state.showConfirmarAhorro = false;
+  state.confirmSumarAhorro = false;
+  state.subscriptionAssistKey = null;
+  state.subscriptionReviewOpen = false;
+  state.editingSubs = false;
+  state.editingCards = false;
+  state.editingLoans = false;
+  state.editingIngreso = false;
+  state.editingAhorro = false;
   state.expandedCloudCardIds = {};
   render();
   requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
