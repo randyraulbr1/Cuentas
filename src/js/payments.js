@@ -107,6 +107,44 @@ function addSubFromBankTx(txId) {
   render();
 }
 
+function addDetectedSubscription(key) {
+  const insights = computeInsights();
+  const item = insights.suscripcionesDetectadas.find((entry) => String(entry.key) === String(key));
+  if (!item) return;
+  const exists = state.subs.some((sub) => String(sub.merchantKey || "") === String(item.key) || String(sub.nombre || "").trim().toLowerCase() === String(item.nombre || "").trim().toLowerCase());
+  if (exists) {
+    state.subscriptionReviewOpen = true;
+    state.subscriptionAssistKey = null;
+    render();
+    return;
+  }
+  const txs = state.cloudTransactions.filter((tx) => merchantKey(tx.merchant_name || tx.descripcion || "") === item.key).sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")));
+  const tx = txs[0] || null;
+  const visual = typeof inferPaymentVisual === "function" ? inferPaymentVisual(item.nombre) : { icon: "tag", category: "otro" };
+  const txDate = tx ? String(tx.fecha || "").slice(0, 10) : "";
+  const currentMonth = monthKey();
+  state.subs.push({
+    id: uid(),
+    nombre: item.nombre,
+    monto: String(Math.abs(toNum(item.monto))),
+    categoria: visual.category || "otro",
+    icono: visual.icon || "tag",
+    diaPago: String(Number(txDate.slice(8, 10)) || ""),
+    merchantKey: item.key,
+    matchedBankTxId: tx ? tx.id : null,
+    pagadoMes: txDate.slice(0, 7) === currentMonth ? currentMonth : null,
+    pagadoFuente: txDate.slice(0, 7) === currentMonth ? "banco" : null,
+    pagadoMonto: txDate.slice(0, 7) === currentMonth ? String(Math.abs(toNum(item.monto))) : null,
+    frecuencia: item.frecuencia || "mensual",
+  });
+  state.subPresetPicker = false;
+  state.editingSubs = true;
+  state.subscriptionReviewOpen = true;
+  state.subscriptionAssistKey = null;
+  scheduleSave();
+  render();
+}
+
 function toggleEditIngreso() { state.editingIngreso = !state.editingIngreso; render(); }
 
 function addIngresoEntry() { state.ingresosLog.push({ id: uid(), monto: "", month: monthKey() }); scheduleSave(); rerenderPreservingFocus(); }
