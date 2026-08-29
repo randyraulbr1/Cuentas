@@ -166,16 +166,17 @@ public class MainActivity extends FragmentActivity {
         });
         page.addView(primaryButton, linear(-1, dp(58), 0, 0, 0, dp(14)));
 
-        if (unlockMode && biometricsAvailable() && prefs.getBoolean(KEY_BIOMETRIC, false)) {
+        if (unlockMode && biometricsAvailable()) {
+            boolean bioEnabled = prefs.getBoolean(KEY_BIOMETRIC, false);
             Button bio = new Button(this);
-            bio.setText("Usar huella o rostro");
+            bio.setText(bioEnabled ? "Usar huella o rostro" : "Activar huella o rostro");
             bio.setTextColor(Color.WHITE);
             bio.setTextSize(15);
             bio.setAllCaps(false);
             android.graphics.drawable.GradientDrawable bioBg = rounded(CARD, dp(15));
             bioBg.setStroke(dp(1), Color.rgb(52, 61, 74));
             bio.setBackground(bioBg);
-            bio.setOnClickListener(v -> showBiometric(false));
+            bio.setOnClickListener(v -> showBiometric(!bioEnabled, false));
             page.addView(bio, linear(-1, dp(54), 0, 0, 0, 0));
         }
     }
@@ -244,7 +245,7 @@ public class MainActivity extends FragmentActivity {
         prefs.edit().putString(KEY_PIN, sha256(entered))
             .putInt(KEY_ATTEMPTS, 0).remove(KEY_LOCK_UNTIL).apply();
         entered = "";
-        if (biometricsAvailable()) showBiometric(true);
+        if (biometricsAvailable()) showBiometric(true, true);
         else openApp();
     }
 
@@ -276,10 +277,10 @@ public class MainActivity extends FragmentActivity {
 
     private void tryBiometricAutomatically() {
         if (!unlocked && hasPin() && biometricsAvailable() &&
-            prefs.getBoolean(KEY_BIOMETRIC, false)) showBiometric(false);
+            prefs.getBoolean(KEY_BIOMETRIC, false)) showBiometric(false, false);
     }
 
-    private void showBiometric(boolean firstSetup) {
+    private void showBiometric(boolean firstSetup, boolean autoOpenOnDecline) {
         if (biometricPromptShowing || unlocked) return;
         biometricPromptShowing = true;
         int authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG |
@@ -297,8 +298,8 @@ public class MainActivity extends FragmentActivity {
                 @Override public void onAuthenticationError(int code, CharSequence message) {
                     super.onAuthenticationError(code, message);
                     biometricPromptShowing = false;
-                    if (firstSetup) {
-                        prefs.edit().putBoolean(KEY_BIOMETRIC, false).apply();
+                    if (firstSetup) prefs.edit().putBoolean(KEY_BIOMETRIC, false).apply();
+                    if (autoOpenOnDecline) {
                         openApp();
                     } else {
                         subtitle.setText("Usa tu PIN para entrar");
@@ -342,6 +343,8 @@ public class MainActivity extends FragmentActivity {
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
+        settings.setSupportMultipleWindows(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setUserAgentString(settings.getUserAgentString() + " 305SaveAndroid/0.2");
@@ -349,7 +352,64 @@ public class MainActivity extends FragmentActivity {
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
         cookies.setAcceptThirdPartyCookies(webView, true);
-        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override public boolean onCreateWindow(WebView view, boolean isDialog,
+                    boolean isUserGesture, android.os.Message resultMsg) {
+                WebView popup = new WebView(MainActivity.this);
+                WebSettings popupSettings = popup.getSettings();
+                popupSettings.setJavaScriptEnabled(true);
+                popupSettings.setDomStorageEnabled(true);
+                popupSettings.setSupportMultipleWindows(true);
+                popupSettings.setJavaScriptCanOpenWindowsAutomatically(true);
+                CookieManager.getInstance().setAcceptThirdPartyCookies(popup, true);
+
+                android.app.Dialog dialog = new android.app.Dialog(MainActivity.this,
+                    android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+                FrameLayout popupRoot = new FrameLayout(MainActivity.this);
+                popupRoot.setBackgroundColor(BG);
+                Button closeBtn = new Button(MainActivity.this);
+                closeBtn.setText("\u2715");
+                closeBtn.setTextColor(Color.WHITE);
+                closeBtn.setBackground(rounded(CARD, dp(20)));
+                closeBtn.setOnClickListener(v -> dialog.dismiss());
+                FrameLayout.LayoutParams webLp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                webLp.topMargin = dp(48);
+                popupRoot.addView(popup, webLp);
+                FrameLayout.LayoutParams closeLp = new FrameLayout.LayoutParams(dp(40), dp(40));
+                closeLp.gravity = Gravity.TOP | Gravity.END;
+                closeLp.topMargin = dp(4);
+                closeLp.rightMargin = dp(8);
+                popupRoot.addView(closeBtn, closeLp);
+                dialog.setContentView(popupRoot);
+                dialog.setOnDismissListener(d -> popup.destroy());
+
+                popup.setWebViewClient(new WebViewClient() {
+                    @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest request) {
+                        Uri uri = request.getUrl();
+                        String host = uri.getHost() == null ? "" : uri.getHost();
+                        if (host.endsWith("github.io")) {
+                            dialog.dismiss();
+                            webView.loadUrl(uri.toString());
+                            return true;
+                        }
+                        String scheme = uri.getScheme();
+                        if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
+                            try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) {}
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+                popup.setWebChromeClient(new WebChromeClient());
+
+                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(popup);
+                resultMsg.sendToTarget();
+                dialog.show();
+                return true;
+            }
+        });
         webView.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
