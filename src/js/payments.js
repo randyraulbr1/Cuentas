@@ -274,7 +274,7 @@ function resetAll() {
   state.suscripcionesManuales = []; state.suscripcionesFrecuencia = {};
   state.gastosFijosReconocidos = []; state.showMarcarGastoFijo = false; state.nombreGastoFijoTemp = "";
   state.payFrequency = "mensual"; state.ultimoPago = ""; state.proximoPagoAjuste = ""; state.ingresosLog = []; state.loans = [];
-  state.job = { nombre: "", pagoHora: "", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false };
+  state.job = { nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", tipoLaboral: "w2", impuestoPct: "18", descansoPagado: false };
   state.turnos = []; state.turnoActivo = null; state.pagosTrabajo = [];
   stopTimerLoop();
   state.expandedCardIds = {}; state.confirmDeleteSubId = null; state.confirmDeleteCardId = null; state.confirmDeleteHistoryKey = null; state.payingTarget = null; state.payingSubId = null; state.payFormMonto = ""; state.confirmDeleteLoanId = null;
