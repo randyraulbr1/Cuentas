@@ -12,10 +12,20 @@ android {
         versionName "0.1-test"
     }
 
+    signingConfigs {
+        test {
+            storeFile file("../test-signing/debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix ".test"
             versionNameSuffix "-debug"
+            signingConfig signingConfigs.test
         }
         release {
             minifyEnabled true
