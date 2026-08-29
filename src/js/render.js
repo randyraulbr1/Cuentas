@@ -328,7 +328,7 @@ function renderTrabajoCalendar() {
     byDay[tn.fecha].ids.push(tn.id);
   });
 
-  let h = '<div class="panel">';
+  let h = '<div class="panel" id="trabajo-calendar-panel">';
   h += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">';
   h += '<button class="icon-pencil" data-action="trabajoCalPrevMonth" style="transform:rotate(180deg);">' + icon("chevron") + '</button>';
   h += '<h2 style="margin:0;text-transform:capitalize;font-size:16px;">' + esc(monthName) + '</h2>';
@@ -891,7 +891,7 @@ function renderApp() {
     html += renderTrabajoCalendar();
 
     // panel configuracion del trabajo
-    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("miTrabajoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("miTrabajoHint") + '</p></div><button class="icon-pencil' + (state.editingJob ? " done" : "") + '" data-action="toggleEditJob">' + (state.editingJob ? icon("check") : icon("pencil")) + '</button></div>';
+    html += '<div class="panel" id="trabajo-job-panel"><div class="panel-head-row"><div><h2>' + t("miTrabajoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("miTrabajoHint") + '</p></div><button class="icon-pencil' + (state.editingJob ? " done" : "") + '" data-action="toggleEditJob">' + (state.editingJob ? icon("check") : icon("pencil")) + '</button></div>';
     if (!state.editingJob) {
       html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + esc(state.job.nombre || t("trabajoNombrePh")) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.job.pagoHora)) + '/h</span></div>';
     } else {

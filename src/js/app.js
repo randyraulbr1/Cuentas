@@ -636,10 +636,18 @@ root.addEventListener("scroll", (e) => {
 root.addEventListener("click", (e) => {
   const directTab = e.target.closest(".tab-btn[data-id]");
   if (directTab) { e.preventDefault(); goTab(directTab.dataset.id); return; }
-  let closedCloudCards = false;
+  let closedSomethingOnOutsideClick = false;
   if (!e.target.closest(".cc-card") && state.expandedCloudCardIds && Object.keys(state.expandedCloudCardIds).some((key) => state.expandedCloudCardIds[key])) {
     state.expandedCloudCardIds = {};
-    closedCloudCards = true;
+    closedSomethingOnOutsideClick = true;
+  }
+  if (state.trabajoCalSelectedDate && !e.target.closest("#trabajo-calendar-panel")) {
+    state.trabajoCalSelectedDate = null;
+    closedSomethingOnOutsideClick = true;
+  }
+  if (state.editingJob && !e.target.closest("#trabajo-job-panel")) {
+    state.editingJob = false;
+    closedSomethingOnOutsideClick = true;
   }
   if (e.target.classList && e.target.classList.contains("options-overlay")) {
     if (state.showConsentimiento) { state.showConsentimiento = false; render(); return; }
@@ -648,7 +656,7 @@ root.addEventListener("click", (e) => {
     return;
   }
   const btn = e.target.closest("[data-action]");
-  if (!btn) { if (closedCloudCards) render(); return; }
+  if (!btn) { if (closedSomethingOnOutsideClick) render(); return; }
   const action = btn.dataset.action;
   const id = btn.dataset.id;
   const freq = btn.dataset.freq;
