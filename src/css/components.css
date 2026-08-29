@@ -222,3 +222,32 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .slide-big .slide-track { height:64px; border-radius:18px; }
 .slide-big .slide-handle { width:58px; height:58px; border-radius:15px; }
 .slide-big .slide-label { font-size:13px; }
+
+
+/* Personalización compacta de navegación y seguridad */
+.security-compact{padding:16px 18px}
+.security-compact-head{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.security-compact-head .opt-section-title,.nav-order-panel .opt-section-title{margin:0}
+.security-compact-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--pill-bg);color:var(--positive);flex:0 0 auto}
+.security-compact-icon svg{width:18px;height:18px}
+.pin-setup-row.compact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.pin-setup-row.compact input{min-width:0;height:42px;padding:9px 12px;font-size:16px;letter-spacing:.24em;text-align:center}
+.pin-setup-row.compact .pill-btn{height:42px;padding:0 15px;white-space:nowrap}
+.security-compact-actions{display:flex;gap:8px;align-items:center;margin-top:9px}
+.security-compact-actions .pill-btn{flex:1;padding:9px 10px;font-size:12px}
+
+.nav-order-panel{padding:17px 16px}
+.nav-order-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:13px 0 10px;padding:7px;border-radius:16px;background:var(--pill-bg);box-shadow:inset 0 -3px 0 rgba(0,0,0,.04)}
+.nav-order-item{position:relative;min-width:0;min-height:67px;padding:8px 2px 6px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--text-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-family:inherit}
+.nav-order-item span svg{width:20px;height:20px}
+.nav-order-item small{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;font-weight:750}
+.nav-order-item i{position:absolute;top:3px;right:5px;font-size:8px;font-style:normal;opacity:.55}
+.nav-order-item.selected{background:var(--surface);border-color:var(--border);color:var(--text);box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.nav-order-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}
+.nav-order-controls .pill-btn{padding:9px 7px;font-size:12px}
+.nav-order-controls .pill-btn:disabled{opacity:.35}
+
+.bank-expense-sort{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.bank-expense-sort::-webkit-scrollbar{display:none}
+.bank-expense-sort button{flex:0 0 auto;border:1px solid var(--border);border-radius:999px;background:var(--surface);color:var(--text-muted);padding:8px 11px;font:700 11px/1 inherit;white-space:nowrap}
+.bank-expense-sort button.active{background:var(--accent);border-color:var(--accent);color:var(--accent-contrast)}
