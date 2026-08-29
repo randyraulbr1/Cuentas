@@ -48,7 +48,7 @@ async function enterProfile(id) {
   state.proximoPagoAjuste = d.proximoPagoAjuste || "";
   state.ingresosLog = d.ingresosLog || [];
   state.loans = d.loans || [];
-  state.job = Object.assign({ nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false, limiteAlmuerzo: "30", horarioDias: [false, false, false, false, false, false, false], horarioInicio: "09:00", horarioFin: "17:00", horarioRecordar: false, horarioUltimoRecordatorio: "" }, d.job || {});
+  state.job = Object.assign({ nombre: "", pagoHora: "18", pagoDia: "", frecuenciaPago: "semanal", diaPago: "", horasExtraDespues: "40", multiplicadorExtra: "1.5", impuestoPct: "", descansoPagado: false, limiteAlmuerzo: "30", horarioDias: [false, false, false, false, false, false, false], horarioInicio: "09:00", horarioFin: "17:00", horarioRecordar: false, horarioUltimoRecordatorio: "", horarioUltimoRecordatorioSalida: "" }, d.job || {});
   if (!state.job.pagoHora) state.job.pagoHora = "18";
   if (!state.job.limiteAlmuerzo) state.job.limiteAlmuerzo = "30";
   state.turnos = d.turnos || [];
@@ -541,7 +541,22 @@ root.addEventListener("input", (e) => {
   }
   if (scope === "job") {
     const f = el.dataset.field;
-    const raw = f === "nombre" || f === "horarioInicio" || f === "horarioFin";
+    if (f === "horarioInicio" || f === "horarioFin") {
+      const digits = el.value.replace(/[^0-9]/g, "").slice(0, 4);
+      const formatted = digits.length >= 3 ? digits.slice(0, 2) + ":" + digits.slice(2) : digits;
+      el.value = formatted;
+      state.job[f] = formatted;
+      if (f === "horarioInicio" && digits.length === 4) {
+        const hh = parseInt(digits.slice(0, 2), 10), mm = parseInt(digits.slice(2), 10);
+        if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
+          const fin = new Date(2000, 0, 1, hh, mm);
+          fin.setHours(fin.getHours() + 8);
+          state.job.horarioFin = String(fin.getHours()).padStart(2, "0") + ":" + String(fin.getMinutes()).padStart(2, "0");
+        }
+      }
+      scheduleSave(); rerenderPreservingFocus(); return;
+    }
+    const raw = f === "nombre";
     state.job[f] = raw ? el.value : sanitizeNum(el.value);
     scheduleSave(); rerenderPreservingFocus(); return;
   }
@@ -679,6 +694,7 @@ root.addEventListener("click", (e) => {
     setCurEur: () => { if (state.currency !== "eur") toggleCurrency(); },
     setThemeLight: () => { if (state.theme !== "light") toggleTheme(); },
     setThemeDark: () => { if (state.theme !== "dark") toggleTheme(); },
+    setTrabajoPeriodo: () => { state.trabajoPeriodoDefault = id; scheduleSave(); render(); },
     setTextSizeChico: () => setTextSize("pequeno"), setTextSizeNormal: () => setTextSize("normal"), setTextSizeGrande: () => setTextSize("grande"),
     aplicarSugerenciaExtra: () => { state.extraPagoDeuda = String(id); scheduleSave(); render(); },
     pedirSumarAhorro: () => { state.confirmSumarAhorro = true; render(); },

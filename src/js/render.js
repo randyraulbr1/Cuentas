@@ -230,6 +230,11 @@ function renderOpcionesTab() {
   h += '<div class="panel"><p class="opt-section-title">' + t("secPreferencias") + '</p><div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div>';
   h += '<div class="opt-row"><span class="opt-row-label">' + t("secMoneda") + '</span><div class="seg"><button class="' + (state.currency === "usd" ? "active" : "") + '" data-action="setCurUsd">$</button><button class="' + (state.currency === "eur" ? "active" : "") + '" data-action="setCurEur">€</button></div></div>';
   h += '<div class="opt-row"><span class="opt-row-label">' + t("secTema") + '</span><div class="seg"><button class="' + (state.theme === "light" ? "active" : "") + '" data-action="setThemeLight">' + icon("sun") + '</button><button class="' + (state.theme === "dark" ? "active" : "") + '" data-action="setThemeDark">' + icon("moon") + '</button></div></div>';
+  h += '<div class="opt-row"><span class="opt-row-label">' + t("periodoTrabajoLbl") + '</span><div class="seg">';
+  [["semanal", "periodoSemana"], ["quincenal", "periodoQuincenaLbl"], ["mensual", "periodoMes"]].forEach((p) => {
+    h += '<button class="' + (state.trabajoPeriodoDefault === p[0] ? "active" : "") + '" data-action="setTrabajoPeriodo" data-id="' + p[0] + '">' + t(p[1]) + '</button>';
+  });
+  h += '</div></div>';
   h += '<div class="opt-row"><span class="opt-row-label">' + t("secTamanoTexto") + '</span><div class="seg"><button class="' + (state.textSize === "pequeno" ? "active" : "") + '" data-action="setTextSizeChico">' + t("textoChico") + '</button><button class="' + (state.textSize === "normal" ? "active" : "") + '" data-action="setTextSizeNormal">' + t("textoNormal") + '</button><button class="' + (state.textSize === "grande" ? "active" : "") + '" data-action="setTextSizeGrande">' + t("textoGrande") + '</button></div></div></div>';
 
   h += '<div class="panel"><p class="opt-section-title">' + t("secCredito") + '</p>';
@@ -526,16 +531,6 @@ function renderApp() {
       html += '<button class="fab-add" data-action="addGoal">+ ' + t("addGoal") + '</button>';
     }
 
-    // resumen de Trabajo (para tener todo en un solo vistazo en Inicio)
-    html += '<div class="panel" style="cursor:pointer;" data-action="goTab" data-id="trabajo">';
-    html += '<div class="panel-head-row"><h2>' + icon("clockmoney") + ' ' + t("tabTrabajo") + '</h2>' + icon("chevron") + '</div>';
-    if (state.turnoActivo) {
-      const enBreak = !!state.turnoActivo.breakActivo;
-      html += '<div class="mini-total"><span>' + t(enBreak ? "enBreakLbl" : "trabajandoAhoraLbl") + '</span><b class="locked-amount" style="color:' + (enBreak ? "#FF9F0A" : "#34C759") + ';">\u25cf</b></div>';
-    }
-    html += '<div class="mini-total"><span>' + t("ganadoEsteMesLbl") + '</span><b>' + sym() + fmt0(ganadoEsteMes()) + '</b></div>';
-    html += '</div>';
-
   }
 
   if (tab === "cuentas") {
@@ -717,46 +712,6 @@ function renderApp() {
     });
     const priorityCard = rankedCards.find((item) => item.balance > 0) || null;
 
-    html += '<div class="panel cards-dashboard">';
-    html += '<div class="panel-head-row"><div><h2>' + (LANG === "es" ? "Estadísticas de tus tarjetas" : "Your card statistics") + '</h2><p class="hint">' + (LANG === "es" ? "Análisis calculado con saldos, límites e intereses disponibles." : "Analysis based on available balances, limits and interest rates.") + '</p></div></div>';
-    if (cloudCards.length === 0) {
-      html += '<div class="empty-state">' + (LANG === "es" ? "Conecta una tarjeta bancaria para ver su análisis." : "Connect a bank card to see its analysis.") + '</div>';
-    } else {
-      html += '<div class="card-stat-grid">';
-      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Deuda total" : "Total debt") + '</span><b>' + sym() + fmt0(totalCardBalance) + '</b></div>';
-      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Utilización total" : "Total utilization") + '</span><b class="' + (overallUtilization != null && overallUtilization >= 50 ? "bad" : overallUtilization != null && overallUtilization >= 30 ? "warn" : "good") + '">' + (overallUtilization == null ? "—" : Math.round(overallUtilization) + "%") + '</b></div>';
-      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Mínimos del mes" : "Monthly minimums") + '</span><b>' + sym() + fmt0(totalMinimum) + '</b></div>';
-      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Interés mensual estimado" : "Estimated monthly interest") + '</span><b class="bad">' + sym() + fmt0(totalInterestMonth) + '</b></div>';
-      html += '</div>';
-
-      if (priorityCard) {
-        const target30 = priorityCard.limit > 0 ? Math.max(priorityCard.balance - priorityCard.limit * 0.30, 0) : 0;
-        const normalPayment = Math.max(priorityCard.minimum, priorityCard.monthlyInterest + priorityCard.balance / 36, priorityCard.balance * 0.03);
-        const suggestedExtra = Math.min(safeExtra, target30 > 0 ? target30 : normalPayment);
-        html += '<div class="card-priority"><div class="card-priority-title">' + icon("alert") + '<span>' + (LANG === "es" ? "Primera prioridad" : "First priority") + '</span></div>';
-        html += '<h3>' + esc(priorityCard.card.name || (LANG === "es" ? "Tarjeta" : "Card")) + '</h3>';
-        if (priorityCard.utilization != null && priorityCard.utilization > 30) {
-          html += '<p>' + (LANG === "es" ? "Está usando " + Math.round(priorityCard.utilization) + "% del límite. Para llegar a 30%, reduce aproximadamente " : "It is using " + Math.round(priorityCard.utilization) + "% of its limit. To reach 30%, reduce it by about ") + '<b>' + sym() + fmt0(target30) + '</b>.</p>';
-        } else if (priorityCard.apr > 0) {
-          html += '<p>' + (LANG === "es" ? "Es la tarjeta con mayor APR disponible (" : "It has the highest available APR (") + priorityCard.apr + '%). ' + (LANG === "es" ? "Después de pagar todos los mínimos, dirige aquí el dinero extra." : "After all minimums, direct extra money here.") + '</p>';
-        }
-        html += '<div class="card-action-amount"><span>' + (LANG === "es" ? "Pago sugerido ahora sin usar el dinero reservado para el mes" : "Suggested payment now without using reserved monthly money") + '</span><b>' + sym() + fmt0(suggestedExtra) + '</b></div>';
-        if (suggestedExtra <= 0) html += '<p class="hint">' + (LANG === "es" ? "Primero cubre tus pagos pendientes. No se recomienda quedarte sin dinero para bajar la tarjeta." : "Cover pending bills first. Do not run out of cash to lower a card balance.") + '</p>';
-        html += '</div>';
-      }
-
-      html += '<div class="card-level-list">';
-      rankedCards.forEach((item, index) => {
-        const level = item.utilization == null ? "unknown" : item.utilization < 10 ? "excellent" : item.utilization < 30 ? "good" : item.utilization < 50 ? "warn" : "bad";
-        const label = level === "excellent" ? (LANG === "es" ? "Excelente" : "Excellent") : level === "good" ? (LANG === "es" ? "Bien" : "Good") : level === "warn" ? (LANG === "es" ? "Alta" : "High") : level === "bad" ? (LANG === "es" ? "Crítica" : "Critical") : (LANG === "es" ? "Sin límite disponible" : "No limit available");
-        const toThirty = item.limit > 0 ? Math.max(item.balance - item.limit * 0.30, 0) : 0;
-        html += '<div class="card-level-row"><span class="card-rank">' + (index + 1) + '</span><div><b>' + esc(item.card.name || (LANG === "es" ? "Tarjeta" : "Card")) + '</b><small>' + (item.apr ? item.apr + "% APR · " : "") + (LANG === "es" ? "Mínimo " : "Minimum ") + sym() + fmt0(item.minimum) + '</small></div><div class="card-level-right"><span class="card-level ' + level + '">' + label + '</span><b>' + (item.utilization == null ? "—" : Math.round(item.utilization) + "%") + '</b></div></div>';
-        if (toThirty > 0) html += '<p class="card-level-tip">' + (LANG === "es" ? "Baja " : "Reduce by ") + sym() + fmt0(toThirty) + (LANG === "es" ? " para llegar a 30%." : " to reach 30%.") + '</p>';
-      });
-      html += '</div>';
-      html += '<div class="credit-help"><h3>' + (LANG === "es" ? "Orden recomendado" : "Recommended order") + '</h3><ol><li>' + (LANG === "es" ? "Paga al menos el mínimo de todas antes de la fecha límite." : "Pay at least every minimum before its due date.") + '</li><li>' + (LANG === "es" ? "Baja primero cualquier tarjeta sobre 30%, empezando por la de mayor utilización." : "First lower cards above 30%, starting with the highest utilization.") + '</li><li>' + (LANG === "es" ? "Cuando estén debajo de 30%, dirige el extra a la de mayor APR." : "Once below 30%, direct extra money to the highest APR.") + '</li><li>' + (LANG === "es" ? "Evita cerrar tarjetas antiguas sin revisar antes su impacto en el límite total." : "Avoid closing older cards without checking the impact on total available credit.") + '</li></ol></div>';
-    }
-    html += '</div>';
     if (cloudCards.length > 0) {
       html += '<div class="panel"><div class="panel-head-row"><h2 style="margin-bottom:0;">' + t("tarjetasNubeTitle") + '</h2><span class="sync-badge">' + icon("bank") + t("sincronizadoLbl") + '</span></div>';
       const ccGrads = [
@@ -801,11 +756,56 @@ function renderApp() {
       });
       html += '</div></div>';
     }
+
+    html += '<div class="panel cards-dashboard">';
+    html += '<div class="panel-head-row"><div><h2>' + (LANG === "es" ? "Estadísticas de tus tarjetas" : "Your card statistics") + '</h2><p class="hint">' + (LANG === "es" ? "Análisis calculado con saldos, límites e intereses disponibles." : "Analysis based on available balances, limits and interest rates.") + '</p></div></div>';
+    if (cloudCards.length === 0) {
+      html += '<div class="empty-state">' + (LANG === "es" ? "Conecta una tarjeta bancaria para ver su análisis." : "Connect a bank card to see its analysis.") + '</div>';
+    } else {
+      html += '<div class="card-stat-grid">';
+      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Deuda total" : "Total debt") + '</span><b>' + sym() + fmt0(totalCardBalance) + '</b></div>';
+      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Utilización total" : "Total utilization") + '</span><b class="' + (overallUtilization != null && overallUtilization >= 50 ? "bad" : overallUtilization != null && overallUtilization >= 30 ? "warn" : "good") + '">' + (overallUtilization == null ? "—" : Math.round(overallUtilization) + "%") + '</b></div>';
+      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Mínimos del mes" : "Monthly minimums") + '</span><b>' + sym() + fmt0(totalMinimum) + '</b></div>';
+      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Interés mensual estimado" : "Estimated monthly interest") + '</span><b class="bad">' + sym() + fmt0(totalInterestMonth) + '</b></div>';
+      html += '</div>';
+
+      if (priorityCard) {
+        const target30 = priorityCard.limit > 0 ? Math.max(priorityCard.balance - priorityCard.limit * 0.30, 0) : 0;
+        const normalPayment = Math.max(priorityCard.minimum, priorityCard.monthlyInterest + priorityCard.balance / 36, priorityCard.balance * 0.03);
+        const suggestedExtra = Math.min(safeExtra, target30 > 0 ? target30 : normalPayment);
+        html += '<div class="card-priority"><div class="card-priority-title">' + icon("alert") + '<span>' + (LANG === "es" ? "Primera prioridad" : "First priority") + '</span></div>';
+        html += '<h3>' + esc(priorityCard.card.name || (LANG === "es" ? "Tarjeta" : "Card")) + '</h3>';
+        if (priorityCard.utilization != null && priorityCard.utilization > 30) {
+          html += '<p>' + (LANG === "es" ? "Está usando " + Math.round(priorityCard.utilization) + "% del límite. Para llegar a 30%, reduce aproximadamente " : "It is using " + Math.round(priorityCard.utilization) + "% of its limit. To reach 30%, reduce it by about ") + '<b>' + sym() + fmt0(target30) + '</b>.</p>';
+        } else if (priorityCard.apr > 0) {
+          html += '<p>' + (LANG === "es" ? "Es la tarjeta con mayor APR disponible (" : "It has the highest available APR (") + priorityCard.apr + '%). ' + (LANG === "es" ? "Después de pagar todos los mínimos, dirige aquí el dinero extra." : "After all minimums, direct extra money here.") + '</p>';
+        }
+        html += '<div class="card-action-amount"><span>' + (LANG === "es" ? "Pago sugerido ahora sin usar el dinero reservado para el mes" : "Suggested payment now without using reserved monthly money") + '</span><b>' + sym() + fmt0(suggestedExtra) + '</b></div>';
+        if (suggestedExtra <= 0) html += '<p class="hint">' + (LANG === "es" ? "Primero cubre tus pagos pendientes. No se recomienda quedarte sin dinero para bajar la tarjeta." : "Cover pending bills first. Do not run out of cash to lower a card balance.") + '</p>';
+        html += '</div>';
+      }
+
+      html += '<div class="card-level-list">';
+      rankedCards.forEach((item, index) => {
+        const level = item.utilization == null ? "unknown" : item.utilization < 10 ? "excellent" : item.utilization < 30 ? "good" : item.utilization < 50 ? "warn" : "bad";
+        const label = level === "excellent" ? (LANG === "es" ? "Excelente" : "Excellent") : level === "good" ? (LANG === "es" ? "Bien" : "Good") : level === "warn" ? (LANG === "es" ? "Alta" : "High") : level === "bad" ? (LANG === "es" ? "Crítica" : "Critical") : (LANG === "es" ? "Sin límite disponible" : "No limit available");
+        const toThirty = item.limit > 0 ? Math.max(item.balance - item.limit * 0.30, 0) : 0;
+        html += '<div class="card-level-row"><span class="card-rank">' + (index + 1) + '</span><div><b>' + esc(item.card.name || (LANG === "es" ? "Tarjeta" : "Card")) + '</b><small>' + (item.apr ? item.apr + "% APR · " : "") + (LANG === "es" ? "Mínimo " : "Minimum ") + sym() + fmt0(item.minimum) + '</small></div><div class="card-level-right"><span class="card-level ' + level + '">' + label + '</span><b>' + (item.utilization == null ? "—" : Math.round(item.utilization) + "%") + '</b></div></div>';
+        if (toThirty > 0) html += '<p class="card-level-tip">' + (LANG === "es" ? "Baja " : "Reduce by ") + sym() + fmt0(toThirty) + (LANG === "es" ? " para llegar a 30%." : " to reach 30%.") + '</p>';
+      });
+      html += '</div>';
+      html += '<div class="credit-help"><h3>' + (LANG === "es" ? "Orden recomendado" : "Recommended order") + '</h3><ol><li>' + (LANG === "es" ? "Paga al menos el mínimo de todas antes de la fecha límite." : "Pay at least every minimum before its due date.") + '</li><li>' + (LANG === "es" ? "Baja primero cualquier tarjeta sobre 30%, empezando por la de mayor utilización." : "First lower cards above 30%, starting with the highest utilization.") + '</li><li>' + (LANG === "es" ? "Cuando estén debajo de 30%, dirige el extra a la de mayor APR." : "Once below 30%, direct extra money to the highest APR.") + '</li><li>' + (LANG === "es" ? "Evita cerrar tarjetas antiguas sin revisar antes su impacto en el límite total." : "Avoid closing older cards without checking the impact on total available credit.") + '</li></ol></div>';
+    }
+    html += '</div>';
   }
 
   if (tab === "trabajo") {
     if (state.workNotifBanner) html += '<div class="top-action rojo"><b>' + esc(state.workNotifBanner.title) + '</b><br>' + esc(state.workNotifBanner.body) + '</div>';
     if (state.workPagoFlash) html += '<div class="flash">' + icon("check") + ' ' + t("pagoTrabajoRegistrado") + '</div>';
+
+    if (toNum(state.job.pagoHora) > 0) {
+      html += '<div class="panel" style="text-align:center;padding:14px 18px;"><p class="hint" style="margin:0;">' + esc(horarioStatusText()) + '</p></div>';
+    }
 
     // panel configuracion del trabajo
     html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("miTrabajoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("miTrabajoHint") + '</p></div><button class="icon-pencil' + (state.editingJob ? " done" : "") + '" data-action="toggleEditJob">' + (state.editingJob ? icon("check") : icon("pencil")) + '</button></div>';
@@ -837,8 +837,8 @@ function renderApp() {
       });
       html += '</div>';
       html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("horarioInicioLbl") + '</label><input type="time" id="job-horarioInicio" value="' + esc(state.job.horarioInicio) + '" data-scope="job" data-field="horarioInicio"></div>';
-      html += '<div class="goal-field"><label>' + t("horarioFinLbl") + '</label><input type="time" id="job-horarioFin" value="' + esc(state.job.horarioFin) + '" data-scope="job" data-field="horarioFin"></div>';
+      html += '<div class="goal-field"><label>' + t("horarioInicioLbl") + '</label><input type="text" inputmode="numeric" maxlength="5" placeholder="09:00" id="job-horarioInicio" value="' + esc(state.job.horarioInicio) + '" data-scope="job" data-field="horarioInicio"></div>';
+      html += '<div class="goal-field"><label>' + t("horarioFinLbl") + '</label><input type="text" inputmode="numeric" maxlength="5" placeholder="17:00" id="job-horarioFin" value="' + esc(state.job.horarioFin) + '" data-scope="job" data-field="horarioFin"></div>';
       html += '</div>';
       html += '<div class="opt-row" style="margin-top:2px;"><span class="opt-row-label">' + t("horarioRecordarLbl") + '</span><div class="seg"><button class="' + (!state.job.horarioRecordar ? "active" : "") + '" data-action="setHorarioRecordarOff">' + t("off") + '</button><button class="' + (state.job.horarioRecordar ? "active" : "") + '" data-action="setHorarioRecordarOn">' + t("on") + '</button></div></div>';
       html += '<div class="opt-row" style="margin-top:8px;"><span class="opt-row-label">' + t("descansoPagadoLbl") + '</span><div class="seg"><button class="' + (!state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOff">' + t("off") + '</button><button class="' + (state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOn">' + t("on") + '</button></div></div>';
@@ -850,7 +850,7 @@ function renderApp() {
     // resumen del mes/semana
     const tm = totalesMes(); const ts = totalesSemana();
     html += '<div class="summary">';
-    html += '<div class="sum-card"><div class="sum-label">' + t("ganadoEsteMesLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(ganadoEsteMes()) + '</div></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t(state.trabajoPeriodoDefault === "semanal" ? "ganadoSemanaLbl" : state.trabajoPeriodoDefault === "mensual" ? "ganadoEsteMesLbl" : "ganadoQuincenaLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(ganadoPeriodoDefault()) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("recibidoEsteMesLbl") + '</div><div class="sum-val green">' + sym() + fmt0(recibidoEsteMes()) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("pendienteLbl") + '</div><div class="sum-val red">' + sym() + fmt0(pendienteDePago()) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("horasSemanaLbl") + '</div><div class="sum-val blue" style="font-size:16px;">' + fmtHoras(ts.horas) + '</div></div>';

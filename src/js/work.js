@@ -89,10 +89,34 @@ function notifyBreak(title, body) {
   notifyBreak._t = setTimeout(() => { state.workNotifBanner = null; render(); }, 5000);
 }
 
+function horarioStatusText() {
+  const now = new Date();
+  const hoyIdx = now.getDay();
+  const mananaIdx = (hoyIdx + 1) % 7;
+  const trabajaHoy = !!state.job.horarioDias[hoyIdx];
+  const trabajaManana = !!state.job.horarioDias[mananaIdx];
+  const anyDia = state.job.horarioDias.some((d) => d);
+  if (!anyDia) return t("horarioNiHoyNiMananaMsg");
+  let msg;
+  if (trabajaHoy) {
+    const [hh, mm] = String(state.job.horarioInicio || "09:00").split(":").map((x) => parseInt(x, 10) || 0);
+    const [hh2, mm2] = String(state.job.horarioFin || "17:00").split(":").map((x) => parseInt(x, 10) || 0);
+    const inicio = new Date(now); inicio.setHours(hh, mm, 0, 0);
+    const fin = new Date(now); fin.setHours(hh2, mm2, 0, 0);
+    if (now >= inicio && now <= fin) msg = t("horarioTrabajandoAhoraMsg");
+    else if (now < inicio) msg = t("horarioHoyTrabajasMsg")(state.job.horarioInicio, state.job.horarioFin);
+    else msg = t("horarioYaTerminasteMsg");
+  } else {
+    msg = t("horarioHoyNoTrabajasMsg");
+  }
+  msg += trabajaManana ? t("horarioMananaSiMsg") : t("horarioMananaNoMsg");
+  return msg;
+}
+
 function checkHorarioReminder() {
   if (!state.job.horarioRecordar) return;
-  if (state.turnoActivo) return;
   const now = new Date();
+  if (state.turnoActivo) { checkHorarioSalidaReminder(now); return; }
   const hoy = dateKeyOf(now);
   if (state.job.horarioUltimoRecordatorio === hoy) return;
   if (!state.job.horarioDias[now.getDay()]) return;
@@ -103,6 +127,18 @@ function checkHorarioReminder() {
   state.job.horarioUltimoRecordatorio = hoy;
   scheduleSave();
   notifyBreak(t("recordatorioHorarioTitle"), t("recordatorioHorarioBody"));
+}
+
+function checkHorarioSalidaReminder(now) {
+  const hoy = dateKeyOf(now);
+  if (state.job.horarioUltimoRecordatorioSalida === hoy) return;
+  const [hh2, mm2] = String(state.job.horarioFin || "17:00").split(":").map((x) => parseInt(x, 10) || 0);
+  const scheduled = new Date(now); scheduled.setHours(hh2, mm2, 0, 0);
+  if (now < scheduled) return;
+  if (now - scheduled > 3 * 60 * 60 * 1000) return;
+  state.job.horarioUltimoRecordatorioSalida = hoy;
+  scheduleSave();
+  notifyBreak(t("recordatorioSalidaTitle"), t("recordatorioSalidaBody"));
 }
 
 function checkBreakAlerts() {
@@ -225,6 +261,14 @@ function totalesPeriodo(desde, hasta) {
 
 function totalesSemana() { const { inicio, fin } = rangoSemana(new Date()); return totalesPeriodo(inicio, fin); }
 
+function rangoQuincena(d) {
+  const { inicio: inicioSemana } = rangoSemana(d);
+  const inicio = new Date(inicioSemana); inicio.setDate(inicio.getDate() - 7);
+  const fin = new Date(inicioSemana); fin.setDate(fin.getDate() + 7);
+  return { inicio, fin };
+}
+function totalesQuincena() { const { inicio, fin } = rangoQuincena(new Date()); return totalesPeriodo(inicio, fin); }
+
 function totalesMes() {
   const now = new Date();
   const inicio = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -233,6 +277,12 @@ function totalesMes() {
 }
 
 function ganadoEsteMes() { return totalesMes().bruto; }
+
+function ganadoPeriodoDefault() {
+  if (state.trabajoPeriodoDefault === "semanal") return totalesSemana().bruto;
+  if (state.trabajoPeriodoDefault === "mensual") return ganadoEsteMes();
+  return totalesQuincena().bruto;
+}
 
 function recibidoEsteMes() {
   const mk = monthKey();
