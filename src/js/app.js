@@ -714,7 +714,18 @@ root.addEventListener("click", (e) => {
     deleteProfile: () => deleteProfile(id),
     createProfile: createProfile,
   };
-  if (map[action]) map[action]();
+  if (map[action]) {
+    try { map[action](); } catch (err) {
+      console.error("action '" + action + "' error:", err);
+      try {
+        root.innerHTML = '<div style="padding:40px 24px;text-align:center;font-family:inherit;">' +
+          '<div style="font-size:15px;font-weight:700;margin-bottom:8px;">Se encontr\u00f3 un error al hacer esa acci\u00f3n</div>' +
+          '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:18px;word-break:break-word;">' + esc(String(err && err.message || err)) + '</div>' +
+          '<button style="padding:12px 22px;border-radius:12px;border:none;background:var(--accent);color:var(--accent-contrast);font-weight:700;font-family:inherit;" onclick="location.reload()">Recargar</button>' +
+          '</div>';
+      } catch (e2) {}
+    }
+  }
 });
 
 (async function boot() {

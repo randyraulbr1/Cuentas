@@ -1132,9 +1132,20 @@ function renderApp() {
 }
 
 function render() {
-  applyTheme();
-  document.documentElement.lang = state.lang;
-  if (state.appLocked) renderPinScreen(); else if (state.screen === "selector") renderSelector(); else renderApp();
+  try {
+    applyTheme();
+    document.documentElement.lang = state.lang;
+    if (state.appLocked) renderPinScreen(); else if (state.screen === "selector") renderSelector(); else renderApp();
+  } catch (e) {
+    console.error("render() error:", e);
+    try {
+      root.innerHTML = '<div style="padding:40px 24px;text-align:center;font-family:inherit;">' +
+        '<div style="font-size:15px;font-weight:700;margin-bottom:8px;">Se encontr\u00f3 un error al mostrar esta pantalla</div>' +
+        '<div style="font-size:12.5px;color:var(--text-muted);margin-bottom:18px;word-break:break-word;">' + esc(String(e && e.message || e)) + '</div>' +
+        '<button style="padding:12px 22px;border-radius:12px;border:none;background:var(--accent);color:var(--accent-contrast);font-weight:700;font-family:inherit;" onclick="location.reload()">Recargar</button>' +
+        '</div>';
+    } catch (e2) {}
+  }
 }
 
 function rerenderPreservingFocus() {
