@@ -658,14 +658,15 @@ function renderApp() {
       } else {
         bankExpenses.sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")));
       }
-      bankExpenses.splice(80);
+      const bankQuery = String(state.bankExpenseSearch || "").trim().toLowerCase(); const filteredBankExpenses = bankQuery ? bankExpenses.filter((tx) => String(tx.merchant_name || tx.descripcion || "").toLowerCase().indexOf(bankQuery) !== -1) : bankExpenses; filteredBankExpenses.splice(80);
       html += '<div class="sub-add-picker bank-expense-picker" id="bank-expense-picker">';
       html += '<div class="bank-expense-picker-head"><b>' + (LANG === "es" ? "Selecciona un gasto del banco" : "Select a bank expense") + '</b><button class="icon-del" data-action="toggleSubPresetPicker">' + icon("close") + '</button></div>';
+      html += '<input type="search" placeholder="' + (LANG === "es" ? "Buscar por nombre" : "Search by name") + '" data-scope="bankExpenseSearch" value="' + esc(state.bankExpenseSearch || "") + '" style="width:100%;margin:8px 0;">';
       html += '<div class="bank-expense-sort"><button class="' + (state.bankExpenseSort === "fecha" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="fecha">' + (LANG === "es" ? "Recientes" : "Recent") + '</button><button class="' + (state.bankExpenseSort === "monto" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="monto">' + (LANG === "es" ? "Menor a mayor" : "Low to high") + '</button><button class="' + (state.bankExpenseSort === "nombre" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="nombre">' + (LANG === "es" ? "Por nombre" : "By name") + '</button></div>';
-      if (bankExpenses.length === 0) {
+      if (filteredBankExpenses.length === 0) {
         html += '<div class="empty-state">' + (LANG === "es" ? "No hay gastos bancarios disponibles." : "No bank expenses are available.") + '</div>';
       } else {
-        bankExpenses.forEach((tx) => {
+        filteredBankExpenses.forEach((tx) => {
           html += '<button class="bank-expense-choice" data-action="addSubFromBankTx" data-id="' + esc(tx.id) + '">';
           html += renderTxChip(tx.categoria);
           html += '<span class="bank-expense-choice-info"><b>' + esc(tx.merchant_name || tx.descripcion || "") + '</b><small>' + esc(String(tx.fecha || "").slice(0, 10)) + ' · ' + t("cat_" + (tx.categoria || "otro")) + '</small></span>';
