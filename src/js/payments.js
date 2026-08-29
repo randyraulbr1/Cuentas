@@ -447,3 +447,5 @@ function marcarComoPlazo(txId) {
   render();
   setTimeout(() => { state.txDetalleFlash = ""; state.showTxDetalle = null; state.activeTab = "cuentas"; render(); }, 1400);
 }
+
+function marcarNoSuscripcion(key) { if (!state.suscripcionesIgnoradas) state.suscripcionesIgnoradas = []; if (state.suscripcionesIgnoradas.indexOf(String(key)) === -1) state.suscripcionesIgnoradas.push(String(key)); state.subscriptionReviewOpen = true; state.subscriptionAssistKey = null; scheduleSave(); render(); }
