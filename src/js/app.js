@@ -676,6 +676,30 @@ root.addEventListener("click", (e) => {
   const payType = btn.dataset.type;
   const map = {
     actualizar: actualizarApp, undo: undo,
+    selectNavOrder: () => { state.navOrderSelected = id; render(); },
+    moveNavLeft: () => {
+      const order = normalizeNavOrder(state.navOrderDraft);
+      const index = order.indexOf(state.navOrderSelected);
+      if (index > 0) { const temp = order[index - 1]; order[index - 1] = order[index]; order[index] = temp; state.navOrderDraft = order; render(); }
+    },
+    moveNavRight: () => {
+      const order = normalizeNavOrder(state.navOrderDraft);
+      const index = order.indexOf(state.navOrderSelected);
+      if (index >= 0 && index < order.length - 1) { const temp = order[index + 1]; order[index + 1] = order[index]; order[index] = temp; state.navOrderDraft = order; render(); }
+    },
+    confirmNavOrder: () => {
+      state.navOrder = normalizeNavOrder(state.navOrderDraft);
+      state.navOrderDraft = state.navOrder.slice();
+      state.navOrderSaved = true;
+      saveSettings(); render();
+      setTimeout(() => { state.navOrderSaved = false; render(); }, 1400);
+    },
+    setBankExpenseSort: () => {
+      state.bankExpenseSort = id === "monto" || id === "nombre" ? id : "fecha";
+      state.bankExpenseScrollTop = 0;
+      try { sessionStorage.setItem("bankExpenseScrollTop", "0"); } catch (error) {}
+      saveSettings(); render();
+    },
     setJobW2: () => { state.job.tipoLaboral = "w2"; state.job.impuestoPct = "18"; scheduleSave(); render(); },
     setJob1099: () => { state.job.tipoLaboral = "1099"; state.job.impuestoPct = "28"; scheduleSave(); render(); },
     toggleSubscriptionReview: () => { state.subscriptionReviewOpen = !state.subscriptionReviewOpen; render(); },
