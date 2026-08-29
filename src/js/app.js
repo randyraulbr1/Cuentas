@@ -505,7 +505,7 @@ root.addEventListener("input", (e) => {
     scheduleSave(); rerenderPreservingFocus(); return;
   }
   if (scope === "nombreGastoFijoTemp") { state.nombreGastoFijoTemp = el.value; rerenderPreservingFocus(); return; }
-  if (scope === "montoConfirmarAhorro") { state.montoConfirmarAhorro = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
+  if (scope === "montoConfirmarAhorro") { state.montoConfirmarAhorro = String(el.value).replace(/[^0-9.-]/g, "").replace(/(?!^)-/g, ""); const parts = state.montoConfirmarAhorro.split("."); if (parts.length > 2) state.montoConfirmarAhorro = parts[0] + "." + parts.slice(1).join(""); rerenderPreservingFocus(); return; }
   if (scope === "extraPagoDeuda") { state.extraPagoDeuda = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "payFormMonto") { state.payFormMonto = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "agregarTurno") {
