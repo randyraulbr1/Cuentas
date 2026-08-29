@@ -87,7 +87,7 @@ const state = {
   confirmDeleteProfileId: null,
   theme: settingsInit.theme || "light", textSize: settingsInit.textSize || "normal", cardNubeExpandida: null, expandedCloudCardIds: {}, bankExpenseScrollTop: 0,
   navOrder: normalizeNavOrder(settingsInit.navOrder), navOrderDraft: normalizeNavOrder(settingsInit.navOrder), navOrderSelected: "inicio", navOrderSaved: false,
-  bankExpenseSort: settingsInit.bankExpenseSort || "fecha",
+  bankExpenseSort: settingsInit.bankExpenseSort || "fecha", bankExpenseSearch: "",
   showConfirmarAhorro: false, montoConfirmarAhorro: "", debtStrategy: "avalancha", extraPagoDeuda: "",
   lang: settingsInit.lang || "es",
   currency: settingsInit.currency || "usd",
