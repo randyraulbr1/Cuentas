@@ -718,10 +718,12 @@ root.addEventListener("click", (e) => {
 (async function boot() {
   try { history.replaceState({ ccTab: "inicio", ccOverlay: null }, ""); } catch (e) {}
   applyTheme(); applyTextSize();
+  const androidShell = new URLSearchParams(location.search).get("app") === "android" ||
+    /305SaveAndroid\//.test(navigator.userAgent);
 
-  // Decide el bloqueo antes de esperar IndexedDB, el banco o el service worker.
-  // Así una recarga lenta nunca muestra una pantalla intermedia que luego deje botones congelados.
-  try { state.appLocked = !!localStorage.getItem(PIN_HASH_KEY); } catch (error) { state.appLocked = false; }
+  // En el APK la seguridad es nativa (PIN + biometría de Android).
+  // La capa web no muestra un segundo bloqueo.
+  try { state.appLocked = !androidShell && !!localStorage.getItem(PIN_HASH_KEY); } catch (error) { state.appLocked = false; }
   state.pinBusy = false;
   state.biometricBusy = false;
   state.pinInput = "";
@@ -734,7 +736,20 @@ root.addEventListener("click", (e) => {
     state.authToken = session.token;
     state.authUser = session.user;
   }
-  const activeId = (function () { try { return localStorage.getItem(ACTIVE_KEY); } catch (e) { return null; } })();
+  let activeId = (function () { try { return localStorage.getItem(ACTIVE_KEY); } catch (e) { return null; } })();
+  // El APK usa una sola cuenta. La crea silenciosamente la primera vez y la abre siempre.
+  if (androidShell) {
+    if (state.profiles.length === 0) {
+      const firstProfile = { id: uid(), nombre: "Mi cuenta" };
+      state.profiles.push(firstProfile);
+      saveProfiles(state.profiles);
+      activeId = firstProfile.id;
+      try { localStorage.setItem(ACTIVE_KEY, activeId); } catch (error) {}
+    } else if (!activeId || !state.profiles.some((p) => p.id === activeId)) {
+      activeId = state.profiles[0].id;
+      try { localStorage.setItem(ACTIVE_KEY, activeId); } catch (error) {}
+    }
+  }
   if (activeId && state.profiles.some((p) => p.id === activeId)) await enterProfile(activeId);
   else render();
   if (state.appLocked) render();
