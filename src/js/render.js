@@ -585,7 +585,7 @@ function renderApp() {
       if (!state.showConfirmarAhorro) {
         html += '<button class="pill-btn wide" style="margin-top:8px;" data-action="abrirConfirmarAhorro">' + (LANG === "es" ? "Agregar ahorro en efectivo" : "Add cash savings") + '</button>';
       } else {
-        html += '<div class="goal-field" style="margin-top:8px;"><label>' + (LANG === "es" ? "¿Cuánto guardaste este mes?" : "How much did you save this month?") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="confirmar-ahorro-input" placeholder="0" data-scope="montoConfirmarAhorro" value="' + esc(state.montoConfirmarAhorro) + '" style="width:100%;"></div>';
+        html += '<div class="goal-field" style="margin-top:8px;"><label>' + (LANG === "es" ? "Saldo de efectivo ahorrado (usa negativo para retirar)" : "Cash savings balance (use negative to withdraw)") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="confirmar-ahorro-input" placeholder="0" data-scope="montoConfirmarAhorro" value="' + esc(state.montoConfirmarAhorro) + '" style="width:100%;"></div>';
         html += '<div style="display:flex;gap:8px;margin-top:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmarAhorroMes">' + t("siSumar") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelarConfirmarAhorro">' + t("cancel") + '</button></div>';
       }
 
