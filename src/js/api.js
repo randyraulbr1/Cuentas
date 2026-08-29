@@ -99,13 +99,13 @@ async function apiExchangePublicToken(publicToken) {
   return apiFetch("/api/plaid/exchange-public-token", { method: "POST", body: { public_token: publicToken } });
 }
 async function apiSyncTransactions(plaidItemId) {
-  return apiFetch("/api/plaid/sync-transactions", { method: "POST", body: plaidItemId ? { plaid_item_id: plaidItemId } : {} });
+  return apiFetch("/api/plaid/sync-transactions", { method: "POST", body: plaidItemId ? { plaid_item_id: plaidItemId, months: 6 } : { months: 6 } });
 }
 async function apiGetAccounts() {
   return apiFetch("/api/plaid/accounts");
 }
 async function apiGetTransactions() {
-  return apiFetch("/api/plaid/transactions");
+  return apiFetch("/api/plaid/transactions?months=6");
 }
 async function apiGetInstitutionsStatus() {
   return apiFetch("/api/plaid/institutions-status");
