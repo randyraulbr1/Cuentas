@@ -127,6 +127,7 @@ function renderTxDetalleSheet() {
   h += '<div class="options-head"><h2>' + esc(tx.descripcion) + '</h2><button class="options-close" data-action="cerrarDetalleTx">' + icon("close") + '</button></div>';
   h += renderTxChip(tx.categoria);
   h += '<div style="font-size:26px;font-weight:800;margin:10px 0;">' + (toNum(tx.monto) > 0 ? "+" : "\u2212") + sym() + fmt0(Math.abs(toNum(tx.monto))) + '</div>';
+  if (toNum(tx.monto) < 0 && toNum(state.job.pagoHora) > 0) h += '<div style="padding:11px 13px;border-radius:12px;background:var(--surface-2);font-weight:750;margin-bottom:10px;">' + icon("clock") + ' ' + esc(textoGastoEnTiempo(Math.abs(toNum(tx.monto)))) + '</div>';
   h += '<div class="opt-row"><span class="opt-row-label">' + t("categoriaDetalleLbl") + '</span><span>' + t("cat_" + (tx.categoria || "otros")) + '</span></div>';
   h += '<div class="opt-row"><span class="opt-row-label">' + t("fechaDetalleLbl") + '</span><span>' + esc(String(tx.fecha).slice(0, 10)) + '</span></div>';
   if (tx.account_name) h += '<div class="opt-row"><span class="opt-row-label">' + t("cuentaDetalleLbl") + '</span><span>' + esc(tx.account_name) + (tx.account_mask ? " ****" + esc(tx.account_mask) : "") + '</span></div>';
@@ -434,6 +435,25 @@ function renderTabBar() {
   return h;
 }
 
+
+function renderSubscriptionAssistSheet() {
+  const insights = computeInsights();
+  const item = insights.suscripcionesDetectadas.find((s) => String(s.key) === String(state.subscriptionAssistKey));
+  if (!item) return "";
+  const fecha = item.proxima instanceof Date && !isNaN(item.proxima) ? item.proxima.toLocaleDateString(LANG === "es" ? "es-US" : "en-US") : "";
+  const draft = LANG === "es"
+    ? "Asunto: Solicitud de cancelación de " + item.nombre + "\n\nSolicito cancelar mi suscripción y detener futuras renovaciones y cargos. Confirmen por escrito la fecha efectiva de cancelación y que no se realizarán cargos adicionales.\n\nNombre de la cuenta: [COMPLETAR]\nCorreo de la cuenta: [COMPLETAR]"
+    : "Subject: Cancellation request for " + item.nombre + "\n\nPlease cancel my subscription and stop future renewals and charges. Confirm in writing the effective cancellation date and that no additional charges will be made.\n\nAccount name: [COMPLETE]\nAccount email: [COMPLETE]";
+  let h = '<div class="options-overlay"><div class="options-sheet">';
+  h += '<div class="options-head"><h2>' + (LANG === "es" ? "Revisar suscripción" : "Review subscription") + '</h2><button class="options-close" data-action="closeSubscriptionAssist">' + icon("close") + '</button></div>';
+  h += '<h3 style="margin:4px 0 2px;">' + esc(item.nombre) + '</h3><p class="hint">' + sym() + fmt2(item.monto) + ' · ' + esc(item.frecuencia) + (fecha ? ' · ' + fecha : '') + '</p>';
+  h += '<div style="padding:11px 13px;border-radius:12px;background:var(--surface-2);margin:12px 0;font-size:13px;">' + (LANG === "es" ? "La app prepara la solicitud. Tú debes revisarla y enviarla; no cancela ni contacta al comercio sin tu acción." : "The app prepares the request. You review and send it; it does not cancel or contact the merchant without your action.") + '</div>';
+  h += '<textarea id="subscription-draft" readonly style="width:100%;min-height:190px;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font:inherit;resize:vertical;">' + esc(draft) + '</textarea>';
+  h += '<div class="tx-btn-row" style="margin-top:12px;"><button class="pill-btn confirm" style="flex:1;" data-action="copySubscriptionDraft">' + (state.subscriptionAssistCopied ? (LANG === "es" ? "Copiado" : "Copied") : (LANG === "es" ? "Copiar solicitud" : "Copy request")) + '</button><button class="pill-btn" style="flex:1;" data-action="markSubscriptionCanceled" data-id="' + esc(item.key) + '">' + (LANG === "es" ? "Marcar cancelada" : "Mark canceled") + '</button></div>';
+  h += '</div></div>';
+  return h;
+}
+
 function renderApp() {
   const t2 = computeTotals();
   const resultado = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
@@ -470,6 +490,12 @@ function renderApp() {
     html += '<div class="hero-val' + (patrimonioNeto < 0 ? " neg" : "") + '">' + (patrimonioNeto < 0 ? "\u2212" : "") + sym() + fmt0(Math.abs(patrimonioNeto)) + '</div>';
     html += '<div class="hero-sub"><span>' + t("disponibleHoyLbl") + '</span><b>' + sym() + fmt0(disponibleHoy) + '</b></div>';
     html += '</div>';
+    if (toNum(state.job.pagoHora) > 0) {
+      html += '<div class="panel" style="padding:18px;"><div class="panel-head-row"><div><h2>' + (LANG === "es" ? "Dinero en tiempo real" : "Money in real time") + '</h2><p class="hint" style="margin:3px 0 0;">' + (LANG === "es" ? "Mide una compra con tu tiempo neto de trabajo." : "Measure a purchase using your net working time.") + '</p></div>' + icon("clock") + '</div>';
+      html += '<div class="goal-field" style="margin-top:12px;"><label>' + (LANG === "es" ? "Monto de la compra" : "Purchase amount") + ' ' + sym() + '</label><input id="purchase-time-input" type="text" inputmode="decimal" value="' + esc(state.evaluarCompraMonto || "") + '" placeholder="45"></div>';
+      html += '<div id="purchase-time-result" style="font-size:18px;font-weight:800;margin-top:12px;color:var(--positive);">' + esc(textoGastoEnTiempo(state.evaluarCompraMonto)) + '</div>';
+      html += '<p class="hint" style="margin:8px 0 0;">' + (LANG === "es" ? "Basado en " : "Based on ") + sym() + fmt2(tarifaNetaTrabajo()) + '/h ' + (LANG === "es" ? "netos estimados." : "estimated net.") + '</p></div>';
+    }
     const smartAdvice = computeSmartAdvice();
     if (smartAdvice.length) {
       html += '<div class="panel smart-advice-panel"><div class="panel-head-row"><h2>' + (LANG === "es" ? "Estado de tus pagos" : "Payment status") + '</h2></div>';
@@ -893,16 +919,15 @@ function renderApp() {
     // panel configuracion del trabajo
     html += '<div class="panel" id="trabajo-job-panel"><div class="panel-head-row"><div><h2>' + t("miTrabajoTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("miTrabajoHint") + '</p></div><button class="icon-pencil' + (state.editingJob ? " done" : "") + '" data-action="toggleEditJob">' + (state.editingJob ? icon("check") : icon("pencil")) + '</button></div>';
     if (!state.editingJob) {
-      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + esc(state.job.nombre || t("trabajoNombrePh")) + '</span><span class="locked-amount">' + sym() + fmt0(toNum(state.job.pagoHora)) + '/h</span></div>';
+      html += '<div class="sub-row-locked" style="border-bottom:none;"><span class="locked-name">' + esc(state.job.nombre || t("trabajoNombrePh")) + '<small style="display:block;color:var(--text-muted);font-weight:600;margin-top:3px;">' + (state.job.tipoLaboral === "1099" ? "1099" : "W-2") + ' · ' + porcentajeRetencionTrabajo() + '% · ' + sym() + fmt2(tarifaNetaTrabajo()) + '/h ' + (LANG === "es" ? "netos" : "net") + '</small></span><span class="locked-amount">' + sym() + fmt0(toNum(state.job.pagoHora)) + '/h</span></div>';
     } else {
       html += '<div class="goal-grid">';
       html += '<div class="goal-field"><label>' + t("trabajoNombreLbl") + '</label><input type="text" placeholder="' + t("trabajoNombrePh") + '" id="job-nombre" value="' + esc(state.job.nombre) + '" data-scope="job" data-field="nombre"></div>';
       html += '<div class="goal-field"><label>' + t("pagoHoraLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="18" id="job-pagoHora" value="' + esc(state.job.pagoHora) + '" data-scope="job" data-field="pagoHora"></div>';
       html += '</div>';
-      html += '<div class="goal-grid">';
-      html += '<div class="goal-field"><label>' + t("pagoDiaLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="job-pagoDia" value="' + esc(state.job.pagoDia) + '" data-scope="job" data-field="pagoDia"></div>';
-      html += '<div class="goal-field"><label>' + t("impuestoPctLbl") + '</label><input type="text" inputmode="decimal" placeholder="0" id="job-impuestoPct" value="' + esc(state.job.impuestoPct) + '" data-scope="job" data-field="impuestoPct"></div>';
-      html += '</div>';
+      html += '<div class="goal-field" style="margin-top:10px;"><label>' + (LANG === "es" ? "Tipo de ingreso" : "Income type") + '</label><div class="seg" style="width:100%;"><button style="flex:1;" class="' + (state.job.tipoLaboral !== "1099" ? "active" : "") + '" data-action="setJobW2">W-2</button><button style="flex:1;" class="' + (state.job.tipoLaboral === "1099" ? "active" : "") + '" data-action="setJob1099">1099</button></div></div>';
+      html += '<div class="goal-field" style="margin-top:12px;"><label>' + (LANG === "es" ? "Retención estimada" : "Estimated withholding") + ' <b id="job-tax-value">' + porcentajeRetencionTrabajo() + '%</b></label><input id="job-tax-slider" type="range" min="0" max="60" step="1" value="' + porcentajeRetencionTrabajo() + '" style="width:100%;accent-color:var(--positive);"><p class="hint" style="margin:5px 0 0;">' + (LANG === "es" ? "Estimación manual; ajústala según tu recibo de pago." : "Manual estimate; adjust it to your paystub.") + '</p></div>';
+      html += '<div class="goal-field" style="margin-top:10px;"><label>' + t("pagoDiaLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="job-pagoDia" value="' + esc(state.job.pagoDia) + '" data-scope="job" data-field="pagoDia"></div>';
       html += '<div class="pay-config"><label>' + t("frecuenciaPagoLbl") + '</label><div class="seg" style="width:100%;">';
       [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["dosVecesMes", "freqDosVecesMes"], ["mensual", "payMensual"]].forEach((f) => { html += '<button style="flex:1;" class="' + (state.job.frecuenciaPago === f[0] ? "active" : "") + '" data-action="setJobFrecuencia" data-freq="' + f[0] + '">' + t(f[1]) + '</button>'; });
       html += '</div></div>';
@@ -1020,6 +1045,21 @@ function renderApp() {
     }
   }
 
+
+  if (tab === "cuentas") {
+    const subscriptionInsights = computeInsights();
+    const activeSubscriptions = subscriptionInsights.suscripcionesDetectadas.filter((s) => !s.cancelada);
+    html += '<button class="section-collapser" data-action="toggleSubscriptionReview"><span>' + icon("bills") + ' ' + (LANG === "es" ? "Suscripciones detectadas" : "Detected subscriptions") + ' <b>(' + activeSubscriptions.length + ')</b></span><span class="chev' + (state.subscriptionReviewOpen ? " open" : "") + '">' + icon("chevron") + '</span></button>';
+    if (state.subscriptionReviewOpen) {
+      html += '<div class="panel"><div class="mini-total"><span>' + (LANG === "es" ? "Costo mensual estimado" : "Estimated monthly cost") + '</span><b>' + sym() + fmt2(subscriptionInsights.suscripcionesTotalMensual) + '</b></div>';
+      if (!activeSubscriptions.length) html += '<div class="empty-state">' + (LANG === "es" ? "Aún no hay cargos recurrentes suficientes para confirmar." : "There are not enough recurring charges to confirm yet.") + '</div>';
+      activeSubscriptions.forEach((s) => {
+        html += '<div class="sub-row-locked"><span class="locked-name">' + esc(s.nombre) + '<small style="display:block;color:var(--text-muted);font-weight:600;">' + esc(s.frecuencia) + ' · ' + (s.diasFaltan >= 0 ? (LANG === "es" ? "en " : "in ") + s.diasFaltan + (LANG === "es" ? " días" : " days") : (LANG === "es" ? "fecha estimada vencida" : "estimated date passed")) + '</small></span><span><b>' + sym() + fmt2(s.monto) + '</b><button class="pill-btn" style="display:block;margin-top:6px;" data-action="openSubscriptionAssist" data-id="' + esc(s.key) + '">' + (LANG === "es" ? "Revisar" : "Review") + '</button></span></div>';
+      });
+      html += '</div>';
+    }
+  }
+
   if (tab === "historial" || tab === "cuentas") {
     if (tab === "cuentas") {
       html += '<button class="section-collapser" data-action="toggleCuentasHistorial"><span>' + icon("clock") + ' ' + t("tabHistorial") + '</span><span class="chev' + (state.cuentasHistorialAbierto ? " open" : "") + '">' + icon("chevron") + '</span></button>';
@@ -1120,6 +1160,7 @@ function renderApp() {
   html += renderTabBar();
   if (state.showExport) html += renderExportSheet();
   if (state.showTxDetalle) html += renderTxDetalleSheet();
+  if (state.subscriptionAssistKey) html += renderSubscriptionAssistSheet();
   if (state.showConsentimiento) html += renderConsentimientoSheet();
   html += '</div>';
 
