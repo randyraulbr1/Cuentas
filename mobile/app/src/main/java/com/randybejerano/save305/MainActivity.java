@@ -103,35 +103,41 @@ public class MainActivity extends FragmentActivity {
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         root.addView(scroll, scrollLp);
 
+        FrameLayout centerWrap = new FrameLayout(this);
+        scroll.addView(centerWrap, new android.widget.ScrollView.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
         page.setGravity(Gravity.CENTER_HORIZONTAL);
-        page.setPadding(dp(24), dp(30), dp(24), dp(22));
-        scroll.addView(page, new android.widget.ScrollView.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        page.setPadding(dp(24), dp(16), dp(24), dp(16));
+        FrameLayout.LayoutParams pageLp = new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        pageLp.gravity = Gravity.CENTER;
+        centerWrap.addView(page, pageLp);
 
         TextView logo = new TextView(this);
         logo.setText("$");
         logo.setTextColor(Color.WHITE);
-        logo.setTextSize(34);
+        logo.setTextSize(26);
         logo.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         logo.setGravity(Gravity.CENTER);
-        android.graphics.drawable.GradientDrawable logoBg = rounded(BG, dp(22));
+        android.graphics.drawable.GradientDrawable logoBg = rounded(BG, dp(17));
         logoBg.setStroke(dp(2), GREEN);
         logo.setBackground(logoBg);
-        page.addView(logo, linear(dp(82), dp(82), 0, 0, 0, dp(22)));
+        page.addView(logo, linear(dp(60), dp(60), 0, 0, 0, dp(14)));
 
-        title = label(heading, 30, Color.WHITE, true);
-        page.addView(title, linear(-1, -2, 0, 0, 0, dp(7)));
-        subtitle = label(message, 16, MUTED, false);
+        title = label(heading, 23, Color.WHITE, true);
+        page.addView(title, linear(-1, -2, 0, 0, 0, dp(5)));
+        subtitle = label(message, 13, MUTED, false);
         subtitle.setGravity(Gravity.CENTER);
-        page.addView(subtitle, linear(-1, -2, 0, 0, 0, dp(24)));
+        page.addView(subtitle, linear(-1, -2, 0, 0, 0, dp(16)));
 
-        dots = label("○  ○  ○  ○  ○  ○", 31, Color.WHITE, true);
+        dots = label("○  ○  ○  ○  ○  ○", 24, Color.WHITE, true);
         dots.setGravity(Gravity.CENTER);
         dots.setLetterSpacing(0.08f);
-        dots.setBackground(rounded(CARD, dp(18)));
-        page.addView(dots, linear(-1, dp(76), 0, 0, 0, dp(20)));
+        dots.setBackground(rounded(CARD, dp(15)));
+        page.addView(dots, linear(-1, dp(58), 0, 0, 0, dp(14)));
 
         LinearLayout keypad = new LinearLayout(this);
         keypad.setOrientation(LinearLayout.VERTICAL);
@@ -142,7 +148,7 @@ public class MainActivity extends FragmentActivity {
                 int number = row * 3 + col + 1;
                 line.addView(numberButton(String.valueOf(number)), weightButton());
             }
-            keypad.addView(line, linear(-1, dp(64), 0, 0, 0, dp(8)));
+            keypad.addView(line, linear(-1, dp(50), 0, 0, 0, dp(6)));
         }
         LinearLayout last = new LinearLayout(this);
         last.setOrientation(LinearLayout.HORIZONTAL);
@@ -153,36 +159,36 @@ public class MainActivity extends FragmentActivity {
         erase.setContentDescription("Borrar");
         erase.setOnClickListener(v -> eraseDigit());
         last.addView(erase, weightButton());
-        keypad.addView(last, linear(-1, dp(64), 0, 0, 0, dp(14)));
+        keypad.addView(last, linear(-1, dp(50), 0, 0, 0, dp(10)));
         page.addView(keypad, linear(-1, -2, 0, 0, 0, 0));
 
         primaryButton = new Button(this);
         primaryButton.setText(buttonText);
         primaryButton.setTextColor(Color.rgb(5, 25, 17));
-        primaryButton.setTextSize(17);
+        primaryButton.setTextSize(15);
         primaryButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         primaryButton.setAllCaps(false);
         primaryButton.setEnabled(false);
         primaryButton.setAlpha(.45f);
-        primaryButton.setBackground(rounded(GREEN, dp(16)));
+        primaryButton.setBackground(rounded(GREEN, dp(14)));
         primaryButton.setOnClickListener(v -> {
             if (unlockMode) checkPin();
             else continueSetup();
         });
-        page.addView(primaryButton, linear(-1, dp(58), 0, 0, 0, dp(14)));
+        page.addView(primaryButton, linear(-1, dp(48), 0, 0, 0, dp(10)));
 
         if (unlockMode && biometricsAvailable()) {
             boolean bioEnabled = prefs.getBoolean(KEY_BIOMETRIC, false);
             Button bio = new Button(this);
             bio.setText(bioEnabled ? "Usar huella o rostro" : "Activar huella o rostro");
             bio.setTextColor(Color.WHITE);
-            bio.setTextSize(15);
+            bio.setTextSize(13);
             bio.setAllCaps(false);
-            android.graphics.drawable.GradientDrawable bioBg = rounded(CARD, dp(15));
+            android.graphics.drawable.GradientDrawable bioBg = rounded(CARD, dp(14));
             bioBg.setStroke(dp(1), Color.rgb(52, 61, 74));
             bio.setBackground(bioBg);
             bio.setOnClickListener(v -> showBiometric(!bioEnabled, false));
-            page.addView(bio, linear(-1, dp(54), 0, 0, 0, 0));
+            page.addView(bio, linear(-1, dp(44), 0, 0, 0, 0));
         }
     }
 
@@ -190,7 +196,7 @@ public class MainActivity extends FragmentActivity {
         Button button = new Button(this);
         button.setText(value);
         button.setTextColor(Color.WHITE);
-        button.setTextSize(23);
+        button.setTextSize(19);
         button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         button.setAllCaps(false);
         button.setBackground(rounded(CARD, dp(17)));
