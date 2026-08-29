@@ -4,12 +4,8 @@ function ingresoTrabajoParaFecha(fechaStr) {
   return state.turnos.filter((tn) => tn.fecha === fechaStr).reduce((a, tn) => a + turnoPagoBruto(tn).bruto, 0);
 }
 
-function buildCashflowBuckets(period, monthOffset) {
-  monthOffset = Math.max(parseInt(monthOffset, 10) || 0, 0);
-  const today = new Date(); today.setHours(23, 59, 59, 999);
-  const monthStart = new Date(today.getFullYear(), today.getMonth() - monthOffset, 1);
-  const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59, 999);
-  const effectiveEnd = monthOffset === 0 ? today : monthEnd;
+function buildCashflowBuckets(period) {
+  const now = new Date(); now.setHours(23, 59, 59, 999);
   const events = [];
 
   state.cloudTransactions.forEach((tx, index) => {
@@ -18,7 +14,7 @@ function buildCashflowBuckets(period, monthOffset) {
     if (!dateKey) return;
     const hasTime = rawDate.indexOf("T") !== -1;
     const when = new Date(hasTime ? rawDate : dateKey + "T12:00:00");
-    if (!isFinite(when.getTime()) || when < monthStart || when > effectiveEnd) return;
+    if (!isFinite(when.getTime()) || when > now) return;
     const amount = toNum(tx.monto);
     if (!amount) return;
     events.push({
@@ -26,27 +22,33 @@ function buildCashflowBuckets(period, monthOffset) {
       description: tx.descripcion || tx.merchant_name || "", index
     });
   });
-  for (let cursor = new Date(monthStart); cursor <= effectiveEnd; cursor.setDate(cursor.getDate() + 1)) {
-    const earned = ingresoTrabajoParaFecha(dateKeyOf(cursor));
-    if (earned > 0) {
-      const when = new Date(cursor); when.setHours(18, 0, 0, 0);
-      events.push({ when, amount: earned, value: earned, type: "income", description: LANG === "es" ? "Trabajo" : "Work", index: 100000 + events.length });
-    }
-  }
+
+  const turnoIngresoPorFecha = {};
+  state.turnos.forEach((tn) => {
+    const bruto = turnoPagoBruto(tn).bruto;
+    if (bruto > 0) turnoIngresoPorFecha[tn.fecha] = (turnoIngresoPorFecha[tn.fecha] || 0) + bruto;
+  });
+  Object.keys(turnoIngresoPorFecha).forEach((fecha, i) => {
+    const when = new Date(fecha + "T18:00:00");
+    if (when > now) return;
+    events.push({ when, amount: turnoIngresoPorFecha[fecha], value: turnoIngresoPorFecha[fecha], type: "income", description: LANG === "es" ? "Trabajo" : "Work", index: 100000 + i });
+  });
+
   events.sort((x, y) => x.when - y.when || x.index - y.index);
 
   let filtered = events;
   if (period === "week") {
-    const anchor = events.length ? events[events.length - 1].when : effectiveEnd;
+    const anchor = events.length ? events[events.length - 1].when : now;
     const day = anchor.getDay();
     const weekStart = new Date(anchor); weekStart.setDate(anchor.getDate() - (day === 0 ? 6 : day - 1)); weekStart.setHours(0, 0, 0, 0);
     const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 7);
     filtered = events.filter((event) => event.when >= weekStart && event.when < weekEnd);
   } else if (period === "day") {
-    const anchor = events.length ? events[events.length - 1].when : effectiveEnd;
+    const anchor = events.length ? events[events.length - 1].when : now;
     const selectedDay = dateKeyOf(anchor);
     filtered = events.filter((event) => dateKeyOf(event.when) === selectedDay);
   }
+  // period === "month" (o cualquier otro valor): usa TODO el historial disponible, sin recortar por mes.
 
   let running = 0;
   return filtered.map((event) => {

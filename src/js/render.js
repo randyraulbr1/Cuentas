@@ -668,7 +668,7 @@ function renderApp() {
           html += '<div style="display:flex;gap:8px;margin-top:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmPagoSub">' + t("confirmarPago") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelPagoSub">' + t("cancel") + '</button></div></div>';
         } else {
           const ico = sub.icono || CATEGORY_ICON[sub.categoria] || CATEGORY_ICON.otro;
-          html += '<div class="sub-item' + (pagado ? " pagado" : "") + '"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + sub.id + '">' + (pagado ? icon("check") : "") + '</button>';
+          html += '<div class="sub-item' + (pagado ? " pagado" : "") + '" data-action="toggleSubPagado" data-id="' + sub.id + '" style="cursor:pointer;"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + sub.id + '">' + (pagado ? icon("check") : "") + '</button>';
           html += '<span class="sub-item-ico">' + icon(ico) + '</span><div class="sub-item-mid"><span class="sub-item-name">' + esc(sub.nombre || t("subNombrePh")) + '</span><span class="sub-item-cat">' + t("cat_" + (sub.categoria || "otro")) + (sub.diaPago ? ' · ' + esc(formatDate(entry.due)) : "") + '</span></div>';
           html += '<span class="sub-item-amt">' + sym() + fmt0(toNum(sub.monto)) + '</span></div>';
         }
@@ -1129,69 +1129,16 @@ function renderApp() {
     // Flujo de caja: grafica tipo velas (verde=ingreso, rojo=gasto)
     html += '<div class="panel">';
     html += '<div class="panel-head-row"><h2>' + t("flujoCajaTitle") + '</h2></div>';
-    html += '<div class="cash-month-picker" aria-label="Mes del gráfico">';
-    for (let monthOffset = 0; monthOffset < 6; monthOffset++) {
-      const monthDate = new Date();
-      monthDate.setDate(1);
-      monthDate.setMonth(monthDate.getMonth() - monthOffset);
-      const monthKey = monthDate.getFullYear() + "-" + String(monthDate.getMonth() + 1).padStart(2, "0");
-      html += '<button class="cash-month-btn' + (Number(state.cashflowMonthOffset || 0) === monthOffset ? " active" : "") + '" data-action="setCashflowMonth" data-id="' + monthOffset + '">' + esc(monthLabel(monthKey)) + '</button>';
-    }
-    html += '</div>';
     html += '<div class="seg" style="margin-bottom:6px;">';
     [["day", "periodoDia"], ["week", "periodoSemana"], ["month", "periodoMes"]].forEach((p) => {
       html += '<button style="flex:1;" class="' + (state.cashflowPeriod === p[0] ? "active" : "") + '" data-action="setCashflowPeriod" data-id="' + p[0] + '">' + t(p[1]) + '</button>';
     });
     html += '</div>';
-    html += renderCashflowChart(buildCashflowBuckets(state.cashflowPeriod, state.cashflowMonthOffset));
+    html += renderCashflowChart(buildCashflowBuckets(state.cashflowPeriod));
     html += '<div style="display:flex;gap:14px;font-size:11.5px;color:var(--text-muted);margin-bottom:4px;"><span>\ud83d\udfe2 ' + t("legendIngreso") + '</span><span>\ud83d\udd34 ' + t("legendGasto") + '</span></div>';
     html += '<p class="hint" style="margin-bottom:0;">' + t("flujoCajaHint") + '</p>';
     html += '</div>';
 
-    const deudasPlan = listaDeudas();
-    if (deudasPlan.length > 0) {
-      const comp = computeComparativaDeuda(state.debtStrategy, toNum(state.extraPagoDeuda));
-      html += '<div class="panel"><h2>' + t("planDeudaTitle") + '</h2><p class="hint">' + t("planDeudaHint") + '</p>';
-      html += '<div class="seg" style="width:100%;margin-top:8px;"><button style="flex:1;" class="' + (state.debtStrategy === "avalancha" ? "active" : "") + '" data-action="setDebtAvalancha">' + t("estrategiaAvalancha") + '</button><button style="flex:1;" class="' + (state.debtStrategy === "bola_nieve" ? "active" : "") + '" data-action="setDebtBolaNieve">' + t("estrategiaBolaNieve") + '</button></div>';
-      html += '<p class="opt-row-sub" style="margin-top:6px;">' + t(state.debtStrategy === "avalancha" ? "avalanchaExplica" : "bolaNieveExplica") + '</p>';
-      html += '<div class="goal-field" style="margin-top:12px;"><label>' + t("extraPagoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="extra-pago-deuda-input" placeholder="0" data-scope="extraPagoDeuda" value="' + esc(state.extraPagoDeuda) + '" style="width:100%;"></div>';
-
-      if (comp) {
-        html += '<div class="debt-result">';
-        html += '<div class="debt-big"><span class="debt-big-lbl">' + t("librePagoLbl") + '</span><b class="debt-big-val">' + (comp.meses ? esc(fechaLibre(comp.meses)) : t("noAlcanzaMsg")) + '</b>';
-        if (comp.meses) html += '<span class="debt-big-sub">' + t("enMesesMsg")(comp.meses) + '</span>';
-        html += '</div>';
-        html += '<div class="debt-grid">';
-        html += '<div class="debt-cell"><span>' + t("pagasAlMesLbl") + '</span><b>' + sym() + fmt0(comp.pagoMensual) + '</b></div>';
-        html += '<div class="debt-cell"><span>' + t("interesTotalLbl") + '</span><b class="rojo">' + sym() + fmt0(comp.interes) + '</b></div>';
-        html += '<div class="debt-cell"><span>' + t("deudaHoyLbl") + '</span><b>' + sym() + fmt0(comp.totalSaldo) + '</b></div>';
-        html += '<div class="debt-cell"><span>' + t("totalPagarasLbl") + '</span><b>' + sym() + fmt0(comp.totalAPagar) + '</b></div>';
-        html += '</div>';
-        if (toNum(state.extraPagoDeuda) > 0 && comp.mesesAhorrados > 0) {
-          html += '<div class="debt-win">' + icon("check") + '<span>' + t("ahorrasConExtraMsg")(comp.mesesAhorrados, sym() + fmt0(comp.interesAhorrado)) + '</span></div>';
-        }
-        if (comp.nuncaTermina && toNum(state.extraPagoDeuda) <= 0) {
-          html += '<div class="debt-warn">' + t("soloMinimosNuncaMsg") + '</div>';
-        }
-        if (comp.sugerencia) {
-          const txtSug = comp.sugerencia.ahorro > 0
-            ? t("sugerenciaExtraMsg")(sym() + fmt0(comp.sugerencia.extra), comp.sugerencia.meses, sym() + fmt0(comp.sugerencia.ahorro))
-            : t("sugerenciaExtraSimpleMsg")(sym() + fmt0(comp.sugerencia.extra), comp.sugerencia.meses);
-          html += '<div class="debt-tip"><span class="debt-tip-lbl">' + t("sugerenciaLbl") + '</span><p>' + txtSug + '</p>';
-          html += '<button class="pill-btn confirm" data-action="aplicarSugerenciaExtra" data-id="' + comp.sugerencia.extra + '">' + t("aplicarSugerenciaBtn")(sym() + fmt0(comp.sugerencia.extra)) + '</button></div>';
-        }
-        if (comp.sinApr > 0) html += '<p class="opt-row-sub" style="margin-top:10px;">' + t("faltaAprMsg")(comp.sinApr) + '</p>';
-
-        html += '<p class="opt-section-title" style="margin-top:16px;">' + t("ordenAtaqueTitle") + '</p>';
-        const ordenMostrar = state.debtStrategy === "avalancha" ? comp.orden.slice().sort((a, b) => b.apr - a.apr) : comp.orden.slice().sort((a, b) => a.saldo - b.saldo);
-        ordenMostrar.forEach((d, idx) => {
-          html += '<div class="debt-row"><span class="debt-num">' + (idx + 1) + '</span>';
-          html += '<div class="debt-row-mid"><span class="debt-row-name">' + esc(d.nombre) + '</span><span class="debt-row-sub">' + (d.apr > 0 ? d.apr + "% APR" : t("sinAprLbl")) + (d.mesesParaPagar ? " \u00b7 " + t("enMesesCortoMsg")(d.mesesParaPagar) : "") + '</span></div>';
-          html += '<span class="debt-row-amt">' + sym() + fmt0(d.saldo) + '</span></div>';
-        });
-      }
-      html += '</div></div>';
-    }
   }
 
   }
