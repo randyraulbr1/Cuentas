@@ -1,4 +1,4 @@
-const CACHE = "cuentas-claras-v144"
+const CACHE = "cuentas-claras-v145"
 const ASSETS = [
   "./",
   "./index.html",
@@ -30,7 +30,7 @@ const ASSETS = [
   "./src/js/recommendations.js?v=v142",
   "./src/js/render.js?v=v144",
   "./src/js/app.js?v=v141",
-  "./src/js/theme-colors.js?v=v88",
+  "./src/js/theme-colors.js?v=v145",
 ];
 
 self.addEventListener("message", (event) => {
