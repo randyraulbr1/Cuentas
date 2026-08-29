@@ -103,7 +103,7 @@ const state = {
 
   ingreso: "", subs: [], cards: [], savingsRate: 20, ahorroActual: "", metaAhorro: "", debito: "", cash: "", history: [],
   bankTransactions: [], categoriaAprendida: {}, bankPendingCategoria: [], bankImportMsg: "", confirmDeleteBankTxId: null,
-  suscripcionesCanceladas: [], suscripcionesManuales: [], suscripcionesFrecuencia: {},
+  suscripcionesCanceladas: [], suscripcionesIgnoradas: [], suscripcionesManuales: [], suscripcionesFrecuencia: {},
   gastosFijosReconocidos: [], showMarcarGastoFijo: false, nombreGastoFijoTemp: "",
   consentimientoAceptado: false, consentimientoFecha: "", showConsentimiento: false,
 
