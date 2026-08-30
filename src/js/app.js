@@ -777,7 +777,7 @@ root.addEventListener("click", (e) => {
       setTimeout(() => { state.navOrderSaved = false; render(); }, 1400);
     },
     setBankExpenseSort: () => {
-      state.bankExpenseSort = id === "monto" || id === "nombre" ? id : "fecha";
+      state.bankExpenseSort = ["monto", "monto_desc", "nombre"].indexOf(id) !== -1 ? id : "fecha";
       state.bankExpenseScrollTop = 0; state.bankExpenseSearch = "";
       try { sessionStorage.setItem("bankExpenseScrollTop", "0"); } catch (error) {}
       saveSettings(); render();

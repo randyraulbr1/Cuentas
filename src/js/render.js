@@ -653,6 +653,8 @@ function renderApp() {
         .slice();
       if (state.bankExpenseSort === "monto") {
         bankExpenses.sort((a, b) => Math.abs(toNum(a.monto)) - Math.abs(toNum(b.monto)) || String(b.fecha || "").localeCompare(String(a.fecha || "")));
+      } else if (state.bankExpenseSort === "monto_desc") {
+        bankExpenses.sort((a, b) => Math.abs(toNum(b.monto)) - Math.abs(toNum(a.monto)) || String(b.fecha || "").localeCompare(String(a.fecha || "")));
       } else if (state.bankExpenseSort === "nombre") {
         bankExpenses.sort((a, b) => String(a.merchant_name || a.descripcion || "").localeCompare(String(b.merchant_name || b.descripcion || ""), LANG === "es" ? "es" : "en", { sensitivity: "base" }) || String(b.fecha || "").localeCompare(String(a.fecha || "")));
       } else {
@@ -662,7 +664,7 @@ function renderApp() {
       html += '<div class="sub-add-picker bank-expense-picker" id="bank-expense-picker">';
       html += '<div class="bank-expense-picker-head"><b>' + (LANG === "es" ? "Selecciona un gasto del banco" : "Select a bank expense") + '</b><button class="icon-del" data-action="toggleSubPresetPicker">' + icon("close") + '</button></div>';
       html += '<input type="search" placeholder="' + (LANG === "es" ? "Buscar por nombre" : "Search by name") + '" data-scope="bankExpenseSearch" value="' + esc(state.bankExpenseSearch || "") + '" style="width:100%;margin:8px 0;">';
-      html += '<div class="bank-expense-sort"><button class="' + (state.bankExpenseSort === "fecha" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="fecha">' + (LANG === "es" ? "Recientes" : "Recent") + '</button><button class="' + (state.bankExpenseSort === "monto" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="monto">' + (LANG === "es" ? "Menor a mayor" : "Low to high") + '</button><button class="' + (state.bankExpenseSort === "nombre" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="nombre">' + (LANG === "es" ? "Por nombre" : "By name") + '</button></div>';
+      html += '<div class="bank-expense-sort"><button class="' + (state.bankExpenseSort === "fecha" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="fecha">' + (LANG === "es" ? "Recientes" : "Recent") + '</button><button class="' + (state.bankExpenseSort === "monto" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="monto">' + (LANG === "es" ? "Menor a mayor" : "Low to high") + '</button><button class="' + (state.bankExpenseSort === "monto_desc" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="monto_desc">' + (LANG === "es" ? "Mayor a menor" : "High to low") + '</button><button class="' + (state.bankExpenseSort === "nombre" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="nombre">' + (LANG === "es" ? "Por nombre" : "By name") + '</button></div>';
       if (filteredBankExpenses.length === 0) {
         html += '<div class="empty-state">' + (LANG === "es" ? "No hay gastos bancarios disponibles." : "No bank expenses are available.") + '</div>';
       } else {
@@ -801,7 +803,7 @@ function renderApp() {
     html += '<div class="mini-total"><span>' + t("totalPrestamos") + '</span><b>' + sym() + fmt0(totalPrestamos) + '</b></div></div>';
 
     if (toNum(state.job.pagoHora) > 0) {
-      html += '<div class="panel" style="padding:18px;"><div class="panel-head-row"><div><h2>' + (LANG === "es" ? "Dinero en tiempo real" : "Money in real time") + '</h2><p class="hint" style="margin:3px 0 0;">' + (LANG === "es" ? "Mide una compra con tu tiempo neto de trabajo." : "Measure a purchase using your net working time.") + '</p></div>' + icon("clock") + '</div>';
+      html += '<div class="panel" style="padding:18px;"><div class="panel-head-row"><div><h2>' + (LANG === "es" ? "Calculadora de tiempo" : "Time calculator") + '</h2><p class="hint" style="margin:3px 0 0;">' + (LANG === "es" ? "Mide una compra con tu tiempo neto de trabajo." : "Measure a purchase using your net working time.") + '</p></div>' + icon("clock") + '</div>';
       html += '<div class="goal-field" style="margin-top:12px;"><label>' + (LANG === "es" ? "Monto de la compra" : "Purchase amount") + ' ' + sym() + '</label><input id="purchase-time-input" type="text" inputmode="decimal" value="' + esc(state.evaluarCompraMonto || "") + '" placeholder="45"></div>';
       html += '<div id="purchase-time-result" style="font-size:18px;font-weight:800;margin-top:12px;color:var(--positive);">' + esc(textoGastoEnTiempo(state.evaluarCompraMonto)) + '</div>';
       html += '<p class="hint" style="margin:8px 0 0;">' + (LANG === "es" ? "Basado en " : "Based on ") + sym() + fmt2(tarifaNetaTrabajo()) + '/h ' + (LANG === "es" ? "netos estimados." : "estimated net.") + '</p></div>';
@@ -866,6 +868,7 @@ function renderApp() {
         if (limite > 0) {
           html += utilBarHtml(uso, usoNivel);
           html += '<div class="cc-line"><span>' + sym() + fmt0(saldo) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(limite) + '</span></div>';
+          html += '<div class="cc-line"><span>' + t("creditoDisponible") + '</span><span>' + sym() + fmt0(Math.max(limite - saldo, 0)) + '</span></div>';
         }
         if (liab) {
           if (liab.apr) html += '<div class="cc-line"><span>' + t("cardAprLbl") + '</span><span>' + liab.apr + '%</span></div>';
@@ -875,6 +878,10 @@ function renderApp() {
             const recommendedPayment = Math.max(toNum(liab.pago_minimo), monthlyInterest + saldo / 36, saldo * 0.03);
             html += '<div class="cc-line"><span>' + (LANG === "es" ? "Interés estimado al mes" : "Estimated monthly interest") + '</span><span>' + sym() + fmt0(monthlyInterest) + '</span></div>';
             html += '<div class="cc-line"><span>' + (LANG === "es" ? "Pago mensual recomendado" : "Recommended monthly payment") + '</span><span>' + sym() + fmt0(recommendedPayment) + '</span></div>';
+          }
+          if (limite > 0 && uso !== null && uso > 30) {
+            const paraTreinta = Math.max(saldo - limite * 0.3, 0);
+            html += '<div class="cc-line"><span>' + (LANG === "es" ? "Para bajar a 30% de uso" : "To get to 30% usage") + '</span><span>' + sym() + fmt0(paraTreinta) + '</span></div>';
           }
           if (liab.fecha_limite) html += '<div class="cc-line"><span>' + t("proximoPago") + '</span><span>' + esc(liab.fecha_limite) + '</span></div>';
         }

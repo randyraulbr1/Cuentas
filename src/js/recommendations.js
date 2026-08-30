@@ -23,17 +23,6 @@ function buildCashflowBuckets(period) {
     });
   });
 
-  const turnoIngresoPorFecha = {};
-  state.turnos.forEach((tn) => {
-    const bruto = turnoPagoBruto(tn).bruto;
-    if (bruto > 0) turnoIngresoPorFecha[tn.fecha] = (turnoIngresoPorFecha[tn.fecha] || 0) + bruto;
-  });
-  Object.keys(turnoIngresoPorFecha).forEach((fecha, i) => {
-    const when = new Date(fecha + "T18:00:00");
-    if (when > now) return;
-    events.push({ when, amount: turnoIngresoPorFecha[fecha], value: turnoIngresoPorFecha[fecha], type: "income", description: LANG === "es" ? "Trabajo" : "Work", index: 100000 + i });
-  });
-
   events.sort((x, y) => x.when - y.when || x.index - y.index);
 
   let filtered = events;
