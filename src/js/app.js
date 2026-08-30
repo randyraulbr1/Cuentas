@@ -736,6 +736,14 @@ root.addEventListener("click", (e) => {
     state.editingJob = false;
     closedSomethingOnOutsideClick = true;
   }
+  if (state.subPresetPicker && !e.target.closest("#bank-expense-picker") && !e.target.closest('[data-action="toggleSubPresetPicker"]')) {
+    state.subPresetPicker = false;
+    closedSomethingOnOutsideClick = true;
+  }
+  if (state.subscriptionReviewOpen && !e.target.closest("#subscription-review-panel")) {
+    state.subscriptionReviewOpen = false;
+    closedSomethingOnOutsideClick = true;
+  }
   if (e.target.classList && e.target.classList.contains("options-overlay")) {
     if (state.showConsentimiento) { state.showConsentimiento = false; render(); return; }
     if (state.showExport) { state.showExport = false; state.exportCopied = false; render(); return; }

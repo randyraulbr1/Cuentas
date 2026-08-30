@@ -1042,6 +1042,7 @@ function renderApp() {
   if (tab === "cuentas") {
     const subscriptionInsights = computeInsights();
     const activeSubscriptions = subscriptionInsights.suscripcionesDetectadas.filter((s) => !s.cancelada);
+    html += '<div id="subscription-review-panel">';
     html += '<button class="section-collapser" data-action="toggleSubscriptionReview"><span>' + icon("bills") + ' ' + (LANG === "es" ? "Suscripciones detectadas" : "Detected subscriptions") + ' <b>(' + activeSubscriptions.length + ')</b></span><span class="chev' + (state.subscriptionReviewOpen ? " open" : "") + '">' + icon("chevron") + '</span></button>';
     if (state.subscriptionReviewOpen) {
       html += '<div class="panel"><div class="mini-total"><span>' + (LANG === "es" ? "Costo mensual estimado" : "Estimated monthly cost") + '</span><b>' + sym() + fmt2(subscriptionInsights.suscripcionesTotalMensual) + '</b></div>';
@@ -1051,6 +1052,7 @@ function renderApp() {
       });
       html += '</div>';
     }
+    html += '</div>';
   }
 
   if (tab === "historial" || tab === "cuentas") {
