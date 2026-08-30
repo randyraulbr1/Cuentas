@@ -22,7 +22,6 @@ function renderBancoNubePanel(compact) {
 
   if (!state.authUser) {
     html += '<button class="pay-trigger" style="background:var(--accent);" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
-    html += '<button class="delete-link" style="display:block;margin:8px auto 0;" data-action="resetConexionNube">' + t("restablecerConexionBtn") + '</button>';
     html += '</div>';
     return html;
   }
@@ -271,9 +270,10 @@ function renderOpcionesTab() {
 
   h += '<div class="panel"><p class="opt-section-title">' + t("secAhorroPct") + '</p>';
   h += '<div class="seg" style="width:100%;margin-bottom:8px;">';
-  h += '<button style="flex:1;" class="' + (state.savingsRate === 10 ? "active" : "") + '" data-action="setAhorroNormal" data-savings-rate="10">' + t("ahorroNormal") + '</button>';
-  h += '<button style="flex:1;" class="' + (state.savingsRate === 20 ? "active" : "") + '" data-action="setAhorroMedio" data-savings-rate="20">' + t("ahorroMedio") + '</button>';
-  h += '<button style="flex:1;" class="' + (state.savingsRate === 35 ? "active" : "") + '" data-action="setAhorroAgresivo" data-savings-rate="35">' + t("ahorroAgresivo") + '</button>';
+  const nivelAhorro = state.savingsRate < 15 ? "normal" : state.savingsRate < 28 ? "medio" : "agresivo";
+  h += '<button style="flex:1;" class="' + (nivelAhorro === "normal" ? "active" : "") + '" data-action="setAhorroNormal" data-savings-rate="10">' + t("ahorroNormal") + '</button>';
+  h += '<button style="flex:1;" class="' + (nivelAhorro === "medio" ? "active" : "") + '" data-action="setAhorroMedio" data-savings-rate="20">' + t("ahorroMedio") + '</button>';
+  h += '<button style="flex:1;" class="' + (nivelAhorro === "agresivo" ? "active" : "") + '" data-action="setAhorroAgresivo" data-savings-rate="35">' + t("ahorroAgresivo") + '</button>';
   h += '</div>';
   h += '<div class="opt-slider-row"><input type="range" min="0" max="100" step="1" id="savings-rate-input" data-scope="savingsRate" value="' + state.savingsRate + '"><div class="opt-slider-val">' + state.savingsRate + '%</div></div></div>';
 
@@ -666,7 +666,7 @@ function renderApp() {
       const bankQuery = String(state.bankExpenseSearch || "").trim().toLowerCase(); const filteredBankExpenses = bankQuery ? bankExpenses.filter((tx) => String(tx.merchant_name || tx.descripcion || "").toLowerCase().indexOf(bankQuery) !== -1) : bankExpenses; filteredBankExpenses.splice(80);
       html += '<div class="sub-add-picker bank-expense-picker" id="bank-expense-picker">';
       html += '<div class="bank-expense-picker-head"><b>' + (LANG === "es" ? "Selecciona un gasto del banco" : "Select a bank expense") + '</b><button class="icon-del" data-action="toggleSubPresetPicker">' + icon("close") + '</button></div>';
-      html += '<input type="search" placeholder="' + (LANG === "es" ? "Buscar por nombre" : "Search by name") + '" data-scope="bankExpenseSearch" value="' + esc(state.bankExpenseSearch || "") + '" style="width:100%;margin:8px 0;">';
+      html += '<input type="search" id="bank-expense-search" placeholder="' + (LANG === "es" ? "Buscar por nombre" : "Search by name") + '" data-scope="bankExpenseSearch" value="' + esc(state.bankExpenseSearch || "") + '" style="width:100%;margin:8px 0;">';
       html += '<div class="bank-expense-sort"><button class="' + (state.bankExpenseSort === "fecha" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="fecha">' + (LANG === "es" ? "Recientes" : "Recent") + '</button><button class="' + (state.bankExpenseSort === "monto" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="monto">' + (LANG === "es" ? "Menor a mayor" : "Low to high") + '</button><button class="' + (state.bankExpenseSort === "monto_desc" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="monto_desc">' + (LANG === "es" ? "Mayor a menor" : "High to low") + '</button><button class="' + (state.bankExpenseSort === "nombre" ? "active" : "") + '" data-action="setBankExpenseSort" data-id="nombre">' + (LANG === "es" ? "Por nombre" : "By name") + '</button></div>';
       if (filteredBankExpenses.length === 0) {
         html += '<div class="empty-state">' + (LANG === "es" ? "No hay gastos bancarios disponibles." : "No bank expenses are available.") + '</div>';
@@ -963,7 +963,7 @@ function renderApp() {
     html += '<div class="summary">';
     html += '<div class="sum-card"><div class="sum-label">' + t(state.trabajoPeriodoDefault === "semanal" ? "ganadoSemanaLbl" : state.trabajoPeriodoDefault === "mensual" ? "ganadoEsteMesLbl" : "ganadoQuincenaLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(ganadoPeriodoDefault()) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("recibidoEsteMesLbl") + '</div><div class="sum-val green">' + sym() + fmt0(recibidoEsteMes()) + '</div></div>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("pendienteLbl") + '</div><div class="sum-val red">' + sym() + fmt0(pendienteDePago()) + '</div></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("pendienteLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(pendienteDePago()) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("horasSemanaLbl") + '</div><div class="sum-val blue" style="font-size:16px;">' + fmtHoras(ts.horas) + '</div></div>';
     html += '</div>';
 
@@ -1202,7 +1202,6 @@ function render() {
     document.documentElement.lang = state.lang;
     if (state.appLocked) renderPinScreen();
     else if (state.screen === "selector") renderSelector();
-    else if (state.turnoActivo && state.turnoActivo.breakActivo && !state.breakLockDismissed) renderBreakLockScreen();
     else renderApp();
   } catch (e) {
     console.error("render() error:", e);

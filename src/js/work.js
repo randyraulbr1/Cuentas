@@ -207,7 +207,7 @@ function terminarTrabajo() {
   const t = state.turnoActivo;
   if (t.breakActivo) { t.breaks.push({ inicio: t.breakActivo.inicio, fin: new Date().toISOString() }); t.breakActivo = null; }
   t.horaFin = new Date().toISOString();
-  t.fecha = t.horaInicio.slice(0, 10);
+  t.fecha = dateKeyOf(new Date(t.horaInicio));
   t.estado = "trabajado";
   delete t.breakActivo;
   state.turnos.push(t);
@@ -320,7 +320,7 @@ function trabajoCalSelectDay(dateStr) {
 function trabajoCalGuardarHoras() {
   const fecha = state.trabajoCalSelectedDate;
   const horas = toNum(state.trabajoCalHorasInput);
-  if (!fecha || horas <= 0) return;
+  if (!fecha || horas < 1) return;
   pushUndo();
   const inicio = new Date(fecha + "T09:00:00");
   const fin = new Date(inicio.getTime() + horas * 3600000);
@@ -365,7 +365,7 @@ function setCashflowPeriod(p) { state.cashflowPeriod = p; render(); }
 
 function startPagoTrabajo() {
   state.showPagoTrabajo = true;
-  state.pagoTrabajoForm = { fecha: new Date().toISOString().slice(0, 10), montoBruto: "", montoNeto: "", bonos: "", horasExtra: "", descuentos: "", metodo: "", notas: "", turnosSel: {} };
+  state.pagoTrabajoForm = { fecha: dateKeyOf(new Date()), montoBruto: "", montoNeto: "", bonos: "", horasExtra: "", descuentos: "", metodo: "", notas: "", turnosSel: {} };
   render();
 }
 

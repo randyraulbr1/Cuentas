@@ -311,7 +311,7 @@ function computeResumenSemanal() {
   const dia = (hoy.getDay() + 6) % 7; // lunes = 0
   const iniSemana = new Date(hoy); iniSemana.setDate(hoy.getDate() - dia); iniSemana.setHours(0, 0, 0, 0);
   const iniPrev = new Date(iniSemana); iniPrev.setDate(iniSemana.getDate() - 7);
-  const key = (d) => d.toISOString().slice(0, 10);
+  const key = (d) => dateKeyOf(d);
   const kIni = key(iniSemana), kPrev = key(iniPrev);
   const dias = [0, 0, 0, 0, 0, 0, 0];
   let total = 0, prev = 0;

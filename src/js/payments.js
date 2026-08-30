@@ -208,7 +208,7 @@ function processAutoPayments() {
       if (!next || next > now) break;
       const monto = Math.min(toNum(l.montoPago), toNum(l.saldoTotal) + (toNum(l.saldoTotal) * Math.max(toNum(l.tasa), 0) / 100 / (l.frecuencia === "semanal" ? 52 : l.frecuencia === "quincenal" ? 26 : 12)));
       if (monto <= 0) break;
-      applyLoanPayment(l, monto, next.toISOString().slice(0, 10));
+      applyLoanPayment(l, monto, dateKeyOf(next));
       if (l.fuenteAutomatica === "debito") state.debito = String(Math.max(toNum(state.debito) - monto, 0));
       else state.ahorroActual = String(Math.max(toNum(state.ahorroActual) - monto, 0));
       if (aplicados.indexOf(l.nombre || t("loanNombrePh")) === -1) aplicados.push(l.nombre || t("loanNombrePh"));
@@ -270,7 +270,7 @@ function confirmPago() {
   const item = list.find((x) => x.id === state.payingTarget.id);
   if (!item) return;
   pushUndo();
-  if (state.payingTarget.type === "loan") applyLoanPayment(item, monto, new Date().toISOString().slice(0, 10));
+  if (state.payingTarget.type === "loan") applyLoanPayment(item, monto, dateKeyOf(new Date()));
   else item[field] = String(Math.max(toNum(item[field]) - monto, 0));
   state.payingTarget = null;
   state.payFormMonto = "";

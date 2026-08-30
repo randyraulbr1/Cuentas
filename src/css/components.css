@@ -213,10 +213,10 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .work-btn:disabled { opacity:.32; cursor:default; }
 .slide-confirm { position:relative; }
 .slide-track { position:relative; height:48px; border-radius:14px; background:color-mix(in srgb,var(--accent) 14%,var(--card-bg)); overflow:hidden; display:flex; align-items:center; justify-content:center; }
-.slide-danger .slide-track { background:rgba(255,59,48,0.14); }
+.slide-danger .slide-track { background:color-mix(in srgb,var(--accent) 14%,var(--card-bg)); }
 .slide-label { font-size:11px; font-weight:700; color:var(--text-muted); pointer-events:none; padding:0 44px 0 6px; text-align:center; }
 .slide-handle { position:absolute; left:3px; top:3px; width:42px; height:42px; border-radius:11px; background:var(--accent); color:var(--accent-contrast); display:flex; align-items:center; justify-content:center; touch-action:none; cursor:grab; }
-.slide-danger .slide-handle { background:#FF3B30; color:#fff; }
+.slide-danger .slide-handle { background:var(--accent); color:var(--accent-contrast); }
 .slide-big .slide-track { height:64px; border-radius:18px; }
 .slide-big .slide-handle { width:58px; height:58px; border-radius:15px; }
 .slide-big .slide-label { font-size:13px; }
@@ -226,7 +226,7 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .security-compact{padding:16px 18px}
 .security-compact-head{display:flex;align-items:center;gap:11px;margin-bottom:12px}
 .security-compact-head .opt-section-title,.nav-order-panel .opt-section-title{margin:0}
-.security-compact-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--pill-bg);color:var(--positive);flex:0 0 auto}
+.security-compact-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 16%,var(--pill-bg));color:var(--accent);flex:0 0 auto}
 .security-compact-icon svg{width:18px;height:18px}
 .pin-setup-row.compact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
 .pin-setup-row.compact input{min-width:0;height:42px;padding:9px 12px;font-size:16px;letter-spacing:.24em;text-align:center}

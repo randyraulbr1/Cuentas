@@ -307,7 +307,7 @@ function applyLoanPayment(loan, amount, paymentDate) {
   const aplicado = Math.min(monto, saldo + interes);
   const principal = Math.max(Math.min(aplicado - interes, saldo), 0);
   loan.saldoTotal = String(Math.max(saldo - principal, 0));
-  loan.ultimoPago = paymentDate || new Date().toISOString().slice(0, 10);
+  loan.ultimoPago = paymentDate || dateKeyOf(new Date());
   if (!Array.isArray(loan.pagosRealizados)) loan.pagosRealizados = [];
   loan.pagosRealizados.unshift({
     id: uid(), fecha: loan.ultimoPago, monto: aplicado,

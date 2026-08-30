@@ -153,7 +153,7 @@
 }
 
 /* Ganancias, perdidas y avisos mantienen identidad independiente del tema. */
-.sum-val.green, .flash { color: var(--positive); }
+.sum-val.green, .flash { color: var(--accent); }
 .sum-val.red, .debt-cell b.rojo, .debt-warn, .pill-btn.danger,
 .delete-link, .history-del:hover { color: var(--negative); }
 .debt-warn { background: var(--negative-soft); }
