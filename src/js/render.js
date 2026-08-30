@@ -30,7 +30,7 @@ function renderBancoNubePanel(compact) {
     if (state.confirmDisconnectId === inst.id) {
       html += '<div class="confirm-row"><span>' + esc(t("confirmDesconectarMsg")(inst.institution_name || "")) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="confirmDisconnectBank" data-id="' + inst.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDisconnectBank">' + t("cancel") + '</button></div></div>';
     } else {
-      html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(inst.institution_name || t("bancoDesconocido")) + '</span><span class="status-pill ' + (inst.status === "active" ? "verde" : "rojo") + '">' + (inst.status === "active" ? t("estadoActivo") : t("estadoDesconectado")) + '</span></div>';
+      html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(inst.institution_name || t("bancoDesconocido")) + '</span>' + (inst.status === "active" ? "" : '<span class="status-pill rojo">' + t("estadoDesconectado") + '</span>') + '</div>';
 
       if (inst.status === "active") html += '<button class="delete-link" data-action="askDisconnectBank" data-id="' + inst.id + '">' + t("desconectarBancoBtn") + '</button>';
       html += '</div>';
@@ -551,7 +551,7 @@ function renderApp() {
     html += '<div class="sum-card"><div class="sum-label">' + t("debitoLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(debitoBanco) + '</div><div class="opt-row-sub">' + (state.authToken ? (LANG === "es" ? "Saldo automático del banco" : "Automatic bank balance") : (LANG === "es" ? "Conecta el banco para cargarlo" : "Connect the bank to load it")) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("debesTarjetas") + '</div><div class="sum-val red">' + sym() + fmt0(deudaTarjetas) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div><div class="opt-row-sub">' + (LANG === "es" ? "Ahorro en efectivo" : "Cash savings") + '</div></div>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
+    html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val blue">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
     html += '</div>';
     html += '<div class="summary">';
     if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
@@ -807,7 +807,7 @@ function renderApp() {
     if (state.calcTiempoAbierto && toNum(state.job.pagoHora) > 0) {
       html += '<div class="panel" style="padding:18px;"><p class="hint" style="margin:0 0 12px;">' + (LANG === "es" ? "Mide una compra con tu tiempo neto de trabajo." : "Measure a purchase using your net working time.") + '</p>';
       html += '<div class="goal-field"><label>' + (LANG === "es" ? "Monto de la compra" : "Purchase amount") + ' ' + sym() + '</label><input id="purchase-time-input" type="text" inputmode="decimal" value="' + esc(state.evaluarCompraMonto || "") + '" placeholder="45"></div>';
-      html += '<div id="purchase-time-result" style="font-size:18px;font-weight:800;margin-top:12px;color:var(--positive);">' + esc(textoGastoEnTiempo(state.evaluarCompraMonto)) + '</div>';
+      html += '<div id="purchase-time-result" style="font-size:18px;font-weight:800;margin-top:12px;color:var(--accent);">' + esc(textoGastoEnTiempo(state.evaluarCompraMonto)) + '</div>';
       html += '<p class="hint" style="margin:8px 0 0;">' + (LANG === "es" ? "Basado en " : "Based on ") + sym() + fmt2(tarifaNetaTrabajo()) + '/h ' + (LANG === "es" ? "netos estimados." : "estimated net.") + '</p></div>';
     } else if (state.calcTiempoAbierto) {
       html += '<div class="panel" style="padding:18px;"><p class="hint" style="margin:0;">' + (LANG === "es" ? "Configura tu pago por hora en Trabajo para usar la calculadora." : "Set your hourly rate in Work to use the calculator.") + '</p></div>';
@@ -1117,6 +1117,8 @@ function renderApp() {
       });
 
       html += '</div>';
+    } else {
+      html += '<div class="panel"><div class="empty-state">' + (state.authToken ? (LANG === "es" ? "Aún no hay movimientos guardados." : "No transactions saved yet.") : (LANG === "es" ? "Conecta tu banco para ver tu historial aquí." : "Connect your bank to see your history here.")) + '</div></div>';
     }
     }
   }

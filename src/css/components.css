@@ -78,7 +78,7 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 [data-theme="dark"] .add-btn { background: color-mix(in srgb,var(--accent) 22%,var(--card-bg)); }
 .fab-add { position: fixed; right: 18px; bottom: calc(var(--tabbar-h) + 16px); background: var(--accent); color: #fff; border: none; border-radius: 24px; padding: 12px 18px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: 0 8px 20px rgba(61,90,254,0.4); z-index: 20; }
 .mini-total { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
-.mini-total b { color: var(--text); font-weight: 700; }
+.mini-total b { color: var(--accent); font-weight: 700; }
 .card-entry { background: var(--card-bg-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
 .card-entry-top { display: grid; grid-template-columns: 1fr 30px; gap: 8px; align-items: center; margin-bottom: 8px; }
 .card-entry-top input { min-width: 0; width: 100%; font-weight: 600; }

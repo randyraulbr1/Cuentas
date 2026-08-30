@@ -36,8 +36,11 @@ function buildCashflowBuckets(period) {
     const anchor = events.length ? events[events.length - 1].when : now;
     const selectedDay = dateKeyOf(anchor);
     filtered = events.filter((event) => dateKeyOf(event.when) === selectedDay);
+  } else if (period === "month") {
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    filtered = events.filter((event) => event.when >= monthStart && event.when < monthEnd);
   }
-  // period === "month" (o cualquier otro valor): usa TODO el historial disponible, sin recortar por mes.
 
   let running = 0;
   return filtered.map((event) => {

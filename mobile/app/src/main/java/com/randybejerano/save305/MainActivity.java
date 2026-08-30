@@ -59,6 +59,9 @@ public class MainActivity extends FragmentActivity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            getWindow().setDecorFitsSystemWindows(true);
+        }
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
@@ -200,7 +203,7 @@ public class MainActivity extends FragmentActivity {
         primaryButton.setAllCaps(false);
         primaryButton.setEnabled(false);
         primaryButton.setAlpha(.45f);
-        primaryButton.setBackground(rounded(GREEN, dp(14)));
+        primaryButton.setBackground(rounded(GREEN, dp(24)));
         primaryButton.setOnClickListener(v -> {
             if (unlockMode) checkPin();
             else continueSetup();
