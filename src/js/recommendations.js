@@ -92,7 +92,10 @@ function computeSmartAdvice() {
   if (unpaidTotal > 0) {
     const gap = unpaidTotal - available;
     if (gap > 0) {
-      advice.push({ level: "urgent", text: (LANG === "es" ? "Te faltan " : "You still need ") + sym() + fmt0(gap) + (LANG === "es" ? " para completar todos los pagos pendientes de este mes." : " to cover all remaining payments this month.") });
+      const juntos = state.coupleMode && state.coupleNamePartner;
+      advice.push({ level: "urgent", text: (juntos
+        ? (LANG === "es" ? "Entre " + (state.coupleNameSelf || (LANG === "es" ? "tú" : "you")) + " y " + state.coupleNamePartner + ", les faltan " : "Between " + (state.coupleNameSelf || "you") + " and " + state.coupleNamePartner + ", you're short ")
+        : (LANG === "es" ? "Te faltan " : "You still need ")) + sym() + fmt0(gap) + (LANG === "es" ? " para completar todos los pagos pendientes de este mes." : " to cover all remaining payments this month.") });
     }
   }
 
@@ -118,6 +121,34 @@ function computeSmartAdvice() {
     cardSug.forEach((c) => {
       advice.push({ level: "credit", text: (LANG === "es" ? "Paga " : "Pay ") + sym() + fmt0(c.sugerido) + (LANG === "es" ? " de " + c.nombre + " este mes." : " on " + c.nombre + " this month.") });
     });
+  }
+
+  // Tendencia de gasto: compara lo gastado en lo que va del mes contra el promedio de los ultimos 3 meses en el mismo tramo de dias
+  const now2 = new Date();
+  const dayOfMonth = now2.getDate();
+  const thisMonthKey = monthKey();
+  const gastoEnTramo = (targetMonthKey) => state.cloudTransactions.reduce((sum, tx) => {
+    const fecha = String(tx.fecha || "");
+    if (fecha.slice(0, 7) !== targetMonthKey) return sum;
+    const day = parseInt(fecha.slice(8, 10), 10) || 1;
+    if (day > dayOfMonth) return sum;
+    return toNum(tx.monto) < 0 ? sum + Math.abs(toNum(tx.monto)) : sum;
+  }, 0);
+  const gastoEsteMes = gastoEnTramo(thisMonthKey);
+  const promedios = [];
+  for (let i = 1; i <= 3; i++) {
+    const d = new Date(now2.getFullYear(), now2.getMonth() - i, 1);
+    const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    const g = gastoEnTramo(key);
+    if (g > 0) promedios.push(g);
+  }
+  if (promedios.length >= 2 && gastoEsteMes > 0) {
+    const promedio = promedios.reduce((a, b) => a + b, 0) / promedios.length;
+    if (promedio > 0 && gastoEsteMes > promedio * 1.25) {
+      const diff = gastoEsteMes - promedio;
+      const juntos = state.coupleMode && state.coupleNamePartner;
+      advice.push({ level: "urgent", text: (juntos ? (LANG === "es" ? "Van gastando " : "You've spent ") : (LANG === "es" ? "Vas gastando " : "You've spent ")) + sym() + fmt0(gastoEsteMes) + (LANG === "es" ? " en lo que va del mes, " + sym() + fmt0(diff) + " más que el promedio de los últimos meses en estas mismas fechas." : " so far this month, " + sym() + fmt0(diff) + " more than the recent average for this point in the month.") });
+    }
   }
 
   if (advice.length === 0) {

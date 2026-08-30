@@ -689,6 +689,16 @@ function renderApp() {
     if (state.autoPagoNotif && state.autoPagoNotif.length > 0) {
       html += '<div class="flash">' + t("autoPagoAplicado")(state.autoPagoNotif.join(", ")) + '</div>';
     }
+    if (state.coupleMode) {
+      const coupleAdvice = computeSmartAdvice();
+      if (coupleAdvice.length) {
+        html += '<div class="panel smart-advice-panel"><div class="panel-head-row"><h2>' + (LANG === "es" ? "Para los dos" : "For both of you") + '</h2></div>';
+        coupleAdvice.forEach((tip) => {
+          html += '<div class="smart-advice ' + tip.level + '">' + icon(tip.level === "urgent" || tip.level === "blink" ? "alert" : tip.level === "credit" ? "card" : tip.level === "save" ? "bills" : "check") + '<span>' + esc(tip.text) + '</span></div>';
+        });
+        html += '</div>';
+      }
+    }
     html += '<div class="panel"><div class="panel-head-row"><div><h2 style="margin-bottom:0;">' + t("subsTitle") + '</h2></div><div class="panel-head-actions"><button class="icon-pencil sub-add-trigger" data-action="toggleSubPresetPicker">' + icon("plus") + '</button><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? icon("check") : icon("pencil")) + '</button></div></div>';
     if (state.subPresetPicker) {
       const bankExpenses = state.cloudTransactions
