@@ -1,4 +1,4 @@
-const CACHE = "cuentas-claras-v174"
+const CACHE = "cuentas-claras-v175"
 const ASSETS = [
   "./",
   "./index.html",
@@ -11,25 +11,25 @@ const ASSETS = [
   "./contact.html",
   "./offline.html",
   "./src/css/base.css?v=v160",
-  "./src/css/components.css?v=v170",
+  "./src/css/components.css?v=v175",
   "./src/css/pages.css?v=v169",
   "./src/css/theme-colors.css?v=v171",
   "./src/js/icons.js?v=v95",
   "./src/js/i18n.js?v=v163",
-  "./src/js/storage.js?v=v173",
+  "./src/js/storage.js?v=v175",
   "./src/js/migrations.js?v=v86",
-  "./src/js/state.js?v=v174",
+  "./src/js/state.js?v=v175",
   "./src/js/calculations.js?v=v162",
   "./src/js/categories.js?v=v86",
   "./src/js/work.js?v=v162",
   "./src/js/payments.js?v=v162",
   "./src/js/bank.js?v=v169",
-  "./src/js/api.js?v=v141",
+  "./src/js/api.js?v=v175",
   "./src/js/plaid-link.js?v=v86",
   "./src/js/history.js?v=v86",
-  "./src/js/recommendations.js?v=v174",
-  "./src/js/render.js?v=v174",
-  "./src/js/app.js?v=v173",
+  "./src/js/recommendations.js?v=v175",
+  "./src/js/render.js?v=v175",
+  "./src/js/app.js?v=v175",
   "./src/js/theme-colors.js?v=v161",
 ];
 

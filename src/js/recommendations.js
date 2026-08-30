@@ -121,6 +121,25 @@ function computeSmartAdvice() {
     cardSug.forEach((c) => {
       advice.push({ level: "credit", text: (LANG === "es" ? "Paga " : "Pay ") + sym() + fmt0(c.sugerido) + (LANG === "es" ? " de " + c.nombre + " este mes." : " on " + c.nombre + " this month.") });
     });
+
+    // Comparacion entre los dos: cuando el modo pareja esta activo y ya se marco de quien es cada tarjeta,
+    // aconseja pagar primero la de mayor interes sin importar de quien sea.
+    if (state.coupleMode && state.coupleNamePartner) {
+      const conDueno = cards.filter((card) => state.accountOwner[card.account_id]);
+      const propias = conDueno.filter((card) => state.accountOwner[card.account_id] === "self");
+      const dePareja = conDueno.filter((card) => state.accountOwner[card.account_id] === "partner");
+      if (propias.length && dePareja.length) {
+        const deudaPropia = propias.reduce((sum, c) => sum + toNum(c.balance_current), 0);
+        const deudaPareja = dePareja.reduce((sum, c) => sum + toNum(c.balance_current), 0);
+        const mayorApr = conDueno.slice().sort((a, b) => toNum(b.liab_apr) - toNum(a.liab_apr))[0];
+        if (mayorApr && toNum(mayorApr.liab_apr) > 0) {
+          const deQuien = state.accountOwner[mayorApr.account_id] === "partner" ? state.coupleNamePartner : (state.coupleNameSelf || (LANG === "es" ? "tuya" : "yours"));
+          advice.push({ level: "credit", text: (LANG === "es"
+            ? "Entre los dos deben " + sym() + fmt0(deudaPropia + deudaPareja) + " en tarjetas (" + (state.coupleNameSelf || "Tú") + ": " + sym() + fmt0(deudaPropia) + ", " + state.coupleNamePartner + ": " + sym() + fmt0(deudaPareja) + "). La de " + deQuien + " (" + (mayorApr.name || "tarjeta") + ") tiene el interés más alto (" + Math.round(toNum(mayorApr.liab_apr)) + "%) — prioricen esa, aunque sea de uno solo."
+            : "Together you owe " + sym() + fmt0(deudaPropia + deudaPareja) + " on cards (" + (state.coupleNameSelf || "You") + ": " + sym() + fmt0(deudaPropia) + ", " + state.coupleNamePartner + ": " + sym() + fmt0(deudaPareja) + "). " + deQuien + "'s card (" + (mayorApr.name || "card") + ") has the highest interest (" + Math.round(toNum(mayorApr.liab_apr)) + "%) — prioritize it, even if it's only one of yours.") });
+        }
+      }
+    }
   }
 
   // Tendencia de gasto: compara lo gastado en lo que va del mes contra el promedio de los ultimos 3 meses en el mismo tramo de dias

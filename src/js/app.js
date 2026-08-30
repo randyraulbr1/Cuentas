@@ -27,6 +27,7 @@ async function enterProfile(id) {
   state.coupleMode = !!d.coupleMode;
   state.coupleNameSelf = d.coupleNameSelf || "";
   state.coupleNamePartner = d.coupleNamePartner || "";
+  state.accountOwner = d.accountOwner || {};
   state.gastosFijosReconocidos = d.gastosFijosReconocidos || [];
   // Migra los pagos fijos bancarios antiguos a la lista principal editable.
   state.gastosFijosReconocidos.forEach((gf) => {
@@ -884,6 +885,8 @@ root.addEventListener("click", (e) => {
     toggleCoupleMode: () => { state.coupleMode = !state.coupleMode; scheduleSave(); render(); },
     setInstOwnerSelf: () => { const inst = state.cloudInstitutions.find((i) => i.id === id); if (inst) { inst.owner = "self"; scheduleSave(); render(); } },
     setInstOwnerPartner: () => { const inst = state.cloudInstitutions.find((i) => i.id === id); if (inst) { inst.owner = "partner"; scheduleSave(); render(); } },
+    setAccountOwnerSelf: () => { state.accountOwner[id] = "self"; scheduleSave(); render(); },
+    setAccountOwnerPartner: () => { state.accountOwner[id] = "partner"; scheduleSave(); render(); },
     requestChangePinNative: () => {
       if (window.AndroidBridge && window.AndroidBridge.requestChangePin) {
         try { window.AndroidBridge.requestChangePin(); return; } catch (e) {}

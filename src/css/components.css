@@ -17,8 +17,8 @@ h1, h2, .locked-amount, .sum-val, .cc-balance, .debt-big-val, .day-detail-amt, .
 .back-btn { background: var(--pill-bg); border: none; color: var(--text); border-radius: 16px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
 h1 { font-size: 25px; font-weight: 800; letter-spacing: -0.025em; margin: 2px 0 3px; }
 .seg { display: flex; background: var(--input-bg); border-radius: 9px; padding: 2px; gap: 2px; }
-.seg button { border: none; background: transparent; color: var(--text-muted); font-size: 12px; font-weight: 600; padding: 6px 9px; border-radius: 7px; cursor: pointer; font-family: inherit; }
-.seg button.active { background: var(--accent); color: #fff; }
+.seg button, .seg span[role="button"] { border: none; background: transparent; color: var(--text-muted); font-size: 12px; font-weight: 600; padding: 6px 9px; border-radius: 7px; cursor: pointer; font-family: inherit; text-align: center; display: inline-block; }
+.seg button.active, .seg span[role="button"].active { background: var(--accent); color: #fff; }
 select { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 9px; color: var(--text); font-size: 13px; padding: 7px 9px; font-family: inherit; }
 .pay-config { margin-top: 8px; }
 .pay-config label { font-size: 11px; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }

@@ -924,6 +924,12 @@ function renderApp() {
         html += '<div class="cc-number">\u2022\u2022\u2022\u2022&nbsp;&nbsp;\u2022\u2022\u2022\u2022&nbsp;&nbsp;\u2022\u2022\u2022\u2022&nbsp;&nbsp;' + (c.mask ? esc(c.mask) : "\u2022\u2022\u2022\u2022") + '</div>';
         html += '<div class="cc-bottom"><span class="cc-label">' + t("debesAhoraLbl") + '</span><span class="cc-balance">' + sym() + fmt0(saldo) + '</span></div>';
         html += '<div class="cc-detail">';
+        if (state.coupleMode) {
+          const selfLabel = state.coupleNameSelf || (LANG === "es" ? "Yo" : "Me");
+          const partnerLabel = state.coupleNamePartner || (LANG === "es" ? "Mi pareja" : "Partner");
+          const owner = state.accountOwner[c.account_id];
+          html += '<div class="seg" style="width:100%;margin-bottom:10px;"><span role="button" style="flex:1;" class="' + (owner !== "partner" ? "active" : "") + '" data-action="setAccountOwnerSelf" data-id="' + esc(c.account_id) + '">' + esc(selfLabel) + '</span><span role="button" style="flex:1;" class="' + (owner === "partner" ? "active" : "") + '" data-action="setAccountOwnerPartner" data-id="' + esc(c.account_id) + '">' + esc(partnerLabel) + '</span></div>';
+        }
         if (limite > 0) {
           html += utilBarHtml(uso, usoNivel);
           html += '<div class="cc-line"><span>' + sym() + fmt0(saldo) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(limite) + '</span></div>';

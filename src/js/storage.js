@@ -71,6 +71,7 @@ async function saveUserDataNow() {
     suscripcionesManuales: state.suscripcionesManuales, suscripcionesFrecuencia: state.suscripcionesFrecuencia,
     suscripcionesIgnoradas: state.suscripcionesIgnoradas,
     coupleMode: state.coupleMode, coupleNameSelf: state.coupleNameSelf, coupleNamePartner: state.coupleNamePartner,
+    accountOwner: state.accountOwner,
     gastosFijosReconocidos: state.gastosFijosReconocidos,
     consentimientoAceptado: state.consentimientoAceptado, consentimientoFecha: state.consentimientoFecha,
     payFrequency: state.payFrequency, ultimoPago: state.ultimoPago, proximoPagoAjuste: state.proximoPagoAjuste,

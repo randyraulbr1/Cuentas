@@ -176,6 +176,29 @@ function cacheNubeVencido() {
   return (Date.now() - new Date(state.cloudLastSync).getTime()) > CLOUD_CACHE_MAX_AGE_MS;
 }
 
+// Intenta detectar de quien es cada cuenta con lo que venga del banco (varios nombres de campo posibles,
+// segun lo que el servidor incluya). Si no encuentra nada, no pasa nada: el usuario lo puede marcar a mano
+// en la pestaña de Tarjetas/Pagos, y eso siempre manda sobre lo automatico.
+function autoDetectAccountOwners() {
+  if (!state.coupleMode) return;
+  const instByItemId = {};
+  state.cloudInstitutions.forEach((inst) => {
+    const key = inst.plaid_item_id || inst.item_id || inst.id;
+    if (key) instByItemId[key] = inst;
+  });
+  let changed = false;
+  state.cloudAccounts.forEach((acc) => {
+    if (state.accountOwner[acc.account_id]) return; // ya lo marco la persona a mano, eso manda
+    const itemKey = acc.item_id || acc.plaid_item_id || acc.institution_id;
+    const inst = itemKey ? instByItemId[itemKey] : null;
+    if (inst && inst.owner) {
+      state.accountOwner[acc.account_id] = inst.owner;
+      changed = true;
+    }
+  });
+  if (changed) scheduleSave();
+}
+
 async function refrescarDatosNube() {
   const [accRes, txRes, instRes] = await Promise.all([apiGetAccounts(), apiGetTransactions(), apiGetInstitutionsStatus()]);
   if (accRes.ok) state.cloudAccounts = accRes.data.accounts;
@@ -184,6 +207,7 @@ async function refrescarDatosNube() {
     if (typeof syncFixedPaymentsFromBank === "function") syncFixedPaymentsFromBank();
   }
   if (instRes.ok) state.cloudInstitutions = (instRes.data.items || []).filter((item) => item.status === "active");
+  if (accRes.ok && instRes.ok) autoDetectAccountOwners();
   if (instRes.ok && state.cloudInstitutions.length === 0) {
     state.cloudAccounts = [];
     state.cloudTransactions = [];
