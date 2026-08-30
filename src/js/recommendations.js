@@ -183,7 +183,7 @@ function computeInsights() {
       const intervalo = FREQ_DIAS[frecuencia] || 30;
       const proxima = new Date(ultimaFecha); proxima.setDate(proxima.getDate() + intervalo);
       const diasFaltan = Math.round((proxima - hoy) / 86400000);
-      return { key: key, origen: "auto", nombre: ordenadas[0].descripcion, monto: Math.abs(toNum(ordenadas[0].monto)), frecuencia, proxima, diasFaltan, cancelada: state.suscripcionesCanceladas.indexOf(key) !== -1 };
+      return { key: key, origen: "auto", nombre: ordenadas[0].merchant_name || ordenadas[0].descripcion, monto: Math.abs(toNum(ordenadas[0].monto)), frecuencia, proxima, diasFaltan, cancelada: state.suscripcionesCanceladas.indexOf(key) !== -1 };
     });
 
   const suscripcionesManualesCalc = state.suscripcionesManuales.map((s) => {
@@ -196,7 +196,7 @@ function computeInsights() {
   const añadidas = state.subs || [];
   const suscripcionesAutoDisponibles = suscripcionesAuto.filter((s) => !añadidas.some((sub) =>
     String(sub.merchantKey || "") === String(s.key) ||
-    String(sub.nombre || "").trim().toLowerCase() === String(s.nombre || "").trim().toLowerCase()
+    merchantKey(sub.nombre || "") === merchantKey(s.nombre || "")
   ));
   const suscripcionesDetectadas = suscripcionesAutoDisponibles.concat(suscripcionesManualesCalc).sort((a, b) => a.proxima - b.proxima);
 
