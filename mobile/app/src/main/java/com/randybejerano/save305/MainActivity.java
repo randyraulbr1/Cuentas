@@ -13,10 +13,12 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
+import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
@@ -393,6 +395,7 @@ public class MainActivity extends FragmentActivity {
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setUserAgentString(settings.getUserAgentString() + " 305SaveAndroid/0.2");
+        webView.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
 
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
@@ -555,5 +558,48 @@ public class MainActivity extends FragmentActivity {
     @Override protected void onDestroy() {
         if (webView != null) { webView.loadUrl("about:blank"); webView.destroy(); }
         super.onDestroy();
+    }
+
+    /**
+     * Puente para que la pagina web pida cambiar el PIN nativo.
+     * Por seguridad, cambiar el PIN borra todos los datos financieros guardados
+     * (para que alguien que no sepa el PIN no pueda "cambiarlo" y ver los datos).
+     */
+    private class AndroidBridge {
+        @JavascriptInterface
+        public void requestChangePin() {
+            runOnUiThread(MainActivity.this::showChangePinWarning);
+        }
+    }
+
+    private void showChangePinWarning() {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Cambiar PIN")
+            .setMessage("Por seguridad, cambiar el PIN borra todos los datos guardados en este telefono (bancos, pagos, turnos, tarjetas). Vas a tener que conectar tu banco de nuevo. Esto evita que alguien que no sepa tu PIN pueda \"cambiarlo\" para ver tus datos.\n\n\u00bfContinuar?")
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("S\u00ed, borrar y cambiar PIN", (dialog, which) -> wipeAndChangePin())
+            .setCancelable(true)
+            .show();
+    }
+
+    private void wipeAndChangePin() {
+        try { prefs.edit().clear().apply(); } catch (Exception ignored) {}
+        try {
+            if (webView != null) {
+                webView.clearCache(true);
+                webView.clearHistory();
+                webView.clearFormData();
+            }
+            WebStorage.getInstance().deleteAllData();
+            CookieManager cm = CookieManager.getInstance();
+            cm.removeAllCookies(null);
+            cm.flush();
+        } catch (Exception ignored) {}
+        unlocked = false;
+        showPinDigits = false;
+        entered = "";
+        firstPin = null;
+        if (webView != null) { webView.loadUrl("about:blank"); webView.destroy(); webView = null; }
+        showPinSetup();
     }
 }

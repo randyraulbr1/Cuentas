@@ -254,7 +254,9 @@ function renderOpcionesTab() {
   try { pinConfigured = !!localStorage.getItem(PIN_HASH_KEY); } catch (error) {}
   h += '<div class="panel security-compact"><div class="security-compact-head"><span class="security-compact-icon">' + icon("lock") + '</span><div><p class="opt-section-title">' + (LANG === "es" ? "Seguridad local" : "Local security") + '</p><p class="opt-row-sub">' + (isAndroidShell() ? (LANG === "es" ? "Protegida con el PIN y la huella de la app" : "Protected with the app's PIN and biometrics") : (pinConfigured ? (LANG === "es" ? "PIN activo en este teléfono" : "PIN active on this phone") : (LANG === "es" ? "Protege esta cuenta con 6 dígitos" : "Protect this account with 6 digits"))) + '</p></div></div>';
   if (isAndroidShell()) {
-    h += '<p class="hint" style="margin:2px 0 0;">' + (LANG === "es" ? "Ya la protege el PIN y la huella nativos de la app — no hace falta configurar nada aquí." : "Already protected by the app's native PIN and biometrics — nothing to set up here.") + '</p>';
+    h += '<p class="hint" style="margin:2px 0 0;">' + (LANG === "es" ? "Ya la protege el PIN y la huella nativos de la app." : "Already protected by the app's native PIN and biometrics.") + '</p>';
+    h += '<button class="pill-btn" style="margin-top:10px;" data-action="requestChangePinNative">' + (LANG === "es" ? "Cambiar PIN" : "Change PIN") + '</button>';
+    h += '<p class="hint" style="margin-top:5px;">' + (LANG === "es" ? "Cambiar el PIN borra tus datos guardados por seguridad. Tendrás que conectar tu banco de nuevo." : "Changing the PIN wipes your saved data for security. You'll need to connect your bank again.") + '</p>';
   } else {
   const pinSetupLen = String(state.pinSetupInput || "").length;
   h += '<div class="pin-setup-row compact"><input aria-label="' + (LANG === "es" ? "PIN de 6 dígitos" : "6-digit PIN") + '" id="pin-setup-input" data-scope="pinSetup" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022" value="' + esc(state.pinSetupInput) + '">';
@@ -1240,7 +1242,7 @@ function render() {
   try {
     applyTheme();
     document.documentElement.lang = state.lang;
-    if (state.appLocked) renderPinScreen();
+    if (state.appLocked && !isAndroidShell()) renderPinScreen();
     else if (state.screen === "selector") renderSelector();
     else renderApp();
   } catch (e) {

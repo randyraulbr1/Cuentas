@@ -876,6 +876,7 @@ root.addEventListener("click", (e) => {
     toggleEditLoans: toggleEditLoans, setLoanFrec: () => setLoanFrec(id, freq),
     loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
     toggleLoanBankPicker: () => { state.loanBankPicker = state.loanBankPicker === id ? null : id; state.bankExpenseSearch = ""; render(); },
+    requestChangePinNative: () => { try { window.AndroidBridge && window.AndroidBridge.requestChangePin(); } catch (e) {} },
     setLoanPagoFromTx: () => {
       const loan = state.loans.find((l) => l.id === id);
       const tx = state.cloudTransactions.find((t) => t.id === btn.dataset.txId);

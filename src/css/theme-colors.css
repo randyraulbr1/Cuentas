@@ -162,7 +162,7 @@
 .util-bar-fill.rojo { background: var(--negative); }
 .status-pill.verde { background: var(--accent); color: var(--accent-contrast); }
 .status-pill.rojo { background: var(--negative); color: #FFFFFF; }
-.rule-msg.bien { background: var(--positive); color: #FFFFFF; }
+.rule-msg.bien { background: var(--accent); color: var(--accent-contrast); }
 .rule-msg.mal { background: var(--negative); color: #FFFFFF; }
 
 /* Botones planos: sin reflejos, gradientes ni sombras de color. */
