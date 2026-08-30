@@ -191,7 +191,7 @@ function abrirBanco() {
   for (const k in known) { if (key.indexOf(k) !== -1) { match = known[k]; break; } }
   const fallbackWeb = match ? match.web : "https://www.google.com/search?q=" + encodeURIComponent((name || (LANG === "es" ? "mi banco" : "my bank")) + (LANG === "es" ? " app" : " app"));
 
-  const isAndroidApp = /305SaveAndroid\//.test(navigator.userAgent) || new URLSearchParams(location.search).get("app") === "android";
+  const isAndroidApp = isAndroidShell();
   if (isAndroidApp && match) {
     const intentUrl = "intent://#Intent;package=" + match.pkg + ";S.browser_fallback_url=" + encodeURIComponent(fallbackWeb) + ";end";
     location.href = intentUrl;

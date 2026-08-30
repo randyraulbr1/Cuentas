@@ -74,8 +74,13 @@ function renderPinScreen() {
     if (biometricConfigured) html += '<button class="biometric-unlock" data-action="unlockBiometric"' + (state.biometricBusy ? " disabled" : "") + '>' + icon("lock") + '<span>' + (state.biometricBusy ? (LANG === "es" ? "Comprobando…" : "Checking…") : (LANG === "es" ? "Entrar con huella" : "Unlock with biometrics")) + '</span></button>';
     html += '<div class="pin-or"><span>' + (LANG === "es" ? "o usa tu PIN" : "or use your PIN") + '</span></div>';
     html += '<div class="pin-keypad">';
-    ["1","2","3","4","5","6","7","8","9"].forEach((digit) => { html += '<button type="button" data-action="pinDigit" data-id="' + digit + '">' + digit + '</button>'; });
-    html += '<span></span><button type="button" data-action="pinDigit" data-id="0">0</button><button type="button" class="pin-delete" data-action="pinDelete" aria-label="' + (LANG === "es" ? "Borrar" : "Delete") + '">' + icon("back") + '<small>' + (LANG === "es" ? "Borrar" : "Delete") + '</small></button>';
+    ["1", "2", "3"].forEach((digit) => { html += '<button type="button" data-action="pinDigit" data-id="' + digit + '">' + digit + '</button>'; });
+    html += '<button type="button" class="pin-delete" data-action="pinDelete" aria-label="' + (LANG === "es" ? "Borrar" : "Delete") + '">' + icon("back") + '<small>' + (LANG === "es" ? "Borrar" : "Delete") + '</small></button>';
+    ["4", "5", "6"].forEach((digit) => { html += '<button type="button" data-action="pinDigit" data-id="' + digit + '">' + digit + '</button>'; });
+    html += '<span></span>';
+    ["7", "8", "9"].forEach((digit) => { html += '<button type="button" data-action="pinDigit" data-id="' + digit + '">' + digit + '</button>'; });
+    html += '<span></span>';
+    html += '<span></span><button type="button" data-action="pinDigit" data-id="0">0</button><span></span><span></span>';
     html += '</div>';
     html += '<button class="pay-trigger pin-enter-btn" data-action="unlockPin"' + (entered.length !== 6 || state.pinBusy ? " disabled" : "") + '>' + (state.pinBusy ? (LANG === "es" ? "Comprobando…" : "Checking…") : (LANG === "es" ? "Entrar" : "Unlock")) + '</button>';
   }
@@ -247,7 +252,10 @@ function renderOpcionesTab() {
   const activeProfile = state.profiles.find((p) => p.id === state.activeProfileId);
   let pinConfigured = false;
   try { pinConfigured = !!localStorage.getItem(PIN_HASH_KEY); } catch (error) {}
-  h += '<div class="panel security-compact"><div class="security-compact-head"><span class="security-compact-icon">' + icon("lock") + '</span><div><p class="opt-section-title">' + (LANG === "es" ? "Seguridad local" : "Local security") + '</p><p class="opt-row-sub">' + (pinConfigured ? (LANG === "es" ? "PIN activo en este teléfono" : "PIN active on this phone") : (LANG === "es" ? "Protege esta cuenta con 6 dígitos" : "Protect this account with 6 digits")) + '</p></div></div>';
+  h += '<div class="panel security-compact"><div class="security-compact-head"><span class="security-compact-icon">' + icon("lock") + '</span><div><p class="opt-section-title">' + (LANG === "es" ? "Seguridad local" : "Local security") + '</p><p class="opt-row-sub">' + (isAndroidShell() ? (LANG === "es" ? "Protegida con el PIN y la huella de la app" : "Protected with the app's PIN and biometrics") : (pinConfigured ? (LANG === "es" ? "PIN activo en este teléfono" : "PIN active on this phone") : (LANG === "es" ? "Protege esta cuenta con 6 dígitos" : "Protect this account with 6 digits"))) + '</p></div></div>';
+  if (isAndroidShell()) {
+    h += '<p class="hint" style="margin:2px 0 0;">' + (LANG === "es" ? "Ya la protege el PIN y la huella nativos de la app — no hace falta configurar nada aquí." : "Already protected by the app's native PIN and biometrics — nothing to set up here.") + '</p>';
+  } else {
   const pinSetupLen = String(state.pinSetupInput || "").length;
   h += '<div class="pin-setup-row compact"><input aria-label="' + (LANG === "es" ? "PIN de 6 dígitos" : "6-digit PIN") + '" id="pin-setup-input" data-scope="pinSetup" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022" value="' + esc(state.pinSetupInput) + '">';
   if (pinSetupLen === 6) h += '<button class="pill-btn confirm" style="margin:10px auto 0;display:block;min-width:150px;padding:9px 20px;font-size:13.5px;text-align:center;" data-action="savePin">' + (pinConfigured ? (LANG === "es" ? "Cambiar" : "Change") : (LANG === "es" ? "Crear PIN" : "Create PIN")) + '</button>';
@@ -258,6 +266,7 @@ function renderOpcionesTab() {
     try { biometricConfigured = !!localStorage.getItem(BIOMETRIC_CRED_KEY); } catch (error) {}
     h += '<div class="security-compact-actions"><button class="pill-btn biometric-btn" data-action="setupBiometric"' + (state.biometricBusy ? " disabled" : "") + '>' + icon("lock") + ' ' + (biometricConfigured ? (LANG === "es" ? "Huella activa" : "Biometrics active") : (LANG === "es" ? "Activar huella" : "Enable biometrics")) + '</button>';
     h += '<button class="pill-btn" data-action="lockApp">' + (LANG === "es" ? "Bloquear" : "Lock") + '</button></div>';
+  }
   }
   h += '</div>';
 

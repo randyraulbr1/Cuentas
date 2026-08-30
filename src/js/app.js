@@ -1004,8 +1004,7 @@ root.addEventListener("click", (e) => {
 (async function boot() {
   try { history.replaceState({ ccTab: "inicio", ccOverlay: null }, ""); } catch (e) {}
   applyTheme(); applyTextSize();
-  const androidShell = new URLSearchParams(location.search).get("app") === "android" ||
-    /305SaveAndroid\//.test(navigator.userAgent);
+  const androidShell = isAndroidShell();
 
   // En el APK la seguridad es nativa (PIN + biometría de Android).
   // La capa web no muestra un segundo bloqueo.

@@ -8,8 +8,8 @@ const fmt2 = (n) => (isFinite(Number(n)) ? Number(n) : 0).toLocaleString(LANG ==
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v168";
-const BUILD_DATE = "30/08 14:15 UTC";
+const APP_VERSION = "v169";
+const BUILD_DATE = "30/08 14:25 UTC";
 
 let uidCounter = 1;
 
@@ -58,6 +58,11 @@ const MESES_EN = ["January","February","March","April","May","June","July","Augu
 
 const monthKey = (d) => { d = d || new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); };
 const dateKeyOf = (d) => { d = (d instanceof Date) ? d : new Date(d); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+function isAndroidShell() {
+  try {
+    return new URLSearchParams(location.search).get("app") === "android" || /305SaveAndroid\//.test(navigator.userAgent);
+  } catch (e) { return false; }
+}
 
 const monthLabel = (key) => { const p = key.split("-").map(Number); const arr = LANG === "es" ? MESES_ES : MESES_EN; return arr[p[1] - 1] + " " + p[0]; };
 

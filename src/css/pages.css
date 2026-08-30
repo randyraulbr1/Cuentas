@@ -400,7 +400,7 @@
 .pin-dots { display: grid; grid-template-columns: repeat(6, 44px); justify-content: center; gap: 8px; margin: 20px 0 22px; }
 .pin-dots span { width: 44px; height: 52px; display: grid; place-items: center; border: 2px solid var(--input-border); border-radius: 12px; background: var(--input-bg); color: var(--text); font-size: 20px; }
 .pin-dots span.filled { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent); }
-.pin-keypad { width: min(100%, 310px); margin: 0 auto 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.pin-keypad { width: min(100%, 340px); margin: 0 auto 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .pin-keypad button { min-height: 58px; border: 1px solid var(--border); border-radius: 16px; background: var(--card-bg-2); color: var(--text); font: 700 24px/1 inherit; box-shadow: none; }
 .pin-keypad button:active { transform: scale(.96); background: var(--pill-bg); }
 .pin-keypad .pin-delete { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; color: var(--negative); font-size: 18px; }
