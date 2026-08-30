@@ -41,10 +41,11 @@ public class MainActivity extends FragmentActivity {
     private static final String KEY_BIOMETRIC = "biometric_enabled";
     private static final String KEY_ATTEMPTS = "failed_attempts";
     private static final String KEY_LOCK_UNTIL = "locked_until";
-    private static final int GREEN = Color.rgb(28, 199, 114);
-    private static final int BG = Color.rgb(8, 10, 15);
-    private static final int CARD = Color.rgb(20, 24, 31);
-    private static final int MUTED = Color.rgb(159, 169, 183);
+    private static final int ACCENT = Color.rgb(45, 51, 59);
+    private static final int BG = Color.rgb(245, 245, 247);
+    private static final int CARD = Color.rgb(237, 237, 240);
+    private static final int TEXT = Color.rgb(10, 10, 10);
+    private static final int MUTED = Color.rgb(107, 107, 107);
 
     private FrameLayout root;
     private WebView webView;
@@ -66,6 +67,11 @@ public class MainActivity extends FragmentActivity {
         }
         getWindow().setStatusBarColor(BG);
         getWindow().setNavigationBarColor(BG);
+        View decor = getWindow().getDecorView();
+        int flags = decor.getSystemUiVisibility();
+        flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        if (android.os.Build.VERSION.SDK_INT >= 26) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+        decor.setSystemUiVisibility(flags);
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         root = new FrameLayout(this);
         root.setBackgroundColor(BG);
@@ -98,7 +104,7 @@ public class MainActivity extends FragmentActivity {
     private void showUnlock() {
         firstPin = null;
         entered = "";
-        buildKeypad("Bienvenido", "Desbloquea 305 Save", "Entrar", true);
+        buildKeypad("Ingresa tu PIN", "PIN local de 6 d\u00edgitos", "Entrar", true);
     }
 
     private void buildKeypad(String heading, String message, String buttonText, boolean unlockMode) {
@@ -128,18 +134,17 @@ public class MainActivity extends FragmentActivity {
         logo.setTextSize(26);
         logo.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         logo.setGravity(Gravity.CENTER);
-        android.graphics.drawable.GradientDrawable logoBg = rounded(BG, dp(17));
-        logoBg.setStroke(dp(2), GREEN);
+        android.graphics.drawable.GradientDrawable logoBg = rounded(ACCENT, dp(17));
         logo.setBackground(logoBg);
         page.addView(logo, linear(dp(60), dp(60), 0, 0, 0, dp(14)));
 
-        title = label(heading, 23, Color.WHITE, true);
+        title = label(heading, 23, TEXT, true);
         page.addView(title, linear(-1, -2, 0, 0, 0, dp(5)));
         subtitle = label(message, 13, MUTED, false);
         subtitle.setGravity(Gravity.CENTER);
         page.addView(subtitle, linear(-1, -2, 0, 0, 0, dp(16)));
 
-        dots = label("○  ○  ○  ○  ○  ○", 24, Color.WHITE, true);
+        dots = label("○  ○  ○  ○  ○  ○", 24, TEXT, true);
         dots.setGravity(Gravity.CENTER);
         dots.setLetterSpacing(0.08f);
         dots.setBackground(rounded(CARD, dp(15)));
@@ -171,6 +176,7 @@ public class MainActivity extends FragmentActivity {
         for (int col = 1; col <= 3; col++) topRow.addView(numberButton(String.valueOf(col)), weightButton());
         Button erase = numberButton("\u232b");
         erase.setContentDescription("Borrar");
+        erase.setTextColor(Color.rgb(224, 60, 49));
         erase.setOnClickListener(v -> eraseDigit());
         topRow.addView(erase, weightButton());
         keypad.addView(topRow, linear(-1, dp(50), 0, 0, 0, dp(6)));
@@ -199,13 +205,13 @@ public class MainActivity extends FragmentActivity {
 
         primaryButton = new Button(this);
         primaryButton.setText(buttonText);
-        primaryButton.setTextColor(Color.rgb(5, 25, 17));
+        primaryButton.setTextColor(Color.WHITE);
         primaryButton.setTextSize(15);
         primaryButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         primaryButton.setAllCaps(false);
         primaryButton.setEnabled(false);
         primaryButton.setAlpha(.45f);
-        primaryButton.setBackground(rounded(GREEN, dp(24)));
+        primaryButton.setBackground(rounded(ACCENT, dp(24)));
         primaryButton.setOnClickListener(v -> {
             if (unlockMode) checkPin();
             else continueSetup();
@@ -216,11 +222,11 @@ public class MainActivity extends FragmentActivity {
             boolean bioEnabled = prefs.getBoolean(KEY_BIOMETRIC, false);
             Button bio = new Button(this);
             bio.setText(bioEnabled ? "Usar huella o rostro" : "Activar huella o rostro");
-            bio.setTextColor(Color.WHITE);
+            bio.setTextColor(TEXT);
             bio.setTextSize(13);
             bio.setAllCaps(false);
             android.graphics.drawable.GradientDrawable bioBg = rounded(CARD, dp(14));
-            bioBg.setStroke(dp(1), Color.rgb(52, 61, 74));
+            bioBg.setStroke(dp(1), Color.rgb(214, 214, 218));
             bio.setBackground(bioBg);
             bio.setOnClickListener(v -> showBiometric(!bioEnabled, false));
             page.addView(bio, linear(-1, dp(44), 0, 0, 0, 0));
@@ -230,7 +236,7 @@ public class MainActivity extends FragmentActivity {
     private Button numberButton(String value) {
         Button button = new Button(this);
         button.setText(value);
-        button.setTextColor(Color.WHITE);
+        button.setTextColor(TEXT);
         button.setTextSize(19);
         button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         button.setAllCaps(false);
@@ -251,7 +257,7 @@ public class MainActivity extends FragmentActivity {
     private void eraseDigit() {
         if (!entered.isEmpty()) entered = entered.substring(0, entered.length() - 1);
         updateDots();
-        subtitle.setText(firstPin == null ? (hasPin() ? "Desbloquea 305 Save" : "Crea un PIN de 6 números") : "Confirma el mismo PIN");
+        subtitle.setText(firstPin == null ? (hasPin() ? "PIN local de 6 d\u00edgitos" : "Crea un PIN de 6 números") : "Confirma el mismo PIN");
         subtitle.setTextColor(MUTED);
     }
 
@@ -284,7 +290,7 @@ public class MainActivity extends FragmentActivity {
             firstPin = null;
             title.setText("Protege tu dinero");
             subtitle.setText("Los PIN no coinciden. Comienza otra vez.");
-            subtitle.setTextColor(Color.rgb(255, 100, 112));
+            subtitle.setTextColor(Color.rgb(200, 40, 40));
             primaryButton.setText("Continuar");
             updateDots();
             return;
@@ -301,7 +307,7 @@ public class MainActivity extends FragmentActivity {
         if (lockUntil > System.currentTimeMillis()) {
             long seconds = (lockUntil - System.currentTimeMillis() + 999) / 1000;
             subtitle.setText("Espera " + (seconds / 60) + ":" + String.format("%02d", seconds % 60));
-            subtitle.setTextColor(Color.rgb(255, 100, 112));
+            subtitle.setTextColor(Color.rgb(200, 40, 40));
             return;
         }
         if (sha256(entered).equals(prefs.getString(KEY_PIN, ""))) {
@@ -317,7 +323,7 @@ public class MainActivity extends FragmentActivity {
             subtitle.setText("3 intentos incorrectos. Espera 5 minutos.");
         } else subtitle.setText("PIN incorrecto. Quedan " + (3 - attempts) + " intentos.");
         edit.apply();
-        subtitle.setTextColor(Color.rgb(255, 100, 112));
+        subtitle.setTextColor(Color.rgb(200, 40, 40));
         entered = "";
         updateDots();
     }
@@ -356,7 +362,7 @@ public class MainActivity extends FragmentActivity {
                 @Override public void onAuthenticationFailed() {
                     super.onAuthenticationFailed();
                     subtitle.setText("No se reconoció. Inténtalo otra vez.");
-                    subtitle.setTextColor(Color.rgb(255, 100, 112));
+                    subtitle.setTextColor(Color.rgb(200, 40, 40));
                 }
             });
         BiometricPrompt.PromptInfo info = new BiometricPrompt.PromptInfo.Builder()
@@ -417,7 +423,7 @@ public class MainActivity extends FragmentActivity {
                 popupRoot.setBackgroundColor(BG);
                 Button closeBtn = new Button(MainActivity.this);
                 closeBtn.setText("\u2715");
-                closeBtn.setTextColor(Color.WHITE);
+                closeBtn.setTextColor(TEXT);
                 closeBtn.setBackground(rounded(CARD, dp(20)));
                 closeBtn.setOnClickListener(v -> dialog.dismiss());
                 FrameLayout.LayoutParams webLp = new FrameLayout.LayoutParams(
