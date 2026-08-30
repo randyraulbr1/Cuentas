@@ -321,6 +321,7 @@ function resetAll() {
 
 function toggleEditGoals() { state.editingGoals = !state.editingGoals; state.confirmDeleteGoalId = null; render(); }
 function addGoal() {
+  if (state.goals.length > 0) return;
   state.goals.push({ id: uid(), nombre: "", montoObjetivo: "", montoActual: "" });
   state.editingGoals = true;
   scheduleSave(); rerenderPreservingFocus();

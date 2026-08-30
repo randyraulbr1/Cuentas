@@ -376,7 +376,7 @@ function renderTrabajoCalendar() {
     const isToday = ds === todayStr;
     const isSelected = state.trabajoCalSelectedDate === ds;
     let style = "aspect-ratio:1/1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;background:var(--bg);border:none;font-family:inherit;color:var(--text);position:relative;";
-    if (worked) style += "background:rgba(52,199,89,0.16);color:#248A3D;";
+    if (worked) style += "background:color-mix(in srgb,var(--accent) 18%,var(--card-bg));color:var(--accent);";
     if (isToday) style += "outline:2px solid var(--accent);outline-offset:-2px;";
     if (isSelected) style += "outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent);color:var(--accent-contrast);";
     h += '<button type="button" style="' + style + '" data-action="trabajoCalSelectDay" data-id="' + ds + '">';
@@ -550,7 +550,11 @@ function renderApp() {
     html += '<div class="summary">';
     html += '<div class="sum-card"><div class="sum-label">' + t("debitoLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(debitoBanco) + '</div><div class="opt-row-sub">' + (state.authToken ? (LANG === "es" ? "Saldo automático del banco" : "Automatic bank balance") : (LANG === "es" ? "Conecta el banco para cargarlo" : "Connect the bank to load it")) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("debesTarjetas") + '</div><div class="sum-val red">' + sym() + fmt0(deudaTarjetas) + '</div></div>';
-    html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div><div class="opt-row-sub">' + (LANG === "es" ? "Ahorro en efectivo" : "Cash savings") + '</div></div>';
+    if (!state.editingAhorro) {
+      html += '<div class="sum-card" style="position:relative;"><button class="icon-pencil" style="position:absolute;top:8px;right:8px;width:24px;height:24px;" data-action="toggleEditAhorro">' + icon("pencil") + '</button><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div><div class="opt-row-sub">' + (LANG === "es" ? "Ahorro en efectivo" : "Cash savings") + '</div></div>';
+    } else {
+      html += '<div class="sum-card" style="position:relative;"><button class="icon-pencil done" style="position:absolute;top:8px;right:8px;width:24px;height:24px;" data-action="toggleEditAhorro">' + icon("check") + '</button><div class="sum-label">' + t("ahorradoActual") + '</div><input type="text" inputmode="decimal" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '" placeholder="0" style="width:100%;font-size:19px;font-weight:800;margin-top:4px;"></div>';
+    }
     html += '</div>';
     html += '<div class="summary">';
     html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
@@ -632,7 +636,7 @@ function renderApp() {
       }
       html += '</div>';
       });
-      if (state.editingGoals) html += '<button class="add-btn" data-action="addGoal">' + t("addGoal") + '</button>';
+      if (state.editingGoals && state.goals.length === 0) html += '<button class="add-btn" data-action="addGoal">' + t("addGoal") + '</button>';
       html += '</div>';
     } else {
       html += '<button class="fab-add" data-action="addGoal">+ ' + t("addGoal") + '</button>';
@@ -1014,10 +1018,10 @@ function renderApp() {
       html += '<div class="goal-field"><label>' + t("pagoHoraLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="18" id="job-pagoHora" value="' + esc(state.job.pagoHora) + '" data-scope="job" data-field="pagoHora"></div>';
       html += '</div>';
       html += '<div class="goal-field" style="margin-top:10px;"><label>' + (LANG === "es" ? "Tipo de ingreso" : "Income type") + '</label><div class="seg" style="width:100%;"><button style="flex:1;" class="' + (state.job.tipoLaboral !== "1099" ? "active" : "") + '" data-action="setJobW2">W-2</button><button style="flex:1;" class="' + (state.job.tipoLaboral === "1099" ? "active" : "") + '" data-action="setJob1099">1099</button></div></div>';
-      html += '<div class="goal-field" style="margin-top:12px;"><label>' + (LANG === "es" ? "Retención estimada" : "Estimated withholding") + ' <b id="job-tax-value">' + porcentajeRetencionTrabajo() + '%</b></label><input id="job-tax-slider" type="range" min="0" max="60" step="1" value="' + porcentajeRetencionTrabajo() + '" style="width:100%;accent-color:var(--positive);"><p class="hint" style="margin:5px 0 0;">' + (LANG === "es" ? "Estimación manual; ajústala según tu recibo de pago." : "Manual estimate; adjust it to your paystub.") + '</p></div>';
+      html += '<div class="goal-field" style="margin-top:12px;"><label>' + (LANG === "es" ? "Retención estimada" : "Estimated withholding") + ' <b id="job-tax-value">' + porcentajeRetencionTrabajo() + '%</b></label><input id="job-tax-slider" type="range" min="0" max="60" step="1" value="' + porcentajeRetencionTrabajo() + '" style="width:100%;accent-color:var(--accent);"><p class="hint" style="margin:5px 0 0;">' + (LANG === "es" ? "Estimación manual; ajústala según tu recibo de pago." : "Manual estimate; adjust it to your paystub.") + '</p></div>';
       html += '<div class="goal-field" style="margin-top:10px;"><label>' + t("pagoDiaLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" placeholder="' + t("limiteOpcionalPh") + '" id="job-pagoDia" value="' + esc(state.job.pagoDia) + '" data-scope="job" data-field="pagoDia"></div>';
       html += '<div class="pay-config"><label>' + t("frecuenciaPagoLbl") + '</label><div class="seg" style="width:100%;">';
-      [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["dosVecesMes", "freqDosVecesMes"], ["mensual", "payMensual"]].forEach((f) => { html += '<button style="flex:1;" class="' + (state.job.frecuenciaPago === f[0] ? "active" : "") + '" data-action="setJobFrecuencia" data-freq="' + f[0] + '">' + t(f[1]) + '</button>'; });
+      [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["mensual", "payMensual"]].forEach((f) => { html += '<button style="flex:1;" class="' + (state.job.frecuenciaPago === f[0] ? "active" : "") + '" data-action="setJobFrecuencia" data-freq="' + f[0] + '">' + t(f[1]) + '</button>'; });
       html += '</div></div>';
       html += '<div class="goal-grid" style="margin-top:8px;">';
       html += '<div class="goal-field"><label>' + t("horasExtraDespuesLbl") + '</label><input type="text" inputmode="decimal" placeholder="40" id="job-horasExtraDespues" value="' + esc(state.job.horasExtraDespues) + '" data-scope="job" data-field="horasExtraDespues"></div>';

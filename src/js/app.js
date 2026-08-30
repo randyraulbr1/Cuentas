@@ -498,6 +498,7 @@ root.addEventListener("input", (e) => {
   if (scope === "ingreso") { state.ingreso = sanitizeNum(el.value); scheduleSave(); return; }
   if (scope === "agregarTurno") { state.agregarTurnoForm[el.dataset.field] = el.value; rerenderPreservingFocus(); return; }
   if (scope === "trabajoCalHoras") { state.trabajoCalHorasInput = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
+  if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
   if (scope === "cash") { state.cash = sanitizeNum(el.value); scheduleSave(); return; }
   if (scope === "apiBaseUrl") { state.apiBaseUrl = el.value.trim(); saveSettings(); rerenderPreservingFocus(); return; }
   if (scope === "authEmail") { state.authEmail = el.value; rerenderPreservingFocus(); return; }
@@ -605,15 +606,20 @@ root.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target && e
 /* Deslizar para confirmar (empezar break / terminar trabajo) */
 let slideDrag = null;
 root.addEventListener("pointerdown", (e) => {
-  const handle = e.target.closest(".slide-handle");
-  if (!handle) return;
-  const track = handle.closest(".slide-track");
-  const wrap = handle.closest(".slide-confirm");
-  if (!track || !wrap) return;
+  const wrap = e.target.closest(".slide-confirm");
+  if (!wrap) return;
+  const track = wrap.querySelector(".slide-track");
+  const handle = wrap.querySelector(".slide-handle");
+  if (!track || !handle) return;
   const trackRect = track.getBoundingClientRect();
   const maxX = Math.max(trackRect.width - handle.offsetWidth - 6, 10);
-  slideDrag = { handle, track, wrap, maxX, startX: e.clientX };
   handle.style.transition = "";
+  slideDrag = { handle, track, wrap, maxX, startX: e.clientX };
+  if (!e.target.closest(".slide-handle")) {
+    const jumpLeft = Math.min(Math.max(e.clientX - trackRect.left - handle.offsetWidth / 2, 3), maxX);
+    handle.style.left = jumpLeft + "px";
+    slideDrag.startX = e.clientX - (jumpLeft - 3);
+  }
   try { handle.setPointerCapture(e.pointerId); } catch (err) {}
   window.__slideDragging = true;
 });

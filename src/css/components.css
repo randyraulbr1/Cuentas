@@ -56,15 +56,15 @@ select { background: var(--input-bg); border: 1px solid var(--input-border); bor
 .sub-row-cat select { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 13px; padding: 8px 9px; font-family: inherit; margin-top: 2px; }
 .sub-row:last-of-type { border-bottom: none; }
 .sub-row input { min-width: 0; width: 100%; }
-input[type=text] { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 14px; padding: 9px 10px; font-family: inherit; }
+input[type=text], input[type=search] { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 14px; padding: 9px 10px; font-family: inherit; -webkit-appearance: none; appearance: none; }
 input[type=date] { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; color: var(--text); font-size: 13.5px; padding: 8px 9px; font-family: inherit; }
-input[type=text]:focus, input[type=date]:focus { outline: none; border-color: var(--accent); }
+input[type=text]:focus, input[type=search]:focus, input[type=date]:focus { outline: none; border-color: var(--accent); }
 input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .icon-del { background: var(--input-bg); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; line-height: 1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 .icon-del:hover { background: #FFE5E3; color: #FF3B30; }
 .icon-pencil { background: var(--input-bg); border: none; color: var(--text-muted); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 14px; line-height: 1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 .icon-pencil:hover { background: #EAF3FF; color: var(--accent); }
-.icon-pencil.done { background: #E3F8E9; color: #248A3D; font-size: 16px; font-weight: 800; }
+.icon-pencil.done{background:color-mix(in srgb,var(--accent) 22%,var(--card-bg));color:var(--accent);border-color:color-mix(in srgb,var(--accent) 46%,var(--border));font-size:16px;font-weight:800}
 .confirm-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; flex-wrap: wrap; }
 .confirm-row span { font-size: 13px; color: var(--text-muted); flex: 1 1 140px; }
 .confirm-row-btns { display: flex; gap: 8px; flex-shrink: 0; }
@@ -212,11 +212,11 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .work-btn { padding:14px 8px; border-radius:14px; border:none; background:var(--pill-bg); color:var(--text); font-weight:700; font-size:12.5px; font-family:inherit; cursor:pointer; min-height:48px; }
 .work-btn:disabled { opacity:.32; cursor:default; }
 .slide-confirm { position:relative; }
-.slide-track { position:relative; height:48px; border-radius:14px; background:rgba(52,199,89,0.14); overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.slide-track { position:relative; height:48px; border-radius:14px; background:color-mix(in srgb,var(--accent) 14%,var(--card-bg)); overflow:hidden; display:flex; align-items:center; justify-content:center; }
 .slide-danger .slide-track { background:rgba(255,59,48,0.14); }
 .slide-label { font-size:11px; font-weight:700; color:var(--text-muted); pointer-events:none; padding:0 44px 0 6px; text-align:center; }
-.slide-handle { position:absolute; left:3px; top:3px; width:42px; height:42px; border-radius:11px; background:#34C759; color:#fff; display:flex; align-items:center; justify-content:center; touch-action:none; cursor:grab; }
-.slide-danger .slide-handle { background:#FF3B30; }
+.slide-handle { position:absolute; left:3px; top:3px; width:42px; height:42px; border-radius:11px; background:var(--accent); color:var(--accent-contrast); display:flex; align-items:center; justify-content:center; touch-action:none; cursor:grab; }
+.slide-danger .slide-handle { background:#FF3B30; color:#fff; }
 .slide-big .slide-track { height:64px; border-radius:18px; }
 .slide-big .slide-handle { width:58px; height:58px; border-radius:15px; }
 .slide-big .slide-label { font-size:13px; }
