@@ -250,7 +250,7 @@ function renderOpcionesTab() {
   h += '<div class="panel security-compact"><div class="security-compact-head"><span class="security-compact-icon">' + icon("lock") + '</span><div><p class="opt-section-title">' + (LANG === "es" ? "Seguridad local" : "Local security") + '</p><p class="opt-row-sub">' + (pinConfigured ? (LANG === "es" ? "PIN activo en este teléfono" : "PIN active on this phone") : (LANG === "es" ? "Protege esta cuenta con 6 dígitos" : "Protect this account with 6 digits")) + '</p></div></div>';
   const pinSetupLen = String(state.pinSetupInput || "").length;
   h += '<div class="pin-setup-row compact"><input aria-label="' + (LANG === "es" ? "PIN de 6 dígitos" : "6-digit PIN") + '" id="pin-setup-input" data-scope="pinSetup" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022" value="' + esc(state.pinSetupInput) + '">';
-  if (pinSetupLen === 6) h += '<button class="pill-btn confirm wide" style="margin-top:8px;" data-action="savePin">' + (pinConfigured ? (LANG === "es" ? "Cambiar" : "Change") : (LANG === "es" ? "Crear PIN" : "Create PIN")) + '</button>';
+  if (pinSetupLen === 6) h += '<button class="pill-btn confirm" style="margin:10px auto 0;display:block;min-width:150px;padding:9px 20px;font-size:13.5px;text-align:center;" data-action="savePin">' + (pinConfigured ? (LANG === "es" ? "Cambiar" : "Change") : (LANG === "es" ? "Crear PIN" : "Create PIN")) + '</button>';
   h += '</div>';
   if (state.pinError) h += '<p class="pin-error">' + esc(state.pinError) + '</p>';
   if (pinConfigured) {

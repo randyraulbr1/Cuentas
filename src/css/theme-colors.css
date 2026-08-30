@@ -160,7 +160,7 @@
 .paid-check.checked, .pay-trigger { background: var(--accent); border-color: var(--accent); }
 .util-bar-fill.verde { background: var(--positive); }
 .util-bar-fill.rojo { background: var(--negative); }
-.status-pill.verde { background: var(--positive); color: #FFFFFF; }
+.status-pill.verde { background: var(--accent); color: var(--accent-contrast); }
 .status-pill.rojo { background: var(--negative); color: #FFFFFF; }
 .rule-msg.bien { background: var(--positive); color: #FFFFFF; }
 .rule-msg.mal { background: var(--negative); color: #FFFFFF; }

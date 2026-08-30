@@ -492,7 +492,7 @@ root.addEventListener("input", (e) => {
     scheduleSave();
     return;
   }
-  if (el.dataset.scope === "pinSetup") { state.pinSetupInput = el.value.replace(/\D/g, "").slice(0, 6); state.pinError = ""; return; }
+  if (el.dataset.scope === "pinSetup") { state.pinSetupInput = el.value.replace(/\D/g, "").slice(0, 6); state.pinError = ""; rerenderPreservingFocus(); return; }
   if (el.dataset.scope === "pinUnlock") { state.pinInput = el.value.replace(/\D/g, "").slice(0, 6); state.pinError = ""; return; }
   const scope = el.dataset.scope;
   if (!scope) return;
@@ -729,18 +729,23 @@ root.addEventListener("pointerdown", (e) => {
   const strip = document.getElementById("nav-order-strip");
   if (!strip) return;
   const rect = item.getBoundingClientRect();
-  navDrag = { item, strip, startX: e.clientX };
+  navDrag = { item, strip, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top, width: rect.width, height: rect.height, left: rect.left, top: rect.top };
   item.classList.add("dragging");
-  item.style.position = "relative";
-  item.style.zIndex = "5";
+  item.style.position = "fixed";
+  item.style.left = rect.left + "px";
+  item.style.top = rect.top + "px";
   item.style.width = rect.width + "px";
+  item.style.height = rect.height + "px";
+  item.style.margin = "0";
   try { item.setPointerCapture(e.pointerId); } catch (err) {}
   window.__navDragging = true;
 });
 root.addEventListener("pointermove", (e) => {
   if (!navDrag) return;
-  const dx = e.clientX - navDrag.startX;
-  navDrag.item.style.transform = "translateX(" + dx + "px)";
+  const left = e.clientX - navDrag.offsetX;
+  const top = e.clientY - navDrag.offsetY;
+  navDrag.item.style.left = left + "px";
+  navDrag.item.style.top = top + "px";
   navDrag.item.style.pointerEvents = "none";
   const target = document.elementFromPoint(e.clientX, e.clientY);
   navDrag.item.style.pointerEvents = "";
@@ -750,18 +755,19 @@ root.addEventListener("pointermove", (e) => {
     const sibCenter = r.left + r.width / 2;
     if (e.clientX < sibCenter) navDrag.strip.insertBefore(navDrag.item, sib);
     else navDrag.strip.insertBefore(navDrag.item, sib.nextSibling);
-    navDrag.item.style.transform = "translateX(0px)";
-    navDrag.startX = e.clientX;
   }
 });
 function endNavDrag() {
   if (!navDrag) return;
   const strip = navDrag.strip;
   navDrag.item.classList.remove("dragging");
-  navDrag.item.style.transform = "";
   navDrag.item.style.position = "";
-  navDrag.item.style.zIndex = "";
+  navDrag.item.style.left = "";
+  navDrag.item.style.top = "";
   navDrag.item.style.width = "";
+  navDrag.item.style.height = "";
+  navDrag.item.style.margin = "";
+  navDrag.item.style.zIndex = "";
   const order = Array.from(strip.children).map((el) => el.dataset.id);
   state.navOrderDraft = order;
   navDrag = null;
