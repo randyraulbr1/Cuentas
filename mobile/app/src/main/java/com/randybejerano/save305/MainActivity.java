@@ -147,7 +147,7 @@ public class MainActivity extends FragmentActivity {
         dots = label("○  ○  ○  ○  ○  ○", 24, TEXT, true);
         dots.setGravity(Gravity.CENTER);
         dots.setLetterSpacing(0.08f);
-        dots.setBackground(rounded(CARD, dp(15)));
+        dots.setBackground(roundedBordered(CARD, dp(15), Color.rgb(224, 224, 228)));
         if (!unlockMode) {
             FrameLayout dotsWrap = new FrameLayout(this);
             dotsWrap.addView(dots, new FrameLayout.LayoutParams(
@@ -212,6 +212,7 @@ public class MainActivity extends FragmentActivity {
         primaryButton.setEnabled(false);
         primaryButton.setAlpha(.45f);
         primaryButton.setBackground(rounded(ACCENT, dp(24)));
+        primaryButton.setStateListAnimator(null); primaryButton.setElevation(0);
         primaryButton.setOnClickListener(v -> {
             if (unlockMode) checkPin();
             else continueSetup();
@@ -228,6 +229,7 @@ public class MainActivity extends FragmentActivity {
             android.graphics.drawable.GradientDrawable bioBg = rounded(CARD, dp(14));
             bioBg.setStroke(dp(1), Color.rgb(214, 214, 218));
             bio.setBackground(bioBg);
+            bio.setStateListAnimator(null); bio.setElevation(0);
             bio.setOnClickListener(v -> showBiometric(!bioEnabled, false));
             page.addView(bio, linear(-1, dp(44), 0, 0, 0, 0));
         }
@@ -240,7 +242,8 @@ public class MainActivity extends FragmentActivity {
         button.setTextSize(19);
         button.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         button.setAllCaps(false);
-        button.setBackground(rounded(CARD, dp(17)));
+        button.setBackground(roundedBordered(CARD, dp(17), Color.rgb(224, 224, 228)));
+        button.setStateListAnimator(null); button.setElevation(0);
         button.setOnClickListener(v -> addDigit(value));
         LinearLayout.LayoutParams lp = weightButton();
         lp.setMargins(dp(4), 0, dp(4), 0);
@@ -532,6 +535,12 @@ public class MainActivity extends FragmentActivity {
         return drawable;
     }
 
+    private android.graphics.drawable.GradientDrawable roundedBordered(int color, int radius, int strokeColor) {
+        android.graphics.drawable.GradientDrawable drawable = rounded(color, radius);
+        drawable.setStroke(dp(1), strokeColor);
+        return drawable;
+    }
+
     private LinearLayout.LayoutParams linear(int width, int height, int l, int t, int r, int b) {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width, height);
         lp.setMargins(dp(l), dp(t), dp(r), dp(b));
@@ -579,13 +588,55 @@ public class MainActivity extends FragmentActivity {
     }
 
     private void showChangePinWarning() {
-        new android.app.AlertDialog.Builder(this)
-            .setTitle("Cambiar PIN")
-            .setMessage("Por seguridad, cambiar el PIN borra todos los datos guardados en este telefono (bancos, pagos, turnos, tarjetas). Vas a tener que conectar tu banco de nuevo. Esto evita que alguien que no sepa tu PIN pueda \"cambiarlo\" para ver tus datos.\n\n\u00bfContinuar?")
-            .setNegativeButton("Cancelar", null)
-            .setPositiveButton("S\u00ed, borrar y cambiar PIN", (dialog, which) -> wipeAndChangePin())
-            .setCancelable(true)
-            .show();
+        android.app.Dialog dialog = new android.app.Dialog(this, android.R.style.Theme_Translucent_NoTitleBar);
+        FrameLayout overlay = new FrameLayout(this);
+        overlay.setBackgroundColor(Color.argb(140, 0, 0, 0));
+
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackground(rounded(BG, dp(20)));
+        card.setPadding(dp(22), dp(22), dp(22), dp(20));
+        FrameLayout.LayoutParams cardLp = new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        cardLp.gravity = Gravity.CENTER;
+        cardLp.leftMargin = dp(28); cardLp.rightMargin = dp(28);
+        overlay.addView(card, cardLp);
+
+        TextView title = label("Cambiar PIN", 19, TEXT, true);
+        card.addView(title, linear(-1, -2, 0, 0, 0, dp(10)));
+
+        TextView msg = label("Por seguridad, cambiar el PIN borra todos los datos guardados en este tel\u00e9fono (bancos, pagos, turnos, tarjetas). Vas a tener que conectar tu banco de nuevo. Esto evita que alguien que no sepa tu PIN pueda \"cambiarlo\" para ver tus datos.", 14, MUTED, false);
+        msg.setLineSpacing(dp(3), 1f);
+        card.addView(msg, linear(-1, -2, 0, 0, 0, dp(20)));
+
+        Button confirmBtn = new Button(this);
+        confirmBtn.setText("S\u00ed, borrar y cambiar PIN");
+        confirmBtn.setTextColor(Color.WHITE);
+        confirmBtn.setTextSize(14);
+        confirmBtn.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        confirmBtn.setAllCaps(false);
+        confirmBtn.setBackground(rounded(Color.rgb(200, 40, 40), dp(24)));
+        confirmBtn.setStateListAnimator(null); confirmBtn.setElevation(0);
+        confirmBtn.setOnClickListener(v -> { dialog.dismiss(); wipeAndChangePin(); });
+        card.addView(confirmBtn, linear(-1, dp(46), 0, 0, 0, dp(10)));
+
+        Button cancelBtn = new Button(this);
+        cancelBtn.setText("Cancelar");
+        cancelBtn.setTextColor(TEXT);
+        cancelBtn.setTextSize(14);
+        cancelBtn.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        cancelBtn.setAllCaps(false);
+        cancelBtn.setBackground(rounded(CARD, dp(24)));
+        cancelBtn.setStateListAnimator(null); cancelBtn.setElevation(0);
+        cancelBtn.setOnClickListener(v -> dialog.dismiss());
+        card.addView(cancelBtn, linear(-1, dp(46), 0, 0, 0, 0));
+
+        dialog.setContentView(overlay);
+        dialog.setCancelable(true);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        }
+        dialog.show();
     }
 
     private void wipeAndChangePin() {
