@@ -555,9 +555,9 @@ function renderApp() {
     } else {
       html += '<div class="sum-card" style="position:relative;"><button class="icon-pencil done" style="position:absolute;top:8px;right:8px;width:24px;height:24px;" data-action="toggleEditAhorro">' + icon("check") + '</button><div class="sum-label">' + t("ahorradoActual") + '</div><input type="text" inputmode="decimal" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '" placeholder="0" style="width:100%;font-size:19px;font-weight:800;margin-top:4px;"></div>';
     }
+    html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
     html += '</div>';
     html += '<div class="summary">';
-    html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
     if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
     if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + (np.ajustado ? ' ' + icon("pencil") : "") + '</div></div>';
     html += '</div>';
@@ -614,8 +614,12 @@ function renderApp() {
       html += '</div>';
     }
 
-    if (state.goals.length > 0 || state.editingGoals) {
-      html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("objetivosTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("objetivosHint") + '</p></div><button class="icon-pencil' + (state.editingGoals ? " done" : "") + '" data-action="toggleEditGoals">' + (state.editingGoals ? icon("check") : icon("pencil")) + '</button></div>';
+    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("objetivosTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("objetivosHint") + '</p></div>';
+    if (state.goals.length === 0) {
+      html += '<button class="icon-pencil" data-action="addGoal">' + icon("plus") + '</button></div>';
+      html += '<div class="empty-state">' + (LANG === "es" ? "Aún no tienes una meta de ahorro." : "You don't have a savings goal yet.") + '</div>';
+    } else {
+      html += '<button class="icon-pencil' + (state.editingGoals ? " done" : "") + '" data-action="toggleEditGoals">' + (state.editingGoals ? icon("check") : icon("pencil")) + '</button></div>';
       state.goals.forEach((g) => {
       const objetivo = toNum(g.montoObjetivo);
       const actual = Math.min(toNum(state.ahorroActual), objetivo);
@@ -636,11 +640,8 @@ function renderApp() {
       }
       html += '</div>';
       });
-      if (state.editingGoals && state.goals.length === 0) html += '<button class="add-btn" data-action="addGoal">' + t("addGoal") + '</button>';
-      html += '</div>';
-    } else {
-      html += '<button class="fab-add" data-action="addGoal">+ ' + t("addGoal") + '</button>';
     }
+    html += '</div>';
 
   }
 

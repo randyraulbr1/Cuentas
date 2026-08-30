@@ -1,4 +1,4 @@
-const CACHE = "cuentas-claras-v160"
+const CACHE = "cuentas-claras-v161"
 const ASSETS = [
   "./",
   "./index.html",
@@ -13,12 +13,12 @@ const ASSETS = [
   "./src/css/base.css?v=v160",
   "./src/css/components.css?v=v160",
   "./src/css/pages.css?v=v157",
-  "./src/css/theme-colors.css?v=v107",
+  "./src/css/theme-colors.css?v=v161",
   "./src/js/icons.js?v=v95",
   "./src/js/i18n.js?v=v129",
   "./src/js/storage.js?v=v139",
   "./src/js/migrations.js?v=v86",
-  "./src/js/state.js?v=v160",
+  "./src/js/state.js?v=v161",
   "./src/js/calculations.js?v=v133",
   "./src/js/categories.js?v=v86",
   "./src/js/work.js?v=v126",
@@ -28,9 +28,9 @@ const ASSETS = [
   "./src/js/plaid-link.js?v=v86",
   "./src/js/history.js?v=v86",
   "./src/js/recommendations.js?v=v155",
-  "./src/js/render.js?v=v160",
+  "./src/js/render.js?v=v161",
   "./src/js/app.js?v=v160",
-  "./src/js/theme-colors.js?v=v145",
+  "./src/js/theme-colors.js?v=v161",
 ];
 
 self.addEventListener("message", (event) => {

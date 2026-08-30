@@ -87,9 +87,12 @@
   display: grid;
   grid-template-columns: repeat(5, 32px);
   align-items: center;
-  gap: 8px;
-  justify-content: end;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 4px;
 }
+.theme-color-trigger { display: flex; align-items: center; gap: 8px; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 10px; padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; font-family: inherit; }
+.theme-color-trigger-swatch { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--card-bg); outline: 1px solid var(--border); flex-shrink: 0; }
 .theme-color-btn {
   width: 32px;
   height: 32px;

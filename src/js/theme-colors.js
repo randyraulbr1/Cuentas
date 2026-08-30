@@ -26,6 +26,13 @@
       btn.classList.toggle("active", active);
       btn.setAttribute("aria-pressed", active ? "true" : "false");
     });
+    const trigger = document.querySelector(".theme-color-trigger");
+    if (trigger) {
+      const swatch = trigger.querySelector(".theme-color-trigger-swatch");
+      if (swatch) swatch.style.background = COLORS[theme] || COLORS.black;
+      const label = trigger.querySelector(".theme-color-trigger-label");
+      if (label) label.textContent = choiceLabel(theme);
+    }
   }
 
   function labelText() {
@@ -42,7 +49,7 @@
 
   function injectPicker() {
     const root = document.getElementById("root");
-    if (!root || document.querySelector(".theme-color-picker")) return;
+    if (!root || document.querySelector(".theme-color-trigger")) return;
 
     const titles = Array.from(root.querySelectorAll(".opt-section-title"));
     const prefTitle = titles.find((el) => {
@@ -63,23 +70,50 @@
 
     const row = document.createElement("div");
     row.className = "opt-row theme-color-row";
-    row.innerHTML = '<span class="opt-row-label">' + labelText() + '</span><div class="theme-color-picker" role="group" aria-label="' + labelText() + '"></div>';
-
-    const picker = row.querySelector(".theme-color-picker");
     const current = loadAccentTheme();
+    row.innerHTML = '<span class="opt-row-label">' + labelText() + '</span>' +
+      '<button type="button" class="theme-color-trigger"><span class="theme-color-trigger-swatch" style="background:' + (COLORS[current] || COLORS.black) + '"></span><span class="theme-color-trigger-label">' + choiceLabel(current) + '</span></button>';
+
+    row.querySelector(".theme-color-trigger").addEventListener("click", openColorSheet);
+
+    if (themeRow && themeRow.nextSibling) panel.insertBefore(row, themeRow.nextSibling);
+    else panel.appendChild(row);
+  }
+
+  function openColorSheet() {
+    if (document.querySelector(".theme-color-overlay")) return;
+    const overlay = document.createElement("div");
+    overlay.className = "options-overlay theme-color-overlay";
+    const sheet = document.createElement("div");
+    sheet.className = "options-sheet";
+    const current = loadAccentTheme();
+    sheet.innerHTML = '<div class="options-head"><h2>' + labelText() + '</h2><button type="button" class="options-close">\u2715</button></div>' +
+      '<div class="theme-color-picker" role="group" aria-label="' + labelText() + '"></div>';
+    const picker = sheet.querySelector(".theme-color-picker");
     THEMES.forEach((name) => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "theme-color-btn" + (name === current ? " active" : "");
       btn.dataset.accentChoice = name;
       btn.title = choiceLabel(name);
-      btn.setAttribute("aria-label", choiceLabel(name)); btn.style.background = COLORS[name] || COLORS.black;
+      btn.setAttribute("aria-label", choiceLabel(name));
+      btn.style.background = COLORS[name] || COLORS.black;
       btn.setAttribute("aria-pressed", name === current ? "true" : "false");
+      btn.addEventListener("click", () => {
+        applyAccentTheme(name, true);
+        closeColorSheet();
+      });
       picker.appendChild(btn);
     });
+    overlay.appendChild(sheet);
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) closeColorSheet(); });
+    sheet.querySelector(".options-close").addEventListener("click", closeColorSheet);
+    document.body.appendChild(overlay);
+  }
 
-    if (themeRow && themeRow.nextSibling) panel.insertBefore(row, themeRow.nextSibling);
-    else panel.appendChild(row);
+  function closeColorSheet() {
+    const overlay = document.querySelector(".theme-color-overlay");
+    if (overlay) overlay.remove();
   }
 
   applyAccentTheme(loadAccentTheme(), false);
