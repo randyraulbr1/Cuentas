@@ -554,7 +554,6 @@ function renderApp() {
     html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val blue">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
     html += '</div>';
     html += '<div class="summary">';
-    if (t2.cardsConLimite.length > 0 || t2.cloudCardsConLimite.length > 0) html += '<div class="sum-card"><div class="sum-label">' + t("creditoDisponible") + '</div><div class="sum-val green">' + sym() + fmt0(t2.creditoDisponible) + '</div></div>';
     if (np) html += '<div class="sum-card"><div class="sum-label">' + t("proximoPago") + '</div><div class="sum-val blue" style="font-size:16px;">' + esc(diasLabel(np.diffDays)) + '</div><div class="opt-row-sub">' + esc(formatDate(np.date)) + (np.ajustado ? ' ' + icon("pencil") : "") + '</div></div>';
     html += '</div>';
 
@@ -897,7 +896,7 @@ function renderApp() {
       if (totalLimiteTodas > 0) {
         html += '<div style="text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">';
         html += '<span class="hint" style="display:block;margin-bottom:2px;">' + t("creditoDisponible") + '</span>';
-        html += '<b style="font-size:26px;font-weight:800;color:var(--positive);">' + sym() + fmt0(totalDisponibleTodas) + '</b>';
+        html += '<b style="font-size:26px;font-weight:800;color:var(--accent);">' + sym() + fmt0(totalDisponibleTodas) + '</b>';
         html += '</div>';
       }
       html += '</div></div>';
@@ -909,7 +908,7 @@ function renderApp() {
       html += '<div class="empty-state">' + (LANG === "es" ? "Conecta una tarjeta bancaria para ver su análisis." : "Connect a bank card to see its analysis.") + '</div>';
     } else {
       html += '<div class="card-stat-grid">';
-      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Deuda total" : "Total debt") + '</span><b>' + sym() + fmt0(totalCardBalance) + '</b></div>';
+      html += '<div class="card-stat"><span>' + (LANG === "es" ? "Deuda total" : "Total debt") + '</span><b style="color:var(--negative);">' + sym() + fmt0(totalCardBalance) + '</b></div>';
       html += '<div class="card-stat"><span>' + (LANG === "es" ? "Utilización total" : "Total utilization") + '</span><b class="' + (overallUtilization != null && overallUtilization >= 50 ? "bad" : overallUtilization != null && overallUtilization >= 30 ? "warn" : "good") + '">' + (overallUtilization == null ? "—" : Math.round(overallUtilization) + "%") + '</b></div>';
       html += '<div class="card-stat"><span>' + (LANG === "es" ? "Mínimos del mes" : "Monthly minimums") + '</span><b>' + sym() + fmt0(totalMinimum) + '</b></div>';
       html += '<div class="card-stat"><span>' + (LANG === "es" ? "Interés mensual estimado" : "Estimated monthly interest") + '</span><b class="bad">' + sym() + fmt0(totalInterestMonth) + '</b></div>';
@@ -1068,7 +1067,9 @@ function renderApp() {
       html += '<div class="panel"><div class="mini-total"><span>' + (LANG === "es" ? "Costo mensual estimado" : "Estimated monthly cost") + '</span><b>' + sym() + fmt2(subscriptionInsights.suscripcionesTotalMensual) + '</b></div>';
       if (!activeSubscriptions.length) html += '<div class="empty-state">' + (LANG === "es" ? "Aún no hay cargos recurrentes suficientes para confirmar." : "There are not enough recurring charges to confirm yet.") + '</div>';
       activeSubscriptions.forEach((s) => {
-        html += '<div class="sub-row-locked"><span class="locked-name">' + esc(s.nombre) + '<small style="display:block;color:var(--text-muted);font-weight:600;">' + esc(s.frecuencia) + ' · ' + (s.diasFaltan >= 0 ? (LANG === "es" ? "en " : "in ") + s.diasFaltan + (LANG === "es" ? " días" : " days") : (LANG === "es" ? "fecha estimada vencida" : "estimated date passed")) + '</small></span><span><b>' + sym() + fmt2(s.monto) + '</b><button class="pill-btn sub-add-trigger" style="display:block;margin-top:6px;" data-action="addDetectedSubscription" data-id="' + esc(s.key) + '">' + (LANG === "es" ? "Agregar a suscripciones y pagos fijos" : "Add to subscriptions and fixed payments") + '</button><button class="pill-btn" style="display:block;margin-top:5px;" data-action="marcarNoSuscripcion" data-id="' + esc(s.key) + '">' + (LANG === "es" ? "No es suscripción" : "Not a subscription") + '</button></span></div>';
+        html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(s.nombre) + '</span><span class="locked-amount">' + sym() + fmt2(s.monto) + '</span></div>';
+        html += '<p class="opt-row-sub" style="margin:2px 0 10px;">' + esc(s.frecuencia) + ' · ' + (s.diasFaltan >= 0 ? (LANG === "es" ? "en " : "in ") + s.diasFaltan + (LANG === "es" ? " días" : " days") : (LANG === "es" ? "fecha estimada vencida" : "estimated date passed")) + '</p>';
+        html += '<div style="display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="addDetectedSubscription" data-id="' + esc(s.key) + '">' + (LANG === "es" ? "Agregar" : "Add") + '</button><button class="pill-btn" style="flex:1;" data-action="marcarNoSuscripcion" data-id="' + esc(s.key) + '">' + (LANG === "es" ? "No es suscripción" : "Not a subscription") + '</button></div></div>';
       });
       html += '</div>';
     }
@@ -1139,6 +1140,17 @@ function renderApp() {
     html += '</div>';
     html += renderCashflowChart(buildCashflowBuckets(state.cashflowPeriod));
     html += '</div>';
+
+    if (state.subs.length > 0) {
+      const subsAnual = state.subs.map((s) => ({ nombre: s.nombre || t("subNombrePh"), anual: toNum(s.monto) * 12 })).sort((a, b) => b.anual - a.anual);
+      const totalAnual = subsAnual.reduce((sum, s) => sum + s.anual, 0);
+      html += '<div class="panel"><h2>' + (LANG === "es" ? "Suscripciones al año" : "Subscriptions per year") + '</h2>';
+      html += '<div class="mini-total"><span>' + (LANG === "es" ? "Total al año" : "Total per year") + '</span><b>' + sym() + fmt0(totalAnual) + '</b></div>';
+      subsAnual.forEach((s) => {
+        html += '<div class="sub-row-locked"><span class="locked-name">' + esc(s.nombre) + '</span><span class="locked-amount">' + sym() + fmt0(s.anual) + '/' + (LANG === "es" ? "año" : "yr") + '</span></div>';
+      });
+      html += '</div>';
+    }
 
   }
 

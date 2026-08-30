@@ -23,6 +23,7 @@ async function enterProfile(id) {
   state.notasTransacciones = d.notasTransacciones || {};
   state.suscripcionesManuales = d.suscripcionesManuales || [];
   state.suscripcionesFrecuencia = d.suscripcionesFrecuencia || {};
+  state.suscripcionesIgnoradas = d.suscripcionesIgnoradas || [];
   state.gastosFijosReconocidos = d.gastosFijosReconocidos || [];
   // Migra los pagos fijos bancarios antiguos a la lista principal editable.
   state.gastosFijosReconocidos.forEach((gf) => {

@@ -157,7 +157,7 @@
 .sum-val.red, .debt-cell b.rojo, .debt-warn, .pill-btn.danger,
 .delete-link, .history-del:hover { color: var(--negative); }
 .debt-warn { background: var(--negative-soft); }
-.paid-check.checked, .pay-trigger { background: var(--positive); border-color: var(--positive); }
+.paid-check.checked, .pay-trigger { background: var(--accent); border-color: var(--accent); }
 .util-bar-fill.verde { background: var(--positive); }
 .util-bar-fill.rojo { background: var(--negative); }
 .status-pill.verde { background: var(--positive); color: #FFFFFF; }
