@@ -43,6 +43,7 @@ public class MainActivity extends FragmentActivity {
     private static final String KEY_LOCK_UNTIL = "locked_until";
     private static final int ACCENT = Color.rgb(45, 51, 59);
     private static final int BG = Color.rgb(245, 245, 247);
+    private static final int CARD_WHITE = Color.rgb(255, 255, 255);
     private static final int CARD = Color.rgb(237, 237, 240);
     private static final int TEXT = Color.rgb(10, 10, 10);
     private static final int MUTED = Color.rgb(107, 107, 107);
@@ -116,13 +117,15 @@ public class MainActivity extends FragmentActivity {
         root.addView(scroll, scrollLp);
 
         FrameLayout centerWrap = new FrameLayout(this);
+        centerWrap.setPadding(dp(18), dp(18), dp(18), dp(18));
         scroll.addView(centerWrap, new android.widget.ScrollView.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         LinearLayout page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
         page.setGravity(Gravity.CENTER_HORIZONTAL);
-        page.setPadding(dp(24), dp(16), dp(24), dp(16));
+        page.setBackground(roundedBordered(CARD_WHITE, dp(24), Color.rgb(230, 230, 233)));
+        page.setPadding(dp(24), dp(26), dp(24), dp(22));
         FrameLayout.LayoutParams pageLp = new FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         pageLp.gravity = Gravity.CENTER;
@@ -131,27 +134,27 @@ public class MainActivity extends FragmentActivity {
         TextView logo = new TextView(this);
         logo.setText("$");
         logo.setTextColor(Color.WHITE);
-        logo.setTextSize(26);
+        logo.setTextSize(24);
         logo.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         logo.setGravity(Gravity.CENTER);
-        android.graphics.drawable.GradientDrawable logoBg = rounded(ACCENT, dp(17));
+        android.graphics.drawable.GradientDrawable logoBg = rounded(ACCENT, dp(15));
         logo.setBackground(logoBg);
-        page.addView(logo, linear(dp(60), dp(60), 0, 0, 0, dp(14)));
+        page.addView(logo, linear(dp(52), dp(52), 0, 0, 0, dp(10)));
 
-        title = label(heading, 23, TEXT, true);
-        page.addView(title, linear(-1, -2, 0, 0, 0, dp(5)));
-        subtitle = label(message, 13, MUTED, false);
+        title = label(heading, 21, TEXT, true);
+        page.addView(title, linear(-1, -2, 0, 0, 0, dp(4)));
+        subtitle = label(message, 12.5f, MUTED, false);
         subtitle.setGravity(Gravity.CENTER);
-        page.addView(subtitle, linear(-1, -2, 0, 0, 0, dp(16)));
+        page.addView(subtitle, linear(-1, -2, 0, 0, 0, dp(18)));
 
-        dots = label("○  ○  ○  ○  ○  ○", 24, TEXT, true);
+        dots = label("○  ○  ○  ○  ○  ○", 22, TEXT, true);
         dots.setGravity(Gravity.CENTER);
         dots.setLetterSpacing(0.08f);
-        dots.setBackground(roundedBordered(CARD, dp(15), Color.rgb(224, 224, 228)));
+        dots.setBackground(roundedBordered(CARD, dp(14), Color.rgb(224, 224, 228)));
         if (!unlockMode) {
             FrameLayout dotsWrap = new FrameLayout(this);
             dotsWrap.addView(dots, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(58)));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
             Button eye = new Button(this);
             eye.setText("\ud83d\udc41");
             eye.setTextSize(15);
@@ -164,9 +167,9 @@ public class MainActivity extends FragmentActivity {
             eyeLp.gravity = Gravity.CENTER_VERTICAL | Gravity.END;
             eyeLp.rightMargin = dp(4);
             dotsWrap.addView(eye, eyeLp);
-            page.addView(dotsWrap, linear(-1, dp(58), 0, 0, 0, dp(14)));
+            page.addView(dotsWrap, linear(-1, dp(52), 0, 0, 0, dp(18)));
         } else {
-            page.addView(dots, linear(-1, dp(58), 0, 0, 0, dp(14)));
+            page.addView(dots, linear(-1, dp(52), 0, 0, 0, dp(18)));
         }
 
         LinearLayout keypad = new LinearLayout(this);
