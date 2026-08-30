@@ -74,8 +74,8 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .delete-link { background: none; border: none; color: #FF3B30; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 10px 0 0; font-family: inherit; }
 .pay-trigger { width: 100%; background: #34C759; color: #fff; border: none; border-radius: 10px; padding: 10px; font-weight: 700; font-size: 13.5px; cursor: pointer; margin-top: 10px; font-family: inherit; display: flex; align-items: center; justify-content: center; }
 .pay-form { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 12px; padding: 12px; margin-top: 10px; }
-.add-btn { margin-top: 10px; width: 100%; background: #EAF3FF; color: var(--accent); border: none; border-radius: 10px; padding: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
-[data-theme="dark"] .add-btn { background: #0A2A4A; }
+.add-btn { margin-top: 10px; width: 100%; background: color-mix(in srgb,var(--accent) 14%,var(--card-bg)); color: var(--accent); border: none; border-radius: 10px; padding: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+[data-theme="dark"] .add-btn { background: color-mix(in srgb,var(--accent) 22%,var(--card-bg)); }
 .fab-add { position: fixed; right: 18px; bottom: calc(var(--tabbar-h) + 16px); background: var(--accent); color: #fff; border: none; border-radius: 24px; padding: 12px 18px; font-size: 13.5px; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: 0 8px 20px rgba(61,90,254,0.4); z-index: 20; }
 .mini-total { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-muted); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
 .mini-total b { color: var(--text); font-weight: 700; }
