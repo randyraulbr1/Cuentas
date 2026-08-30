@@ -893,6 +893,15 @@ function renderApp() {
         }
         html += '</div></button>';
       });
+      const totalLimiteTodas = cloudCards.reduce((sum, c) => sum + toNum(c.balance_limit), 0);
+      const totalSaldoTodas = cloudCards.reduce((sum, c) => sum + toNum(c.balance_current), 0);
+      const totalDisponibleTodas = Math.max(totalLimiteTodas - totalSaldoTodas, 0);
+      if (totalLimiteTodas > 0) {
+        html += '<div style="text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">';
+        html += '<span class="hint" style="display:block;margin-bottom:2px;">' + t("creditoDisponible") + '</span>';
+        html += '<b style="font-size:26px;font-weight:800;color:var(--positive);">' + sym() + fmt0(totalDisponibleTodas) + '</b>';
+        html += '</div>';
+      }
       html += '</div></div>';
     }
 
