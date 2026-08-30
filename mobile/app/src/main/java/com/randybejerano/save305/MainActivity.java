@@ -143,7 +143,7 @@ public class MainActivity extends FragmentActivity {
 
         title = label(heading, 21, TEXT, true);
         page.addView(title, linear(-1, -2, 0, 0, 0, dp(4)));
-        subtitle = label(message, 12.5f, MUTED, false);
+        subtitle = label(message, 13, MUTED, false);
         subtitle.setGravity(Gravity.CENTER);
         page.addView(subtitle, linear(-1, -2, 0, 0, 0, dp(18)));
 
