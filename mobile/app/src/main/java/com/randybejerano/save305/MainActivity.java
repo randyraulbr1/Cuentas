@@ -55,6 +55,7 @@ public class MainActivity extends FragmentActivity {
     private Button primaryButton;
     private boolean unlocked = false;
     private boolean biometricPromptShowing = false;
+    private boolean showPinDigits = false;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -137,17 +138,46 @@ public class MainActivity extends FragmentActivity {
         dots.setGravity(Gravity.CENTER);
         dots.setLetterSpacing(0.08f);
         dots.setBackground(rounded(CARD, dp(15)));
-        page.addView(dots, linear(-1, dp(58), 0, 0, 0, dp(14)));
+        if (!unlockMode) {
+            FrameLayout dotsWrap = new FrameLayout(this);
+            dotsWrap.addView(dots, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(58)));
+            Button eye = new Button(this);
+            eye.setText("\ud83d\udc41");
+            eye.setTextSize(15);
+            eye.setBackground(null);
+            eye.setPadding(dp(10), dp(6), dp(10), dp(6));
+            eye.setContentDescription("Mostrar u ocultar PIN");
+            eye.setOnClickListener(v -> { showPinDigits = !showPinDigits; updateDots(); });
+            FrameLayout.LayoutParams eyeLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            eyeLp.gravity = Gravity.CENTER_VERTICAL | Gravity.END;
+            eyeLp.rightMargin = dp(4);
+            dotsWrap.addView(eye, eyeLp);
+            page.addView(dotsWrap, linear(-1, dp(58), 0, 0, 0, dp(14)));
+        } else {
+            page.addView(dots, linear(-1, dp(58), 0, 0, 0, dp(14)));
+        }
 
         LinearLayout keypad = new LinearLayout(this);
         keypad.setOrientation(LinearLayout.VERTICAL);
-        for (int row = 0; row < 3; row++) {
+        LinearLayout topRow = new LinearLayout(this);
+        topRow.setOrientation(LinearLayout.HORIZONTAL);
+        for (int col = 1; col <= 3; col++) topRow.addView(numberButton(String.valueOf(col)), weightButton());
+        Button erase = numberButton("\u232b");
+        erase.setContentDescription("Borrar");
+        erase.setOnClickListener(v -> eraseDigit());
+        topRow.addView(erase, weightButton());
+        keypad.addView(topRow, linear(-1, dp(50), 0, 0, 0, dp(6)));
+        for (int row = 1; row < 3; row++) {
             LinearLayout line = new LinearLayout(this);
             line.setOrientation(LinearLayout.HORIZONTAL);
             for (int col = 0; col < 3; col++) {
                 int number = row * 3 + col + 1;
                 line.addView(numberButton(String.valueOf(number)), weightButton());
             }
+            View endSpacer = new View(this);
+            line.addView(endSpacer, weightButton());
             keypad.addView(line, linear(-1, dp(50), 0, 0, 0, dp(6)));
         }
         LinearLayout last = new LinearLayout(this);
@@ -155,10 +185,10 @@ public class MainActivity extends FragmentActivity {
         View spacer = new View(this);
         last.addView(spacer, weightButton());
         last.addView(numberButton("0"), weightButton());
-        Button erase = numberButton("⌫");
-        erase.setContentDescription("Borrar");
-        erase.setOnClickListener(v -> eraseDigit());
-        last.addView(erase, weightButton());
+        View spacer2 = new View(this);
+        last.addView(spacer2, weightButton());
+        View spacer3 = new View(this);
+        last.addView(spacer3, weightButton());
         keypad.addView(last, linear(-1, dp(50), 0, 0, 0, dp(10)));
         page.addView(keypad, linear(-1, -2, 0, 0, 0, 0));
 
@@ -224,7 +254,8 @@ public class MainActivity extends FragmentActivity {
         StringBuilder value = new StringBuilder();
         for (int i = 0; i < 6; i++) {
             if (i > 0) value.append("  ");
-            value.append(i < entered.length() ? "●" : "○");
+            if (i < entered.length()) value.append(showPinDigits ? entered.charAt(i) : '\u25cf');
+            else value.append('\u25cb');
         }
         dots.setText(value.toString());
         boolean ready = entered.length() == 6;
