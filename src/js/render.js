@@ -238,16 +238,14 @@ function renderOpcionesTab() {
 
   const navDefinitions = navTabDefinitions();
   const navDraft = normalizeNavOrder(state.navOrderDraft);
-  h += '<div class="panel nav-order-panel"><div class="panel-head-row"><div><p class="opt-section-title">' + (LANG === "es" ? "Orden de los botones" : "Button order") + '</p><p class="opt-row-sub">' + (LANG === "es" ? "Toca uno y muévelo con las flechas." : "Tap one and move it with the arrows.") + '</p></div></div>';
-  h += '<div class="nav-order-strip">';
-  navDraft.forEach((navId, index) => {
+  h += '<div class="panel nav-order-panel"><div class="panel-head-row"><div><p class="opt-section-title">' + (LANG === "es" ? "Orden de los botones" : "Button order") + '</p><p class="opt-row-sub">' + (LANG === "es" ? "Mantén presionado y arrastra para reordenar." : "Press and hold, then drag to reorder.") + '</p></div></div>';
+  h += '<div class="nav-order-strip" id="nav-order-strip">';
+  navDraft.forEach((navId) => {
     const item = navDefinitions[navId];
-    h += '<button class="nav-order-item' + (state.navOrderSelected === navId ? " selected" : "") + '" data-action="selectNavOrder" data-id="' + navId + '"><span>' + icon(item.icon) + '</span><small>' + esc(item.label) + '</small><i>' + (index + 1) + '</i></button>';
+    h += '<div class="nav-order-item" data-id="' + navId + '"><span>' + icon(item.icon) + '</span><small>' + esc(item.label) + '</small></div>';
   });
   h += '</div>';
-  const selectedIndex = navDraft.indexOf(state.navOrderSelected);
-  h += '<div class="nav-order-controls"><button class="pill-btn" data-action="moveNavLeft"' + (selectedIndex <= 0 ? " disabled" : "") + '>← ' + (LANG === "es" ? "Izquierda" : "Left") + '</button><button class="pill-btn" data-action="moveNavRight"' + (selectedIndex < 0 || selectedIndex >= navDraft.length - 1 ? " disabled" : "") + '>' + (LANG === "es" ? "Derecha" : "Right") + ' →</button></div>';
-  h += '<button class="pill-btn confirm wide" data-action="confirmNavOrder">' + (state.navOrderSaved ? (LANG === "es" ? "Orden guardado" : "Order saved") : (LANG === "es" ? "Confirmar orden" : "Confirm order")) + '</button>';
+  h += '<p class="hint" id="nav-order-status" style="text-align:center;margin-top:8px;">' + (state.navOrderSaved ? (LANG === "es" ? "Orden guardado \u2713" : "Order saved \u2713") : (LANG === "es" ? "Los cambios se guardan solos." : "Changes save on their own.")) + '</p>';
   h += '</div>';
 
   h += '<div class="panel"><p class="opt-section-title">' + t("secPreferencias") + '</p><div class="opt-row"><span class="opt-row-label">' + t("secIdioma") + '</span><div class="seg"><button class="' + (state.lang === "es" ? "active" : "") + '" data-action="setLangEs">ES</button><button class="' + (state.lang === "en" ? "active" : "") + '" data-action="setLangEn">EN</button></div></div>';

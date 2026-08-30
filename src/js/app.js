@@ -720,6 +720,65 @@ root.addEventListener("pointerup", endCashflowDrag);
 root.addEventListener("pointercancel", endCashflowDrag);
 root.addEventListener("pointerleave", endCashflowDrag);
 
+/* Arrastrar y soltar para reordenar los botones de navegacion en Opciones */
+let navDrag = null;
+let navSaveTimer = null;
+root.addEventListener("pointerdown", (e) => {
+  const item = e.target.closest(".nav-order-item");
+  if (!item) return;
+  const strip = document.getElementById("nav-order-strip");
+  if (!strip) return;
+  navDrag = { item, strip, startX: e.clientX };
+  item.classList.add("dragging");
+  item.style.position = "relative";
+  item.style.zIndex = "5";
+  try { item.setPointerCapture(e.pointerId); } catch (err) {}
+  window.__navDragging = true;
+});
+root.addEventListener("pointermove", (e) => {
+  if (!navDrag) return;
+  const dx = e.clientX - navDrag.startX;
+  navDrag.item.style.transform = "translateX(" + dx + "px)";
+  const items = Array.from(navDrag.strip.children);
+  const draggedRect = navDrag.item.getBoundingClientRect();
+  const draggedCenter = draggedRect.left + draggedRect.width / 2;
+  for (const sib of items) {
+    if (sib === navDrag.item) continue;
+    const r = sib.getBoundingClientRect();
+    if (draggedCenter > r.left && draggedCenter < r.right) {
+      const sibCenter = r.left + r.width / 2;
+      if (draggedCenter < sibCenter) navDrag.strip.insertBefore(navDrag.item, sib);
+      else navDrag.strip.insertBefore(navDrag.item, sib.nextSibling);
+      navDrag.item.style.transform = "translateX(0px)";
+      navDrag.startX = e.clientX;
+      break;
+    }
+  }
+});
+function endNavDrag() {
+  if (!navDrag) return;
+  const strip = navDrag.strip;
+  navDrag.item.classList.remove("dragging");
+  navDrag.item.style.transform = "";
+  navDrag.item.style.position = "";
+  navDrag.item.style.zIndex = "";
+  const order = Array.from(strip.children).map((el) => el.dataset.id);
+  state.navOrderDraft = order;
+  navDrag = null;
+  window.__navDragging = false;
+  if (navSaveTimer) clearTimeout(navSaveTimer);
+  const status = document.getElementById("nav-order-status");
+  if (status) status.textContent = LANG === "es" ? "Guardando en unos segundos\u2026" : "Saving in a few seconds\u2026";
+  navSaveTimer = setTimeout(() => {
+    state.navOrder = normalizeNavOrder(state.navOrderDraft);
+    state.navOrderSaved = true;
+    saveSettings(); render();
+    setTimeout(() => { state.navOrderSaved = false; render(); }, 1400);
+  }, 1800);
+}
+root.addEventListener("pointerup", endNavDrag);
+root.addEventListener("pointercancel", endNavDrag);
+
 root.addEventListener("scroll", (e) => {
   if (e.target && e.target.id === "bank-expense-picker") {
     state.bankExpenseScrollTop = e.target.scrollTop;
@@ -765,24 +824,6 @@ root.addEventListener("click", (e) => {
   const payType = btn.dataset.type;
   const map = {
     actualizar: actualizarApp, undo: undo,
-    selectNavOrder: () => { state.navOrderSelected = id; render(); },
-    moveNavLeft: () => {
-      const order = normalizeNavOrder(state.navOrderDraft);
-      const index = order.indexOf(state.navOrderSelected);
-      if (index > 0) { const temp = order[index - 1]; order[index - 1] = order[index]; order[index] = temp; state.navOrderDraft = order; render(); }
-    },
-    moveNavRight: () => {
-      const order = normalizeNavOrder(state.navOrderDraft);
-      const index = order.indexOf(state.navOrderSelected);
-      if (index >= 0 && index < order.length - 1) { const temp = order[index + 1]; order[index + 1] = order[index]; order[index] = temp; state.navOrderDraft = order; render(); }
-    },
-    confirmNavOrder: () => {
-      state.navOrder = normalizeNavOrder(state.navOrderDraft);
-      state.navOrderDraft = state.navOrder.slice();
-      state.navOrderSaved = true;
-      saveSettings(); render();
-      setTimeout(() => { state.navOrderSaved = false; render(); }, 1400);
-    },
     setBankExpenseSort: () => {
       state.bankExpenseSort = ["monto", "monto_desc", "nombre"].indexOf(id) !== -1 ? id : "fecha";
       state.bankExpenseScrollTop = 0; state.bankExpenseSearch = "";
