@@ -728,10 +728,12 @@ root.addEventListener("pointerdown", (e) => {
   if (!item) return;
   const strip = document.getElementById("nav-order-strip");
   if (!strip) return;
+  const rect = item.getBoundingClientRect();
   navDrag = { item, strip, startX: e.clientX };
   item.classList.add("dragging");
   item.style.position = "relative";
   item.style.zIndex = "5";
+  item.style.width = rect.width + "px";
   try { item.setPointerCapture(e.pointerId); } catch (err) {}
   window.__navDragging = true;
 });
@@ -739,20 +741,17 @@ root.addEventListener("pointermove", (e) => {
   if (!navDrag) return;
   const dx = e.clientX - navDrag.startX;
   navDrag.item.style.transform = "translateX(" + dx + "px)";
-  const items = Array.from(navDrag.strip.children);
-  const draggedRect = navDrag.item.getBoundingClientRect();
-  const draggedCenter = draggedRect.left + draggedRect.width / 2;
-  for (const sib of items) {
-    if (sib === navDrag.item) continue;
+  navDrag.item.style.pointerEvents = "none";
+  const target = document.elementFromPoint(e.clientX, e.clientY);
+  navDrag.item.style.pointerEvents = "";
+  const sib = target && target.closest(".nav-order-item");
+  if (sib && sib !== navDrag.item && sib.parentElement === navDrag.strip) {
     const r = sib.getBoundingClientRect();
-    if (draggedCenter > r.left && draggedCenter < r.right) {
-      const sibCenter = r.left + r.width / 2;
-      if (draggedCenter < sibCenter) navDrag.strip.insertBefore(navDrag.item, sib);
-      else navDrag.strip.insertBefore(navDrag.item, sib.nextSibling);
-      navDrag.item.style.transform = "translateX(0px)";
-      navDrag.startX = e.clientX;
-      break;
-    }
+    const sibCenter = r.left + r.width / 2;
+    if (e.clientX < sibCenter) navDrag.strip.insertBefore(navDrag.item, sib);
+    else navDrag.strip.insertBefore(navDrag.item, sib.nextSibling);
+    navDrag.item.style.transform = "translateX(0px)";
+    navDrag.startX = e.clientX;
   }
 });
 function endNavDrag() {
@@ -762,6 +761,7 @@ function endNavDrag() {
   navDrag.item.style.transform = "";
   navDrag.item.style.position = "";
   navDrag.item.style.zIndex = "";
+  navDrag.item.style.width = "";
   const order = Array.from(strip.children).map((el) => el.dataset.id);
   state.navOrderDraft = order;
   navDrag = null;
@@ -804,6 +804,10 @@ root.addEventListener("click", (e) => {
   }
   if (state.subPresetPicker && !e.target.closest("#bank-expense-picker") && !e.target.closest('[data-action="toggleSubPresetPicker"]')) {
     state.subPresetPicker = false;
+    closedSomethingOnOutsideClick = true;
+  }
+  if (state.loanBankPicker && !e.target.closest("#loan-bank-picker") && !e.target.closest('[data-action="toggleLoanBankPicker"]')) {
+    state.loanBankPicker = null;
     closedSomethingOnOutsideClick = true;
   }
   if (state.subscriptionReviewOpen && !e.target.closest("#subscription-review-panel")) {
@@ -865,6 +869,16 @@ root.addEventListener("click", (e) => {
     addLoan: addLoan, removeLoan: () => removeLoan(id), askDeleteLoan: () => askDeleteLoan(id), cancelDeleteLoan: cancelDeleteLoan,
     toggleEditLoans: toggleEditLoans, setLoanFrec: () => setLoanFrec(id, freq),
     loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
+    toggleLoanBankPicker: () => { state.loanBankPicker = state.loanBankPicker === id ? null : id; state.bankExpenseSearch = ""; render(); },
+    setLoanPagoFromTx: () => {
+      const loan = state.loans.find((l) => l.id === id);
+      const tx = state.cloudTransactions.find((t) => t.id === btn.dataset.txId);
+      if (!loan || !tx) return;
+      loan.montoPago = String(Math.abs(toNum(tx.monto)));
+      loan.ultimoPago = String(tx.fecha).slice(0, 10);
+      state.loanBankPicker = null;
+      scheduleSave(); render();
+    },
     startImportarBanco: startImportarBanco, confirmTxCategoria: () => confirmTxCategoria(id),
     setAuthLogin: () => { state.authMode = "login"; state.authFormError = ""; render(); },
     setAuthRegister: () => { state.authMode = "register"; state.authFormError = ""; render(); },
@@ -913,7 +927,7 @@ root.addEventListener("click", (e) => {
     setDescansoPagadoOn: () => updateJobField("descansoPagado", true),
     setDescansoPagadoOff: () => updateJobField("descansoPagado", false),
     toggleHorarioDia: () => { const di = toNum(id); state.job.horarioDias[di] = !state.job.horarioDias[di]; scheduleSave(); render(); },
-    setHorarioRecordarOn: () => updateJobField("horarioRecordar", true),
+    setHorarioRecordarOn: () => { updateJobField("horarioRecordar", true); requestWorkNotifPermission(); },
     setHorarioRecordarOff: () => updateJobField("horarioRecordar", false),
     empezarTrabajo: empezarTrabajo, empezarBreak: empezarBreak, terminarBreak: terminarBreak,
     askTerminarTrabajo: askTerminarTrabajo, cancelTerminarTrabajo: cancelTerminarTrabajo, terminarTrabajo: terminarTrabajo,

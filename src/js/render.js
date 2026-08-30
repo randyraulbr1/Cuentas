@@ -191,6 +191,28 @@ function renderConsentimientoSheet() {
   return h;
 }
 
+function renderLoanBankPicker(loanId) {
+  const query = String(state.bankExpenseSearch || "").trim().toLowerCase();
+  let expenses = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0);
+  if (query) expenses = expenses.filter((tx) => String(tx.merchant_name || tx.descripcion || "").toLowerCase().indexOf(query) !== -1);
+  expenses.sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || "")));
+  expenses = expenses.slice(0, 60);
+  let h = '<div class="sub-add-picker" id="loan-bank-picker">';
+  h += '<input type="search" id="loan-bank-search" placeholder="' + (LANG === "es" ? "Buscar por nombre" : "Search by name") + '" data-scope="bankExpenseSearch" value="' + esc(state.bankExpenseSearch || "") + '" style="width:100%;margin-bottom:8px;">';
+  if (expenses.length === 0) {
+    h += '<div class="empty-state">' + (LANG === "es" ? "No hay movimientos del banco todavía." : "No bank transactions yet.") + '</div>';
+  } else {
+    expenses.forEach((tx) => {
+      h += '<button class="bank-expense-choice" data-action="setLoanPagoFromTx" data-id="' + loanId + '" data-tx-id="' + esc(tx.id) + '">';
+      h += renderTxChip(tx.categoria);
+      h += '<span class="bank-expense-choice-info"><b>' + esc(tx.merchant_name || tx.descripcion || "") + '</b><small>' + esc(String(tx.fecha || "").slice(0, 10)) + '</small></span>';
+      h += '<strong>\u2212' + sym() + fmt0(Math.abs(toNum(tx.monto))) + '</strong></button>';
+    });
+  }
+  h += '</div>';
+  return h;
+}
+
 function renderTxChip(categoria) {
   const c = categoriaIconoColor(categoria);
   return '<div class="tx-chip" style="background:' + c.color + ';">' + icon(c.icon) + '</div>';
@@ -226,7 +248,10 @@ function renderOpcionesTab() {
   let pinConfigured = false;
   try { pinConfigured = !!localStorage.getItem(PIN_HASH_KEY); } catch (error) {}
   h += '<div class="panel security-compact"><div class="security-compact-head"><span class="security-compact-icon">' + icon("lock") + '</span><div><p class="opt-section-title">' + (LANG === "es" ? "Seguridad local" : "Local security") + '</p><p class="opt-row-sub">' + (pinConfigured ? (LANG === "es" ? "PIN activo en este teléfono" : "PIN active on this phone") : (LANG === "es" ? "Protege esta cuenta con 6 dígitos" : "Protect this account with 6 digits")) + '</p></div></div>';
-  h += '<div class="pin-setup-row compact"><input aria-label="' + (LANG === "es" ? "PIN de 6 dígitos" : "6-digit PIN") + '" id="pin-setup-input" data-scope="pinSetup" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="••••••" value="' + esc(state.pinSetupInput) + '"><button class="pill-btn confirm" data-action="savePin">' + (pinConfigured ? (LANG === "es" ? "Cambiar" : "Change") : (LANG === "es" ? "Crear PIN" : "Create PIN")) + '</button></div>';
+  const pinSetupLen = String(state.pinSetupInput || "").length;
+  h += '<div class="pin-setup-row compact"><input aria-label="' + (LANG === "es" ? "PIN de 6 dígitos" : "6-digit PIN") + '" id="pin-setup-input" data-scope="pinSetup" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022" value="' + esc(state.pinSetupInput) + '">';
+  if (pinSetupLen === 6) h += '<button class="pill-btn confirm wide" style="margin-top:8px;" data-action="savePin">' + (pinConfigured ? (LANG === "es" ? "Cambiar" : "Change") : (LANG === "es" ? "Crear PIN" : "Create PIN")) + '</button>';
+  h += '</div>';
   if (state.pinError) h += '<p class="pin-error">' + esc(state.pinError) + '</p>';
   if (pinConfigured) {
     let biometricConfigured = false;
@@ -784,9 +809,9 @@ function renderApp() {
         html += '<div class="pay-config" style="margin-top:8px;"><label>' + t("loanFrecLbl") + '</label><div class="seg" style="width:100%;">';
         [["semanal", "paySemanal"], ["quincenal", "payQuincenal"], ["mensual", "payMensual"]].forEach((f) => { html += '<button style="flex:1;" class="' + (l.frecuencia === f[0] ? "active" : "") + '" data-action="setLoanFrec" data-id="' + l.id + '" data-freq="' + f[0] + '">' + t(f[1]) + '</button>'; });
         html += '</div></div>';
-        html += '<div class="pay-config"><label>' + t("loanUltimoPagoLbl") + '</label><input type="date" id="loan-ultimo-' + l.id + '" data-scope="loan" data-id="' + l.id + '" data-field="ultimoPago" value="' + esc(l.ultimoPago) + '"></div>';
-        html += '<div class="pay-config"><label>' + t("loanAutoLbl") + '</label><div class="seg" style="width:100%;"><button style="flex:1;" class="' + (!l.automatico ? "active" : "") + '" data-action="loanAutoOff" data-id="' + l.id + '">' + t("off") + '</button><button style="flex:1;" class="' + (l.automatico ? "active" : "") + '" data-action="loanAutoOn" data-id="' + l.id + '">' + t("on") + '</button></div></div>';
-        if (l.automatico) html += '<div class="pay-config"><label>' + t("pagarDesdeLbl") + '</label><div class="seg" style="width:100%;"><button style="flex:1;" class="' + (l.fuenteAutomatica === "ahorro" ? "active" : "") + '" data-action="loanFuenteAhorro" data-id="' + l.id + '">' + t("ahorroActualLbl") + '</button><button style="flex:1;" class="' + (l.fuenteAutomatica === "debito" ? "active" : "") + '" data-action="loanFuenteDebito" data-id="' + l.id + '">' + t("debitoLbl") + '</button></div><p class="opt-row-sub" style="margin-top:4px;">' + t("loanAutoHint") + '</p></div>';
+        html += '<div class="pay-config"><label>' + (LANG === "es" ? "Pago desde el banco" : "Payment from bank") + '</label><button class="pill-btn wide" data-action="toggleLoanBankPicker" data-id="' + l.id + '">' + (l.ultimoPago ? (LANG === "es" ? "Cambiar (\u00faltimo: " : "Change (last: ") + esc(formatDate(l.ultimoPago)) + ')' : (LANG === "es" ? "Seleccionar pago del banco" : "Select payment from bank")) + '</button>';
+        html += '<p class="hint" style="margin:5px 0 0;">' + (LANG === "es" ? "Si aún no se te ha cobrado, deja el pago mensual escrito a mano arriba." : "If you haven't been charged yet, leave the monthly payment typed in by hand above.") + '</p></div>';
+        if (state.loanBankPicker === l.id) html += renderLoanBankPicker(l.id);
         if (pago > 0 && saldo > 0) {
           html += '<p class="opt-row-sub" style="margin-top:8px;">' + t("loanQuedan")(pagosRestantes) + '</p>';
           if (interesEstimado > 0) html += '<p class="opt-row-sub">' + t("loanInteresEstimado")(fmt0(interesEstimado)) + '</p>';
@@ -1035,7 +1060,6 @@ function renderApp() {
       html += '</div>';
       html += '<div class="opt-row" style="margin-top:2px;"><span class="opt-row-label">' + t("horarioRecordarLbl") + '</span><div class="seg"><button class="' + (!state.job.horarioRecordar ? "active" : "") + '" data-action="setHorarioRecordarOff">' + t("off") + '</button><button class="' + (state.job.horarioRecordar ? "active" : "") + '" data-action="setHorarioRecordarOn">' + t("on") + '</button></div></div>';
       html += '<div class="opt-row" style="margin-top:8px;"><span class="opt-row-label">' + t("descansoPagadoLbl") + '</span><div class="seg"><button class="' + (!state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOff">' + t("off") + '</button><button class="' + (state.job.descansoPagado ? "active" : "") + '" data-action="setDescansoPagadoOn">' + t("on") + '</button></div></div>';
-      html += '<button class="pill-btn wide" style="margin-top:10px;" data-action="requestWorkNotifPermission">' + t("notifBtnLbl") + '</button>';
       html += '<p class="opt-row-sub" style="margin-top:6px;">' + notifStatusText() + '</p>';
     }
     html += '</div>';

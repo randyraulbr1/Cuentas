@@ -228,8 +228,8 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .security-compact-head .opt-section-title,.nav-order-panel .opt-section-title{margin:0}
 .security-compact-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 16%,var(--pill-bg));color:var(--accent);flex:0 0 auto}
 .security-compact-icon svg{width:18px;height:18px}
-.pin-setup-row.compact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
-.pin-setup-row.compact input{min-width:0;height:42px;padding:9px 12px;font-size:16px;letter-spacing:.24em;text-align:center}
+.pin-setup-row.compact{display:flex;flex-direction:column;gap:0}
+.pin-setup-row.compact input{min-width:0;max-width:200px;margin:0 auto;height:44px;padding:9px 10px;font-size:19px;letter-spacing:.35em;text-align:center}
 .pin-setup-row.compact .pill-btn{height:42px;padding:0 15px;white-space:nowrap}
 .security-compact-actions{display:flex;gap:8px;align-items:center;margin-top:9px}
 .security-compact-actions .pill-btn{flex:1;padding:9px 10px;font-size:12px}
