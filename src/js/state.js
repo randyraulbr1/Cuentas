@@ -8,8 +8,8 @@ const fmt2 = (n) => (isFinite(Number(n)) ? Number(n) : 0).toLocaleString(LANG ==
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v172";
-const BUILD_DATE = "30/08 16:05 UTC";
+const APP_VERSION = "v173";
+const BUILD_DATE = "30/08 22:55 UTC";
 
 let uidCounter = 1;
 
@@ -102,6 +102,7 @@ const state = {
   activeTab: "inicio",
   confirmDeleteSubId: null, confirmDeleteCardId: null, confirmDeleteHistoryKey: null, confirmDeleteLoanId: null,
   editingSubs: false, subPresetPicker: false, loanBankPicker: null,
+  coupleMode: false, coupleNameSelf: "", coupleNamePartner: "",
   editingIngreso: false, editingAhorro: false, editingCards: false, editingLoans: false,
   payingTarget: null, payingSubId: null, payFormSource: "ahorro", payFormMonto: "", payFlash: false, autoPagoNotif: null,
   expandedCardIds: {},

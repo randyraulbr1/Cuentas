@@ -32,6 +32,11 @@ function renderBancoNubePanel(compact) {
     } else {
       html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(inst.institution_name || t("bancoDesconocido")) + '</span>' + (inst.status === "active" ? "" : '<span class="status-pill rojo">' + t("estadoDesconectado") + '</span>') + '</div>';
 
+      if (state.coupleMode && inst.status === "active") {
+        const selfLabel = state.coupleNameSelf || (LANG === "es" ? "Yo" : "Me");
+        const partnerLabel = state.coupleNamePartner || (LANG === "es" ? "Mi pareja" : "Partner");
+        html += '<div class="seg" style="width:100%;margin:8px 0;"><button style="flex:1;" class="' + (inst.owner !== "partner" ? "active" : "") + '" data-action="setInstOwnerSelf" data-id="' + inst.id + '">' + esc(selfLabel) + '</button><button style="flex:1;" class="' + (inst.owner === "partner" ? "active" : "") + '" data-action="setInstOwnerPartner" data-id="' + inst.id + '">' + esc(partnerLabel) + '</button></div>';
+      }
       if (inst.status === "active") html += '<button class="delete-link" data-action="askDisconnectBank" data-id="' + inst.id + '">' + t("desconectarBancoBtn") + '</button>';
       html += '</div>';
     }
@@ -301,6 +306,13 @@ function renderOpcionesTab() {
   h += '<button style="flex:1;" class="' + (state.objetivo === "credito" ? "active" : "") + '" data-action="setObjCredito">' + t("objCredito") + '</button>';
   h += '<button style="flex:1;" class="' + (state.objetivo === "ahorro" ? "active" : "") + '" data-action="setObjAhorro">' + t("objAhorro") + '</button>';
   h += '</div></div>';
+
+  h += '<div class="panel"><div class="opt-row" style="padding:0;"><span class="opt-row-label">' + (LANG === "es" ? "Modo pareja" : "Couple mode") + '</span><label class="switch"><input type="checkbox" data-action="toggleCoupleMode"' + (state.coupleMode ? " checked" : "") + '><span class="slider"></span></label></div>';
+  h += '<p class="hint" style="margin:4px 0 0;">' + (LANG === "es" ? "Analiza las finanzas de los dos juntos y te da consejos pensando en ambos." : "Analyzes both your finances together and gives advice that considers both of you.") + '</p>';
+  if (state.coupleMode) {
+    h += '<div class="goal-grid" style="margin-top:12px;"><div class="goal-field"><label>' + (LANG === "es" ? "Tu nombre" : "Your name") + '</label><input type="text" id="couple-name-self" data-scope="coupleNameSelf" placeholder="' + (LANG === "es" ? "Randy" : "Your name") + '" value="' + esc(state.coupleNameSelf) + '"></div><div class="goal-field"><label>' + (LANG === "es" ? "Nombre de tu pareja" : "Partner's name") + '</label><input type="text" id="couple-name-partner" data-scope="coupleNamePartner" placeholder="' + (LANG === "es" ? "Su nombre" : "Partner's name") + '" value="' + esc(state.coupleNamePartner) + '"></div></div>';
+  }
+  h += '</div>';
 
   h += '<div class="panel"><p class="opt-section-title">' + t("secAhorroPct") + '</p>';
   h += '<div class="seg" style="width:100%;margin-bottom:8px;">';

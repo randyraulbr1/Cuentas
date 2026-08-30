@@ -24,6 +24,9 @@ async function enterProfile(id) {
   state.suscripcionesManuales = d.suscripcionesManuales || [];
   state.suscripcionesFrecuencia = d.suscripcionesFrecuencia || {};
   state.suscripcionesIgnoradas = d.suscripcionesIgnoradas || [];
+  state.coupleMode = !!d.coupleMode;
+  state.coupleNameSelf = d.coupleNameSelf || "";
+  state.coupleNamePartner = d.coupleNamePartner || "";
   state.gastosFijosReconocidos = d.gastosFijosReconocidos || [];
   // Migra los pagos fijos bancarios antiguos a la lista principal editable.
   state.gastosFijosReconocidos.forEach((gf) => {
@@ -500,6 +503,8 @@ root.addEventListener("input", (e) => {
   if (scope === "agregarTurno") { state.agregarTurnoForm[el.dataset.field] = el.value; rerenderPreservingFocus(); return; }
   if (scope === "trabajoCalHoras") { state.trabajoCalHorasInput = sanitizeNum(el.value); rerenderPreservingFocus(); return; }
   if (scope === "ahorroActual") { state.ahorroActual = sanitizeNum(el.value); scheduleSave(); rerenderPreservingFocus(); return; }
+  if (scope === "coupleNameSelf") { state.coupleNameSelf = el.value; scheduleSave(); return; }
+  if (scope === "coupleNamePartner") { state.coupleNamePartner = el.value; scheduleSave(); return; }
   if (scope === "cash") { state.cash = sanitizeNum(el.value); scheduleSave(); return; }
   if (scope === "apiBaseUrl") { state.apiBaseUrl = el.value.trim(); saveSettings(); rerenderPreservingFocus(); return; }
   if (scope === "authEmail") { state.authEmail = el.value; rerenderPreservingFocus(); return; }
@@ -876,6 +881,9 @@ root.addEventListener("click", (e) => {
     toggleEditLoans: toggleEditLoans, setLoanFrec: () => setLoanFrec(id, freq),
     loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
     toggleLoanBankPicker: () => { state.loanBankPicker = state.loanBankPicker === id ? null : id; state.bankExpenseSearch = ""; render(); },
+    toggleCoupleMode: () => { state.coupleMode = !state.coupleMode; scheduleSave(); render(); },
+    setInstOwnerSelf: () => { const inst = state.cloudInstitutions.find((i) => i.id === id); if (inst) { inst.owner = "self"; scheduleSave(); render(); } },
+    setInstOwnerPartner: () => { const inst = state.cloudInstitutions.find((i) => i.id === id); if (inst) { inst.owner = "partner"; scheduleSave(); render(); } },
     requestChangePinNative: () => {
       if (window.AndroidBridge && window.AndroidBridge.requestChangePin) {
         try { window.AndroidBridge.requestChangePin(); return; } catch (e) {}
