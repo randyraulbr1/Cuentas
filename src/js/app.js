@@ -883,8 +883,10 @@ root.addEventListener("click", (e) => {
     loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
     toggleLoanBankPicker: () => { state.loanBankPicker = state.loanBankPicker === id ? null : id; state.bankExpenseSearch = ""; render(); },
     toggleCoupleMode: () => { state.coupleMode = !state.coupleMode; scheduleSave(); render(); },
-    setInstOwnerSelf: () => { const inst = state.cloudInstitutions.find((i) => i.id === id); if (inst) { inst.owner = "self"; scheduleSave(); render(); } },
-    setInstOwnerPartner: () => { const inst = state.cloudInstitutions.find((i) => i.id === id); if (inst) { inst.owner = "partner"; scheduleSave(); render(); } },
+    toggleEditCoupleNames: () => { state.editingCoupleNames = !state.editingCoupleNames; render(); },
+    setInstOwnerSelf: () => { const inst = state.cloudInstitutions.find((i) => i.id === id); if (inst) { inst.owner = "self"; } state.editingInstOwner = null; scheduleSave(); render(); },
+    setInstOwnerPartner: () => { const inst = state.cloudInstitutions.find((i) => i.id === id); if (inst) { inst.owner = "partner"; } state.editingInstOwner = null; scheduleSave(); render(); },
+    toggleEditInstOwner: () => { state.editingInstOwner = state.editingInstOwner === id ? null : id; render(); },
     setAccountOwnerSelf: () => { state.accountOwner[id] = "self"; scheduleSave(); render(); },
     setAccountOwnerPartner: () => { state.accountOwner[id] = "partner"; scheduleSave(); render(); },
     requestChangePinNative: () => {

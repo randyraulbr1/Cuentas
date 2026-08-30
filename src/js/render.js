@@ -35,14 +35,21 @@ function renderBancoNubePanel(compact) {
       if (state.coupleMode && inst.status === "active") {
         const selfLabel = state.coupleNameSelf || (LANG === "es" ? "Yo" : "Me");
         const partnerLabel = state.coupleNamePartner || (LANG === "es" ? "Mi pareja" : "Partner");
-        html += '<div class="seg" style="width:100%;margin:8px 0;"><button style="flex:1;" class="' + (inst.owner !== "partner" ? "active" : "") + '" data-action="setInstOwnerSelf" data-id="' + inst.id + '">' + esc(selfLabel) + '</button><button style="flex:1;" class="' + (inst.owner === "partner" ? "active" : "") + '" data-action="setInstOwnerPartner" data-id="' + inst.id + '">' + esc(partnerLabel) + '</button></div>';
+        const currentOwnerLabel = inst.owner === "partner" ? partnerLabel : selfLabel;
+        if (state.editingInstOwner === inst.id) {
+          html += '<div class="seg" style="width:100%;margin:8px 0;"><button style="flex:1;" class="' + (inst.owner !== "partner" ? "active" : "") + '" data-action="setInstOwnerSelf" data-id="' + inst.id + '">' + esc(selfLabel) + '</button><button style="flex:1;" class="' + (inst.owner === "partner" ? "active" : "") + '" data-action="setInstOwnerPartner" data-id="' + inst.id + '">' + esc(partnerLabel) + '</button></div>';
+        } else {
+          html += '<div class="opt-row" style="padding:6px 0;"><span class="opt-row-sub">' + (LANG === "es" ? "Cuenta de " : "Account of ") + esc(currentOwnerLabel) + '</span><button class="icon-pencil" data-action="toggleEditInstOwner" data-id="' + inst.id + '">' + icon("pencil") + '</button></div>';
+        }
       }
       if (inst.status === "active") html += '<button class="delete-link" data-action="askDisconnectBank" data-id="' + inst.id + '">' + t("desconectarBancoBtn") + '</button>';
       html += '</div>';
     }
   });
 
-  if (!state.cloudInstitutions.some((inst) => inst.status === "active")) html += '<button class="pay-trigger" style="background:var(--accent);" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
+  const hasActiveBank = state.cloudInstitutions.some((inst) => inst.status === "active");
+  if (!hasActiveBank) html += '<button class="pay-trigger" style="background:var(--accent);" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
+  else if (state.coupleMode) html += '<button class="pill-btn wide" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("plus") + ' ' + (state.cloudBusy ? t("conectandoMsg") : (LANG === "es" ? "Conectar otro banco" : "Connect another bank")) + '</button>';
 
 
   if (state.cloudAccounts.length > 0 && !compact) {
@@ -310,7 +317,13 @@ function renderOpcionesTab() {
   h += '<div class="panel"><div class="opt-row" style="padding:0;"><span class="opt-row-label">' + (LANG === "es" ? "Modo pareja" : "Couple mode") + '</span><label class="switch"><input type="checkbox" data-action="toggleCoupleMode"' + (state.coupleMode ? " checked" : "") + '><span class="slider"></span></label></div>';
   h += '<p class="hint" style="margin:4px 0 0;">' + (LANG === "es" ? "Analiza las finanzas de los dos juntos y te da consejos pensando en ambos." : "Analyzes both your finances together and gives advice that considers both of you.") + '</p>';
   if (state.coupleMode) {
-    h += '<div class="goal-grid" style="margin-top:12px;"><div class="goal-field"><label>' + (LANG === "es" ? "Tu nombre" : "Your name") + '</label><input type="text" id="couple-name-self" data-scope="coupleNameSelf" placeholder="' + (LANG === "es" ? "Randy" : "Your name") + '" value="' + esc(state.coupleNameSelf) + '"></div><div class="goal-field"><label>' + (LANG === "es" ? "Nombre de tu pareja" : "Partner's name") + '</label><input type="text" id="couple-name-partner" data-scope="coupleNamePartner" placeholder="' + (LANG === "es" ? "Su nombre" : "Partner's name") + '" value="' + esc(state.coupleNamePartner) + '"></div></div>';
+    if (!state.editingCoupleNames) {
+      const bothNames = (state.coupleNameSelf || (LANG === "es" ? "Tú" : "You")) + (state.coupleNamePartner ? " " + (LANG === "es" ? "y" : "and") + " " + state.coupleNamePartner : "");
+      h += '<div class="opt-row" style="padding:12px 0 0;margin-top:4px;border-top:1px solid var(--border);"><span class="opt-row-label">' + esc(bothNames) + '</span><button class="icon-pencil" data-action="toggleEditCoupleNames">' + icon("pencil") + '</button></div>';
+    } else {
+      h += '<div class="goal-grid" style="margin-top:12px;"><div class="goal-field"><label>' + (LANG === "es" ? "Tu nombre" : "Your name") + '</label><input type="text" id="couple-name-self" data-scope="coupleNameSelf" placeholder="' + (LANG === "es" ? "Randy" : "Your name") + '" value="' + esc(state.coupleNameSelf) + '"></div><div class="goal-field"><label>' + (LANG === "es" ? "Nombre de tu pareja" : "Partner's name") + '</label><input type="text" id="couple-name-partner" data-scope="coupleNamePartner" placeholder="' + (LANG === "es" ? "Su nombre" : "Partner's name") + '" value="' + esc(state.coupleNamePartner) + '"></div></div>';
+      h += '<button class="pill-btn confirm wide" style="margin-top:10px;" data-action="toggleEditCoupleNames">' + (LANG === "es" ? "Listo" : "Done") + '</button>';
+    }
   }
   h += '</div>';
 
