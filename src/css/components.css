@@ -239,7 +239,7 @@ input::placeholder { color: var(--text-muted); opacity: 0.7; }
 .nav-order-item{position:relative;min-width:0;min-height:67px;padding:8px 2px 6px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--text-muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-family:inherit;touch-action:none;cursor:grab;transition:transform .12s ease}
 .nav-order-item.dragging{background:var(--surface);border-color:var(--accent);color:var(--text);box-shadow:0 10px 24px rgba(0,0,0,.28);z-index:50;cursor:grabbing;opacity:.96}
 .nav-order-item span svg{width:20px;height:20px}
-.nav-order-item small{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;font-weight:750}
+.nav-order-item small{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;font-weight:750;text-align:center}
 .nav-order-item i{position:absolute;top:3px;right:5px;font-size:8px;font-style:normal;opacity:.55}
 .nav-order-item.selected{background:var(--surface);border-color:var(--border);color:var(--text);box-shadow:0 3px 10px rgba(0,0,0,.08)}
 .nav-order-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}
