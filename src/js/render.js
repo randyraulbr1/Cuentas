@@ -563,7 +563,7 @@ function renderApp() {
       const sugGustos = debitoBase * 0.2;
       const resultadoMes = t2.ingresoEfectivo > 0 ? computeResultado(t2) : null;
       const ahorroBase = resultadoMes && !resultadoMes.insuficiente ? resultadoMes.ahorro : t2.disponibleBruto * (state.savingsRate / 100);
-      const pendienteObjetivos = state.goals.reduce((sum, goal) => sum + Math.max(toNum(goal.montoObjetivo) - toNum(goal.montoActual), 0), 0);
+      const pendienteObjetivos = state.goals.reduce((sum, goal) => sum + Math.max(toNum(goal.montoObjetivo) - Math.min(toNum(state.ahorroActual), toNum(goal.montoObjetivo)), 0), 0);
       const aporteObjetivosMensual = pendienteObjetivos > 0 ? pendienteObjetivos / 12 : 0;
       const pesoObjetivo = state.objetivo === "ahorro" ? 1 : state.objetivo === "credito" ? 0.35 : 0.7;
       const sugAhorro = Math.min(Math.max(ahorroBase, aporteObjetivosMensual * pesoObjetivo), Math.max(t2.disponibleBruto, 0));
@@ -614,7 +614,7 @@ function renderApp() {
       html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("objetivosTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("objetivosHint") + '</p></div><button class="icon-pencil' + (state.editingGoals ? " done" : "") + '" data-action="toggleEditGoals">' + (state.editingGoals ? icon("check") : icon("pencil")) + '</button></div>';
       state.goals.forEach((g) => {
       const objetivo = toNum(g.montoObjetivo);
-      const actual = toNum(g.montoActual);
+      const actual = Math.min(toNum(state.ahorroActual), objetivo);
       const pct = objetivo > 0 ? Math.min((actual / objetivo) * 100, 100) : 0;
       if (state.confirmDeleteGoalId === g.id) {
         html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteGoalMsg")(g.nombre || t("goalNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeGoal" data-id="' + g.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteGoal">' + t("cancel") + '</button></div></div>';
@@ -626,10 +626,8 @@ function renderApp() {
         html += '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>';
       } else {
         html += '<div class="goal-grid" style="margin-bottom:6px;"><input type="text" id="goal-nombre-' + g.id + '" placeholder="' + t("goalNombrePh") + '" data-scope="goal" data-id="' + g.id + '" data-field="nombre" value="' + esc(g.nombre) + '"><button class="icon-del" data-action="askDeleteGoal" data-id="' + g.id + '">' + icon("close") + '</button></div>';
-        html += '<div class="goal-grid">';
-        html += '<div class="goal-field"><label>' + t("goalActualLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="goal-actual-' + g.id + '" placeholder="0" data-scope="goal" data-id="' + g.id + '" data-field="montoActual" value="' + esc(g.montoActual) + '"></div>';
         html += '<div class="goal-field"><label>' + t("goalObjetivoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="goal-objetivo-' + g.id + '" placeholder="0" data-scope="goal" data-id="' + g.id + '" data-field="montoObjetivo" value="' + esc(g.montoObjetivo) + '"></div>';
-        html += '</div>';
+        html += '<p class="hint" style="margin:6px 0 0;">' + (LANG === "es" ? "El progreso se calcula solo con tu Ahorro actual." : "Progress is calculated automatically from your Current savings.") + '</p>';
         html += '<div class="progress-track" style="margin-top:6px;"><div class="progress-fill" style="width:' + pct + '%"></div></div>';
       }
       html += '</div>';
