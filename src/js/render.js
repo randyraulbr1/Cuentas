@@ -731,7 +731,9 @@ function renderApp() {
     const unifiedTotal = state.subs.reduce((sum, sub) => sum + toNum(sub.monto), 0);
     html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(unifiedTotal) + '</b></div></div>';
 
-    html += '<div class="panel"><div class="panel-head-row"><div><h2>' + t("loansTitle") + '</h2><p class="hint" style="margin-bottom:0;">' + t("loansHint") + '</p></div><button class="icon-pencil' + (state.editingLoans ? " done" : "") + '" data-action="toggleEditLoans">' + (state.editingLoans ? icon("check") : icon("pencil")) + '</button></div>';
+    html += '<button class="section-collapser" data-action="togglePlazos"><span>' + icon("bills") + ' ' + t("loansTitle") + '</span><span class="chev' + (state.plazosAbierto ? " open" : "") + '">' + icon("chevron") + '</span></button>';
+    if (state.plazosAbierto) {
+    html += '<div class="panel"><div class="panel-head-row"><div><p class="hint" style="margin-bottom:0;">' + t("loansHint") + '</p></div><button class="icon-pencil' + (state.editingLoans ? " done" : "") + '" data-action="toggleEditLoans">' + (state.editingLoans ? icon("check") : icon("pencil")) + '</button></div>';
     state.loans.forEach((l) => {
       const saldo = toNum(l.saldoTotal);
       const original = toNum(l.montoOriginal);
@@ -801,12 +803,16 @@ function renderApp() {
     if (state.editingLoans) html += '<button class="add-btn" data-action="addLoan">' + t("addLoan") + '</button>';
     const totalPrestamos = state.loans.reduce((a, l) => a + (toNum(l.saldoTotal) > 0 ? toNum(l.montoPago) : 0), 0);
     html += '<div class="mini-total"><span>' + t("totalPrestamos") + '</span><b>' + sym() + fmt0(totalPrestamos) + '</b></div></div>';
+    }
 
-    if (toNum(state.job.pagoHora) > 0) {
-      html += '<div class="panel" style="padding:18px;"><div class="panel-head-row"><div><h2>' + (LANG === "es" ? "Calculadora de tiempo" : "Time calculator") + '</h2><p class="hint" style="margin:3px 0 0;">' + (LANG === "es" ? "Mide una compra con tu tiempo neto de trabajo." : "Measure a purchase using your net working time.") + '</p></div>' + icon("clock") + '</div>';
-      html += '<div class="goal-field" style="margin-top:12px;"><label>' + (LANG === "es" ? "Monto de la compra" : "Purchase amount") + ' ' + sym() + '</label><input id="purchase-time-input" type="text" inputmode="decimal" value="' + esc(state.evaluarCompraMonto || "") + '" placeholder="45"></div>';
+    html += '<button class="section-collapser" data-action="toggleCalcTiempo"><span>' + icon("clock") + ' ' + (LANG === "es" ? "Calculadora de tiempo" : "Time calculator") + '</span><span class="chev' + (state.calcTiempoAbierto ? " open" : "") + '">' + icon("chevron") + '</span></button>';
+    if (state.calcTiempoAbierto && toNum(state.job.pagoHora) > 0) {
+      html += '<div class="panel" style="padding:18px;"><p class="hint" style="margin:0 0 12px;">' + (LANG === "es" ? "Mide una compra con tu tiempo neto de trabajo." : "Measure a purchase using your net working time.") + '</p>';
+      html += '<div class="goal-field"><label>' + (LANG === "es" ? "Monto de la compra" : "Purchase amount") + ' ' + sym() + '</label><input id="purchase-time-input" type="text" inputmode="decimal" value="' + esc(state.evaluarCompraMonto || "") + '" placeholder="45"></div>';
       html += '<div id="purchase-time-result" style="font-size:18px;font-weight:800;margin-top:12px;color:var(--positive);">' + esc(textoGastoEnTiempo(state.evaluarCompraMonto)) + '</div>';
       html += '<p class="hint" style="margin:8px 0 0;">' + (LANG === "es" ? "Basado en " : "Based on ") + sym() + fmt2(tarifaNetaTrabajo()) + '/h ' + (LANG === "es" ? "netos estimados." : "estimated net.") + '</p></div>';
+    } else if (state.calcTiempoAbierto) {
+      html += '<div class="panel" style="padding:18px;"><p class="hint" style="margin:0;">' + (LANG === "es" ? "Configura tu pago por hora en Trabajo para usar la calculadora." : "Set your hourly rate in Work to use the calculator.") + '</p></div>';
     }
   }
 

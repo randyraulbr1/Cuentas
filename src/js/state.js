@@ -8,8 +8,8 @@ const fmt2 = (n) => (isFinite(Number(n)) ? Number(n) : 0).toLocaleString(LANG ==
 
 const fmt10 = (n) => (Math.round((isFinite(n) ? n : 0) / 10) * 10).toLocaleString(LANG === "es" ? "es-ES" : "en-US", { maximumFractionDigits: 0 });
 
-const APP_VERSION = "v155";
-const BUILD_DATE = "30/08 02:10 UTC";
+const APP_VERSION = "v156";
+const BUILD_DATE = "30/08 02:30 UTC";
 
 let uidCounter = 1;
 
@@ -113,7 +113,7 @@ const state = {
 
   goals: [], editingGoals: false, confirmDeleteGoalId: null, editingSaldosInicio: false, iconPickerSubId: null, confirmSumarAhorro: false, diaSemanaSel: null,
   historialSearch: "", historialCategoriaFiltro: "", showTxDetalle: null, notasTransacciones: {},
-  cuentasHistorialAbierto: false, cuentasAnalisisAbierto: false,
+  cuentasHistorialAbierto: false, cuentasAnalisisAbierto: false, plazosAbierto: false, calcTiempoAbierto: false,
   historialMesesVisibles: 3, pagosMesesVisibles: 3, historialMesAbierto: null, historialVista: "compras", txDetalleFlash: "",
   cloudErrorMsg: "", cloudBusy: false, cloudFlash: "", confirmDisconnectId: null,
   payFrequency: "mensual", ultimoPago: "", proximoPagoAjuste: "", ingresosLog: [], loans: [],

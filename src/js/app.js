@@ -824,6 +824,8 @@ root.addEventListener("click", (e) => {
     iniciarConectarBanco: iniciarConectarBanco, actualizarDatosNube: actualizarDatosNube, resetConexionNube: resetConexionNube,
     toggleEditGoals: toggleEditGoals, addGoal: addGoal, askDeleteGoal: () => askDeleteGoal(id), cancelDeleteGoal: cancelDeleteGoal, removeGoal: () => removeGoal(id),
     toggleCuentasHistorial: () => { state.cuentasHistorialAbierto = !state.cuentasHistorialAbierto; render(); },
+    togglePlazos: () => { state.plazosAbierto = !state.plazosAbierto; render(); },
+    toggleCalcTiempo: () => { state.calcTiempoAbierto = !state.calcTiempoAbierto; render(); },
     toggleCuentasAnalisis: () => { state.cuentasAnalisisAbierto = !state.cuentasAnalisisAbierto; render(); },
     setHistorialFiltro: () => { state.historialCategoriaFiltro = id || ""; render(); },
     setHistorialVista: () => { state.historialVista = id; state.historialCategoriaFiltro = ""; state.historialMesAbierto = null; render(); },
