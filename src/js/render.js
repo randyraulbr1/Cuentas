@@ -550,11 +550,7 @@ function renderApp() {
     html += '<div class="summary">';
     html += '<div class="sum-card"><div class="sum-label">' + t("debitoLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(debitoBanco) + '</div><div class="opt-row-sub">' + (state.authToken ? (LANG === "es" ? "Saldo automático del banco" : "Automatic bank balance") : (LANG === "es" ? "Conecta el banco para cargarlo" : "Connect the bank to load it")) + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("debesTarjetas") + '</div><div class="sum-val red">' + sym() + fmt0(deudaTarjetas) + '</div></div>';
-    if (!state.editingAhorro) {
-      html += '<div class="sum-card" style="position:relative;"><button class="icon-pencil" style="position:absolute;top:8px;right:8px;width:24px;height:24px;" data-action="toggleEditAhorro">' + icon("pencil") + '</button><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div><div class="opt-row-sub">' + (LANG === "es" ? "Ahorro en efectivo" : "Cash savings") + '</div></div>';
-    } else {
-      html += '<div class="sum-card" style="position:relative;"><button class="icon-pencil done" style="position:absolute;top:8px;right:8px;width:24px;height:24px;" data-action="toggleEditAhorro">' + icon("check") + '</button><div class="sum-label">' + t("ahorradoActual") + '</div><input type="text" inputmode="decimal" id="ahorro-actual-input" data-scope="ahorroActual" value="' + esc(state.ahorroActual) + '" placeholder="0" style="width:100%;font-size:19px;font-weight:800;margin-top:4px;"></div>';
-    }
+    html += '<div class="sum-card"><div class="sum-label">' + t("ahorradoActual") + '</div><div class="sum-val green">' + sym() + fmt0(toNum(state.ahorroActual)) + '</div><div class="opt-row-sub">' + (LANG === "es" ? "Ahorro en efectivo" : "Cash savings") + '</div></div>';
     html += '<div class="sum-card"><div class="sum-label">' + t("disponibleMes") + '</div><div class="sum-val ' + (t2.disponibleBruto >= 0 ? "green" : "red") + '">' + (t2.disponibleBruto >= 0 ? "" : "-") + sym() + fmt0(Math.abs(t2.disponibleBruto)) + '</div><span class="status-pill ' + t2.liveStatus.key + '">' + t2.liveStatus.label + '</span></div>';
     html += '</div>';
     html += '<div class="summary">';
@@ -634,8 +630,7 @@ function renderApp() {
         html += '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>';
       } else {
         html += '<div class="goal-grid" style="margin-bottom:6px;"><input type="text" id="goal-nombre-' + g.id + '" placeholder="' + t("goalNombrePh") + '" data-scope="goal" data-id="' + g.id + '" data-field="nombre" value="' + esc(g.nombre) + '"><button class="icon-del" data-action="askDeleteGoal" data-id="' + g.id + '">' + icon("close") + '</button></div>';
-        html += '<div class="goal-field"><label>' + t("goalObjetivoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="goal-objetivo-' + g.id + '" placeholder="0" data-scope="goal" data-id="' + g.id + '" data-field="montoObjetivo" value="' + esc(g.montoObjetivo) + '"></div>';
-        html += '<p class="hint" style="margin:6px 0 0;">' + (LANG === "es" ? "El progreso se calcula solo con tu Ahorro actual." : "Progress is calculated automatically from your Current savings.") + '</p>';
+        html += '<div class="goal-grid"><div class="goal-field"><label>' + (LANG === "es" ? "Ahorrado actual" : "Current savings") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="ahorro-actual-input" data-scope="ahorroActual" placeholder="0" value="' + esc(state.ahorroActual) + '"></div><div class="goal-field"><label>' + t("goalObjetivoLbl") + ' ' + sym() + '</label><input type="text" inputmode="decimal" id="goal-objetivo-' + g.id + '" placeholder="0" data-scope="goal" data-id="' + g.id + '" data-field="montoObjetivo" value="' + esc(g.montoObjetivo) + '"></div></div>';
         html += '<div class="progress-track" style="margin-top:6px;"><div class="progress-fill" style="width:' + pct + '%"></div></div>';
       }
       html += '</div>';
