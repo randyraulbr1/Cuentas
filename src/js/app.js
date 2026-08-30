@@ -876,7 +876,14 @@ root.addEventListener("click", (e) => {
     toggleEditLoans: toggleEditLoans, setLoanFrec: () => setLoanFrec(id, freq),
     loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
     toggleLoanBankPicker: () => { state.loanBankPicker = state.loanBankPicker === id ? null : id; state.bankExpenseSearch = ""; render(); },
-    requestChangePinNative: () => { try { window.AndroidBridge && window.AndroidBridge.requestChangePin(); } catch (e) {} },
+    requestChangePinNative: () => {
+      if (window.AndroidBridge && window.AndroidBridge.requestChangePin) {
+        try { window.AndroidBridge.requestChangePin(); return; } catch (e) {}
+      }
+      alert(LANG === "es"
+        ? "Esta función necesita la versión más reciente de la app. Descarga el APK nuevo desde el enlace que te compartieron e instálalo (no basta con \"Actualizar\" dentro de la app)."
+        : "This feature needs the newest app version. Download and install the new APK from the link you were given (updating inside the app is not enough).");
+    },
     setLoanPagoFromTx: () => {
       const loan = state.loans.find((l) => l.id === id);
       const tx = state.cloudTransactions.find((t) => t.id === btn.dataset.txId);
