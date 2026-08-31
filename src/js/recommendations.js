@@ -50,7 +50,7 @@ function buildCashflowBuckets(period) {
     let label;
     if (period === "day") {
       const hasRealTime = String(event.when.toISOString()).slice(11, 16) !== "12:00";
-      label = hasRealTime ? event.when.toLocaleTimeString(LANG === "es" ? "es-ES" : "en-US", { hour: "2-digit", minute: "2-digit" }) : String(event.when.getDate());
+      label = hasRealTime ? event.when.toLocaleTimeString(LANG === "es" ? "es-ES" : "en-US", { hour: "2-digit", minute: "2-digit", hour12: true }) : String(event.when.getDate());
     } else {
       label = String(event.when.getDate()) + "/" + String(event.when.getMonth() + 1);
     }
@@ -96,6 +96,21 @@ function computeSmartAdvice() {
       advice.push({ level: "urgent", text: (juntos
         ? (LANG === "es" ? "Entre " + (state.coupleNameSelf || (LANG === "es" ? "tú" : "you")) + " y " + state.coupleNamePartner + ", les faltan " : "Between " + (state.coupleNameSelf || "you") + " and " + state.coupleNamePartner + ", you're short ")
         : (LANG === "es" ? "Te faltan " : "You still need ")) + sym() + fmt0(gap) + (LANG === "es" ? " para completar todos los pagos pendientes de este mes." : " to cover all remaining payments this month.") });
+
+      // Sugerencia especifica de quien tiene mas disponible para cubrir el faltante
+      if (juntos) {
+        const depositoCuentas = state.cloudAccounts.filter((account) => String(account.type || "").toLowerCase() === "depository");
+        const dispSelf = depositoCuentas.filter((a) => (state.accountOwner[a.account_id] || "self") === "self").reduce((sum, a) => sum + Math.max(toNum(a.balance_available != null ? a.balance_available : a.balance_current), 0), 0);
+        const dispPartner = depositoCuentas.filter((a) => state.accountOwner[a.account_id] === "partner").reduce((sum, a) => sum + Math.max(toNum(a.balance_available != null ? a.balance_available : a.balance_current), 0), 0);
+        if (dispSelf > 0 || dispPartner > 0) {
+          const mejor = dispPartner > dispSelf ? { nombre: state.coupleNamePartner, monto: Math.min(dispPartner, gap) } : { nombre: state.coupleNameSelf || (LANG === "es" ? "ti" : "you"), monto: Math.min(dispSelf, gap) };
+          if (mejor.monto > 0) {
+            advice.push({ level: "urgent", text: LANG === "es"
+              ? "Usa " + sym() + fmt0(mejor.monto) + " de " + mejor.nombre + " para cubrir la mayor parte de lo que falta."
+              : "Use " + sym() + fmt0(mejor.monto) + " from " + mejor.nombre + " to cover most of what's missing." });
+          }
+        }
+      }
     }
   }
 
@@ -236,7 +251,7 @@ function computeInsights() {
       const intervalo = FREQ_DIAS[frecuencia] || 30;
       const proxima = new Date(ultimaFecha); proxima.setDate(proxima.getDate() + intervalo);
       const diasFaltan = Math.round((proxima - hoy) / 86400000);
-      return { key: key, origen: "auto", nombre: ordenadas[0].merchant_name || ordenadas[0].descripcion, monto: Math.abs(toNum(ordenadas[0].monto)), frecuencia, proxima, diasFaltan, cancelada: state.suscripcionesCanceladas.indexOf(key) !== -1 };
+      return { key: key, origen: "auto", nombre: ordenadas[0].merchant_name || ordenadas[0].descripcion, monto: Math.abs(toNum(ordenadas[0].monto)), frecuencia, proxima, diasFaltan, cancelada: state.suscripcionesCanceladas.indexOf(key) !== -1, owner: state.accountOwner[ordenadas[0].account_id] || null };
     });
 
   const suscripcionesManualesCalc = state.suscripcionesManuales.map((s) => {

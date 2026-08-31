@@ -132,6 +132,7 @@ function addDetectedSubscription(key) {
     diaPago: String(Number(txDate.slice(8, 10)) || ""),
     merchantKey: item.key,
     matchedBankTxId: tx ? tx.id : null,
+    owner: item.owner || null,
     pagadoMes: txDate.slice(0, 7) === currentMonth ? currentMonth : null,
     pagadoFuente: txDate.slice(0, 7) === currentMonth ? "banco" : null,
     pagadoMonto: txDate.slice(0, 7) === currentMonth ? String(Math.abs(toNum(item.monto))) : null,

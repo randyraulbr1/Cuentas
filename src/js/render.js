@@ -48,8 +48,9 @@ function renderBancoNubePanel(compact) {
   });
 
   const hasActiveBank = state.cloudInstitutions.some((inst) => inst.status === "active");
+  const activeBankCount = state.cloudInstitutions.filter((inst) => inst.status === "active").length;
   if (!hasActiveBank) html += '<button class="pay-trigger" style="background:var(--accent);" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("bank") + ' ' + (state.cloudBusy ? t("conectandoMsg") : t("conectarBancoPlaidBtn")) + '</button>';
-  else if (state.coupleMode) html += '<button class="pill-btn wide" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("plus") + ' ' + (state.cloudBusy ? t("conectandoMsg") : (LANG === "es" ? "Conectar otro banco" : "Connect another bank")) + '</button>';
+  else if (state.coupleMode && activeBankCount < 2) html += '<button class="pill-btn wide" data-action="iniciarConectarBanco"' + (state.cloudBusy ? " disabled" : "") + '>' + icon("plus") + ' ' + (state.cloudBusy ? t("conectandoMsg") : (LANG === "es" ? "Conectar otro banco" : "Connect another bank")) + '</button>';
 
 
   if (state.cloudAccounts.length > 0 && !compact) {
@@ -702,16 +703,6 @@ function renderApp() {
     if (state.autoPagoNotif && state.autoPagoNotif.length > 0) {
       html += '<div class="flash">' + t("autoPagoAplicado")(state.autoPagoNotif.join(", ")) + '</div>';
     }
-    if (state.coupleMode) {
-      const coupleAdvice = computeSmartAdvice();
-      if (coupleAdvice.length) {
-        html += '<div class="panel smart-advice-panel"><div class="panel-head-row"><h2>' + (LANG === "es" ? "Para los dos" : "For both of you") + '</h2></div>';
-        coupleAdvice.forEach((tip) => {
-          html += '<div class="smart-advice ' + tip.level + '">' + icon(tip.level === "urgent" || tip.level === "blink" ? "alert" : tip.level === "credit" ? "card" : tip.level === "save" ? "bills" : "check") + '<span>' + esc(tip.text) + '</span></div>';
-        });
-        html += '</div>';
-      }
-    }
     html += '<div class="panel"><div class="panel-head-row"><div><h2 style="margin-bottom:0;">' + t("subsTitle") + '</h2></div><div class="panel-head-actions"><button class="icon-pencil sub-add-trigger" data-action="toggleSubPresetPicker">' + icon("plus") + '</button><button class="icon-pencil' + (state.editingSubs ? " done" : "") + '" data-action="toggleEditSubs">' + (state.editingSubs ? icon("check") : icon("pencil")) + '</button></div></div>';
     if (state.subPresetPicker) {
       const bankExpenses = state.cloudTransactions
@@ -783,7 +774,7 @@ function renderApp() {
         } else {
           const ico = sub.icono || CATEGORY_ICON[sub.categoria] || CATEGORY_ICON.otro;
           html += '<div class="sub-item' + (pagado ? " pagado" : "") + '" data-action="toggleSubPagado" data-id="' + sub.id + '" style="cursor:pointer;"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + sub.id + '">' + (pagado ? icon("check") : "") + '</button>';
-          html += '<span class="sub-item-ico">' + icon(ico) + '</span><div class="sub-item-mid"><span class="sub-item-name">' + esc(sub.nombre || t("subNombrePh")) + '</span><span class="sub-item-cat">' + t("cat_" + (sub.categoria || "otro")) + (sub.diaPago ? ' · ' + esc(formatDate(entry.due)) : "") + '</span></div>';
+          html += '<span class="sub-item-ico">' + icon(ico) + '</span><div class="sub-item-mid"><span class="sub-item-name">' + esc(sub.nombre || t("subNombrePh")) + '</span><span class="sub-item-cat">' + t("cat_" + (sub.categoria || "otro")) + (sub.diaPago ? ' · ' + esc(formatDate(entry.due)) : "") + (state.coupleMode && sub.owner ? ' · ' + esc(sub.owner === "partner" ? (state.coupleNamePartner || "") : (state.coupleNameSelf || (LANG === "es" ? "tú" : "you"))) : "") + '</span></div>';
           html += '<span class="sub-item-amt">' + sym() + fmt0(toNum(sub.monto)) + '</span></div>';
         }
       }
@@ -921,60 +912,77 @@ function renderApp() {
         "linear-gradient(140deg,#0E7C66 0%,#0A5347 55%,#06332C 100%)",
         "linear-gradient(140deg,#5B3A9E 0%,#3A2468 55%,#22143F 100%)"
       ];
-      html += '<div class="cc-stack">';
       const expandedCloudCards = state.expandedCloudCardIds || {};
-      cloudCards.forEach((c, ccIdx) => {
+
+      const renderOneCard = (c, ccIdx, group) => {
         const saldo = toNum(c.balance_current);
         const limite = toNum(c.balance_limit);
         const uso = limite > 0 ? Math.min((saldo / limite) * 100, 100) : null;
         const usoNivel = uso === null ? "verde" : uso < 30 ? "verde" : uso < 70 ? "amarillo" : "rojo";
         const liab = c.liab_apr != null || c.liab_pago_minimo != null ? { apr: c.liab_apr, pago_minimo: c.liab_pago_minimo, fecha_limite: c.liab_fecha_limite } : null;
         const exp = !!expandedCloudCards[c.account_id];
-        const dim = false;
-        html += '<button type="button" class="cc-card' + (exp ? " expanded" : "") + (dim ? " dimmed" : "") + '" data-action="toggleCardNube" data-id="' + esc(c.account_id) + '" style="background:' + ccGrads[ccIdx % ccGrads.length] + ';z-index:' + (exp ? 9 : cloudCards.length - ccIdx) + ';" aria-expanded="' + (exp ? "true" : "false") + '">';
-        html += '<div class="cc-top"><span class="cc-bank">' + esc(c.name || t("cardNombrePh")) + '</span>' + (uso !== null ? '<span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span>' : "") + '</div>';
-        html += '<div class="cc-mid"><span class="cc-chip"></span><svg class="cc-wave" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7a7 7 0 0 1 0 6M9 5a10 10 0 0 1 0 10M13 3a13.5 13.5 0 0 1 0 14"/></svg></div>';
-        html += '<div class="cc-number">\u2022\u2022\u2022\u2022&nbsp;&nbsp;\u2022\u2022\u2022\u2022&nbsp;&nbsp;\u2022\u2022\u2022\u2022&nbsp;&nbsp;' + (c.mask ? esc(c.mask) : "\u2022\u2022\u2022\u2022") + '</div>';
-        html += '<div class="cc-bottom"><span class="cc-label">' + t("debesAhoraLbl") + '</span><span class="cc-balance">' + sym() + fmt0(saldo) + '</span></div>';
-        html += '<div class="cc-detail">';
+        let h = '<button type="button" class="cc-card' + (exp ? " expanded" : "") + '" data-action="toggleCardNube" data-id="' + esc(c.account_id) + '" style="background:' + ccGrads[ccIdx % ccGrads.length] + ';z-index:' + (exp ? 9 : group.length - ccIdx) + ';" aria-expanded="' + (exp ? "true" : "false") + '">';
+        h += '<div class="cc-top"><span class="cc-bank">' + esc(c.name || t("cardNombrePh")) + '</span>' + (uso !== null ? '<span class="status-pill ' + usoNivel + '">' + Math.round(uso) + '%</span>' : "") + '</div>';
+        h += '<div class="cc-mid"><span class="cc-chip"></span><svg class="cc-wave" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 7a7 7 0 0 1 0 6M9 5a10 10 0 0 1 0 10M13 3a13.5 13.5 0 0 1 0 14"/></svg></div>';
+        h += '<div class="cc-number">\u2022\u2022\u2022\u2022&nbsp;&nbsp;\u2022\u2022\u2022\u2022&nbsp;&nbsp;\u2022\u2022\u2022\u2022&nbsp;&nbsp;' + (c.mask ? esc(c.mask) : "\u2022\u2022\u2022\u2022") + '</div>';
+        h += '<div class="cc-bottom"><span class="cc-label">' + t("debesAhoraLbl") + '</span><span class="cc-balance">' + sym() + fmt0(saldo) + '</span></div>';
+        h += '<div class="cc-detail">';
         if (state.coupleMode) {
           const selfLabel = state.coupleNameSelf || (LANG === "es" ? "Yo" : "Me");
           const partnerLabel = state.coupleNamePartner || (LANG === "es" ? "Mi pareja" : "Partner");
           const owner = state.accountOwner[c.account_id];
-          html += '<div class="seg" style="width:100%;margin-bottom:10px;"><span role="button" style="flex:1;" class="' + (owner !== "partner" ? "active" : "") + '" data-action="setAccountOwnerSelf" data-id="' + esc(c.account_id) + '">' + esc(selfLabel) + '</span><span role="button" style="flex:1;" class="' + (owner === "partner" ? "active" : "") + '" data-action="setAccountOwnerPartner" data-id="' + esc(c.account_id) + '">' + esc(partnerLabel) + '</span></div>';
+          h += '<div class="seg" style="width:100%;margin-bottom:10px;"><span role="button" style="flex:1;" class="' + (owner !== "partner" ? "active" : "") + '" data-action="setAccountOwnerSelf" data-id="' + esc(c.account_id) + '">' + esc(selfLabel) + '</span><span role="button" style="flex:1;" class="' + (owner === "partner" ? "active" : "") + '" data-action="setAccountOwnerPartner" data-id="' + esc(c.account_id) + '">' + esc(partnerLabel) + '</span></div>';
         }
         if (limite > 0) {
-          html += utilBarHtml(uso, usoNivel);
-          html += '<div class="cc-line"><span>' + sym() + fmt0(saldo) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(limite) + '</span></div>';
-          html += '<div class="cc-line"><span>' + t("creditoDisponible") + '</span><span>' + sym() + fmt0(Math.max(limite - saldo, 0)) + '</span></div>';
+          h += utilBarHtml(uso, usoNivel);
+          h += '<div class="cc-line"><span>' + sym() + fmt0(saldo) + ' ' + t("deLimiteLbl") + ' ' + sym() + fmt0(limite) + '</span></div>';
+          h += '<div class="cc-line"><span>' + t("creditoDisponible") + '</span><span>' + sym() + fmt0(Math.max(limite - saldo, 0)) + '</span></div>';
         }
         if (liab) {
-          if (liab.apr) html += '<div class="cc-line"><span>' + t("cardAprLbl") + '</span><span>' + liab.apr + '%</span></div>';
-          if (liab.pago_minimo != null) html += '<div class="cc-line"><span>' + t("cardMinimoLbl") + '</span><span>' + sym() + fmt0(toNum(liab.pago_minimo)) + '</span></div>';
+          if (liab.apr) h += '<div class="cc-line"><span>' + t("cardAprLbl") + '</span><span>' + liab.apr + '%</span></div>';
+          if (liab.pago_minimo != null) h += '<div class="cc-line"><span>' + t("cardMinimoLbl") + '</span><span>' + sym() + fmt0(toNum(liab.pago_minimo)) + '</span></div>';
           if (liab.apr && saldo > 0) {
             const monthlyInterest = saldo * toNum(liab.apr) / 1200;
             const recommendedPayment = Math.max(toNum(liab.pago_minimo), monthlyInterest + saldo / 36, saldo * 0.03);
-            html += '<div class="cc-line"><span>' + (LANG === "es" ? "Interés estimado al mes" : "Estimated monthly interest") + '</span><span>' + sym() + fmt0(monthlyInterest) + '</span></div>';
-            html += '<div class="cc-line"><span>' + (LANG === "es" ? "Pago mensual recomendado" : "Recommended monthly payment") + '</span><span>' + sym() + fmt0(recommendedPayment) + '</span></div>';
+            h += '<div class="cc-line"><span>' + (LANG === "es" ? "Interés estimado al mes" : "Estimated monthly interest") + '</span><span>' + sym() + fmt0(monthlyInterest) + '</span></div>';
+            h += '<div class="cc-line"><span>' + (LANG === "es" ? "Pago mensual recomendado" : "Recommended monthly payment") + '</span><span>' + sym() + fmt0(recommendedPayment) + '</span></div>';
           }
           if (limite > 0 && uso !== null && uso > 30) {
             const paraTreinta = Math.max(saldo - limite * 0.3, 0);
-            html += '<div class="cc-line"><span>' + (LANG === "es" ? "Para bajar a 30% de uso" : "To get to 30% usage") + '</span><span>' + sym() + fmt0(paraTreinta) + '</span></div>';
+            h += '<div class="cc-line"><span>' + (LANG === "es" ? "Para bajar a 30% de uso" : "To get to 30% usage") + '</span><span>' + sym() + fmt0(paraTreinta) + '</span></div>';
           }
-          if (liab.fecha_limite) html += '<div class="cc-line"><span>' + t("proximoPago") + '</span><span>' + esc(liab.fecha_limite) + '</span></div>';
+          if (liab.fecha_limite) h += '<div class="cc-line"><span>' + t("proximoPago") + '</span><span>' + esc(liab.fecha_limite) + '</span></div>';
         }
-        html += '</div></button>';
-      });
-      const totalLimiteTodas = cloudCards.reduce((sum, c) => sum + toNum(c.balance_limit), 0);
-      const totalSaldoTodas = cloudCards.reduce((sum, c) => sum + toNum(c.balance_current), 0);
-      const totalDisponibleTodas = Math.max(totalLimiteTodas - totalSaldoTodas, 0);
-      if (totalLimiteTodas > 0) {
-        html += '<div style="text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">';
-        html += '<span class="hint" style="display:block;margin-bottom:2px;">' + t("creditoDisponible") + '</span>';
-        html += '<b style="font-size:26px;font-weight:800;color:var(--accent);">' + sym() + fmt0(totalDisponibleTodas) + '</b>';
-        html += '</div>';
+        h += '</div></button>';
+        return h;
+      };
+
+      const renderCreditoTotal = (group) => {
+        const limiteT = group.reduce((sum, c) => sum + toNum(c.balance_limit), 0);
+        const saldoT = group.reduce((sum, c) => sum + toNum(c.balance_current), 0);
+        const dispT = Math.max(limiteT - saldoT, 0);
+        if (limiteT <= 0) return "";
+        return '<div style="text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);"><span class="hint" style="display:block;margin-bottom:2px;">' + t("creditoDisponible") + '</span><b style="font-size:26px;font-weight:800;color:var(--accent);">' + sym() + fmt0(dispT) + '</b></div>';
+      };
+
+      const selfCards = cloudCards.filter((c) => state.accountOwner[c.account_id] === "self");
+      const partnerCards = cloudCards.filter((c) => state.accountOwner[c.account_id] === "partner");
+      const bothTagged = state.coupleMode && selfCards.length > 0 && partnerCards.length > 0;
+
+      if (bothTagged) {
+        const selfLabel = state.coupleNameSelf || (LANG === "es" ? "Tú" : "You");
+        html += '<p class="opt-section-title" style="margin-top:0;">' + esc(selfLabel) + '</p><div class="cc-stack">';
+        selfCards.forEach((c, i) => { html += renderOneCard(c, i, selfCards); });
+        html += '</div>' + renderCreditoTotal(selfCards);
+        html += '<p class="opt-section-title" style="margin-top:18px;">' + esc(state.coupleNamePartner) + '</p><div class="cc-stack">';
+        partnerCards.forEach((c, i) => { html += renderOneCard(c, i, partnerCards); });
+        html += '</div>' + renderCreditoTotal(partnerCards);
+      } else {
+        html += '<div class="cc-stack">';
+        cloudCards.forEach((c, ccIdx) => { html += renderOneCard(c, ccIdx, cloudCards); });
+        html += '</div>' + renderCreditoTotal(cloudCards);
       }
-      html += '</div></div>';
+      html += '</div>';
     }
 
     html += '<div class="panel cards-dashboard">';
@@ -1141,7 +1149,8 @@ function renderApp() {
       html += '<div class="panel"><div class="mini-total"><span>' + (LANG === "es" ? "Costo mensual estimado" : "Estimated monthly cost") + '</span><b>' + sym() + fmt2(subscriptionInsights.suscripcionesTotalMensual) + '</b></div>';
       if (!activeSubscriptions.length) html += '<div class="empty-state">' + (LANG === "es" ? "Aún no hay cargos recurrentes suficientes para confirmar." : "There are not enough recurring charges to confirm yet.") + '</div>';
       activeSubscriptions.forEach((s) => {
-        html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(s.nombre) + '</span><span class="locked-amount">' + sym() + fmt2(s.monto) + '</span></div>';
+        const dueñoLbl = state.coupleMode && s.owner ? ' <small style="color:var(--text-muted);font-weight:700;">· ' + esc(s.owner === "partner" ? (state.coupleNamePartner || (LANG === "es" ? "pareja" : "partner")) : (state.coupleNameSelf || (LANG === "es" ? "tú" : "you"))) + '</small>' : "";
+        html += '<div class="card-entry"><div class="card-collapsed-top"><span class="card-collapsed-name">' + esc(s.nombre) + dueñoLbl + '</span><span class="locked-amount">' + sym() + fmt2(s.monto) + '</span></div>';
         html += '<p class="opt-row-sub" style="margin:2px 0 10px;">' + esc(s.frecuencia) + ' · ' + (s.diasFaltan >= 0 ? (LANG === "es" ? "en " : "in ") + s.diasFaltan + (LANG === "es" ? " días" : " days") : (LANG === "es" ? "fecha estimada vencida" : "estimated date passed")) + '</p>';
         html += '<div style="display:flex;gap:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="addDetectedSubscription" data-id="' + esc(s.key) + '">' + (LANG === "es" ? "Agregar" : "Add") + '</button><button class="pill-btn" style="flex:1;" data-action="marcarNoSuscripcion" data-id="' + esc(s.key) + '">' + (LANG === "es" ? "No es suscripción" : "Not a subscription") + '</button></div></div>';
       });
@@ -1155,10 +1164,21 @@ function renderApp() {
       html += '<button class="section-collapser" data-action="toggleCuentasHistorial"><span>' + icon("clock") + ' ' + t("tabHistorial") + '</span><span class="chev' + (state.cuentasHistorialAbierto ? " open" : "") + '">' + icon("chevron") + '</span></button>';
     }
     if (tab === "historial" || state.cuentasHistorialAbierto) {
-    const comprasBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0);
-    const recibidosBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) > 0);
+    let comprasBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) < 0);
+    let recibidosBase = state.cloudTransactions.filter((tx) => toNum(tx.monto) > 0);
+    if (state.coupleMode && state.coupleNamePartner) {
+      const filtro = state.historialQuien || "todos";
+      if (filtro !== "todos") {
+        comprasBase = comprasBase.filter((tx) => (state.accountOwner[tx.account_id] || "self") === filtro);
+        recibidosBase = recibidosBase.filter((tx) => (state.accountOwner[tx.account_id] || "self") === filtro);
+      }
+    }
     if (comprasBase.length > 0 || recibidosBase.length > 0) {
       html += '<div class="panel">';
+      if (state.coupleMode && state.coupleNamePartner) {
+        const selfLabel = state.coupleNameSelf || (LANG === "es" ? "Yo" : "Me");
+        html += '<div class="seg" style="width:100%;margin-bottom:10px;"><button style="flex:1;" class="' + ((state.historialQuien || "todos") === "todos" ? "active" : "") + '" data-action="setHistorialQuien" data-id="todos">' + (LANG === "es" ? "Juntos" : "Together") + '</button><button style="flex:1;" class="' + (state.historialQuien === "self" ? "active" : "") + '" data-action="setHistorialQuien" data-id="self">' + esc(selfLabel) + '</button><button style="flex:1;" class="' + (state.historialQuien === "partner" ? "active" : "") + '" data-action="setHistorialQuien" data-id="partner">' + esc(state.coupleNamePartner) + '</button></div>';
+      }
       html += '<div class="seg" style="width:100%;margin-bottom:10px;"><button style="flex:1;" class="' + (state.historialVista === "compras" ? "active" : "") + '" data-action="setHistorialVista" data-id="compras">' + t("comprasTitle") + '</button><button style="flex:1;" class="' + (state.historialVista === "recibidos" ? "active" : "") + '" data-action="setHistorialVista" data-id="recibidos">' + t("pagosRecibidosBancoTitle") + '</button></div>';
 
       const listaBase = state.historialVista === "recibidos" ? recibidosBase : comprasBase;
@@ -1255,7 +1275,7 @@ function renderBreakLockScreen() {
   const offset = circ * (1 - frac);
   const ringColor = breakMs >= limiteMs ? "#FF3B30" : breakMs >= limiteMs * 0.8 ? "#FF9F0A" : "#34C759";
   const now = new Date();
-  const timeStr = now.toLocaleTimeString(LANG === "es" ? "es-ES" : "en-US", { hour: "numeric", minute: "2-digit" });
+  const timeStr = now.toLocaleTimeString(LANG === "es" ? "es-ES" : "en-US", { hour: "numeric", minute: "2-digit", hour12: true });
   const dateStr = now.toLocaleDateString(LANG === "es" ? "es-ES" : "en-US", { weekday: "long", day: "numeric", month: "long" });
 
   let h = '<div style="position:fixed;inset:0;background:#0A0A0A;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top,20px) 24px calc(env(safe-area-inset-bottom,20px) + 20px);z-index:5000;font-family:inherit;">';

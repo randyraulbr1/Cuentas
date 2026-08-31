@@ -918,6 +918,7 @@ root.addEventListener("click", (e) => {
     toggleCuentasAnalisis: () => { state.cuentasAnalisisAbierto = !state.cuentasAnalisisAbierto; render(); },
     setHistorialFiltro: () => { state.historialCategoriaFiltro = id || ""; render(); },
     setHistorialVista: () => { state.historialVista = id; state.historialCategoriaFiltro = ""; state.historialMesAbierto = null; render(); },
+    setHistorialQuien: () => { state.historialQuien = id; state.historialMesAbierto = null; render(); },
     verMasMesesHistorial: () => { state.historialMesesVisibles += 3; render(); },
     toggleMesHistorial: () => { state.historialMesAbierto = state.historialMesAbierto === id ? null : id; render(); },
     verMesTendencia: () => verMesTendencia(id),
