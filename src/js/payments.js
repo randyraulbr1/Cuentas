@@ -69,7 +69,19 @@ function syncFixedPaymentsFromBank() {
       const sameCategory = !!sub.categoria && sub.categoria !== "otro" && tx.categoria === sub.categoria;
       return sameMerchant || similarName || sameCategory || Math.abs(actual - expected) < 0.01;
     });
-    if (!match) return;
+    if (!match) {
+      // Coincidencia debil: parece que puede ser este pago, pero no lo suficientemente seguro para marcarlo solo.
+      const weak = expenses.find((tx) => {
+        const actual = Math.abs(toNum(tx.monto));
+        const txName = merchantKey(tx.merchant_name || tx.descripcion || "");
+        const sameCategory = !!sub.categoria && sub.categoria !== "otro" && tx.categoria === sub.categoria;
+        const widerTolerance = Math.abs(actual - expected) <= Math.max(8, expected * 0.25);
+        return sameCategory && widerTolerance;
+      });
+      if (!!weak !== !!sub.needsReview) { sub.needsReview = !!weak; changed = true; }
+      return;
+    }
+    sub.needsReview = false;
     sub.pagadoMes = currentMonth;
     sub.pagadoFuente = "banco";
     sub.pagadoMonto = String(Math.abs(toNum(match.monto)));

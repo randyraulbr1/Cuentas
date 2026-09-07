@@ -229,11 +229,16 @@ function toggleExpandTurno(id) { state.expandedTurnoIds[id] = !state.expandedTur
 
 function turnoPagoBruto(turno) {
   const horas = turnoHoras(turno, false);
+  const pagoHora = toNum(state.job.pagoHora);
+  if (turno.tiempoMedio) {
+    let bruto = horas * pagoHora * 1.5;
+    bruto += toNum(turno.propinas) + toNum(turno.bonos);
+    return { horas, normales: 0, extra: horas, bruto };
+  }
   const umbral = toNum(state.job.horasExtraDespues) || Infinity;
   const mult = toNum(state.job.multiplicadorExtra) || 1;
   const normales = Math.min(horas, umbral);
   const extra = Math.max(horas - umbral, 0);
-  const pagoHora = toNum(state.job.pagoHora);
   let bruto = normales * pagoHora + extra * pagoHora * mult;
   if (toNum(state.job.pagoDia) > 0) bruto = Math.max(bruto, toNum(state.job.pagoDia));
   bruto += toNum(turno.propinas) + toNum(turno.bonos);
@@ -326,10 +331,11 @@ function trabajoCalGuardarHoras() {
   const fin = new Date(inicio.getTime() + horas * 3600000);
   state.turnos.push({
     id: uid(), fecha: fecha, horaInicio: inicio.toISOString(), horaFin: fin.toISOString(),
-    breaks: [], propinas: "", bonos: "", notas: "", estado: "trabajado",
+    breaks: [], propinas: "", bonos: "", notas: "", estado: "trabajado", tiempoMedio: !!state.trabajoCalTiempoMedio,
   });
   state.turnos.sort((a, b) => (a.horaInicio < b.horaInicio ? 1 : -1));
   state.trabajoCalHorasInput = "";
+  state.trabajoCalTiempoMedio = false;
   scheduleSave(); render();
 }
 function trabajoCalQuitarTurno(id) {

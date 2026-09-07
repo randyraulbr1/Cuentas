@@ -461,6 +461,7 @@ function renderTrabajoCalendar() {
       });
     }
     h += '<div class="goal-field" style="margin-top:6px;"><label>' + t("horasTrabajadasLbl") + '</label><input type="text" inputmode="decimal" placeholder="8" id="cal-horas" value="' + esc(state.trabajoCalHorasInput) + '" data-scope="trabajoCalHoras"></div>';
+    h += '<div class="opt-row" style="padding:8px 0 0;"><span class="opt-row-label">' + (LANG === "es" ? "Tiempo y medio" : "Time and a half") + '</span><label class="switch"><input type="checkbox" data-action="toggleCalTiempoMedio"' + (state.trabajoCalTiempoMedio ? " checked" : "") + '><span class="slider"></span></label></div>';
     h += '<button class="pill-btn confirm" style="width:100%;margin-top:8px;" data-action="trabajoCalGuardarHoras">' + t("agregarTurnoBtn") + '</button>';
     h += '</div>';
   }
@@ -747,46 +748,68 @@ function renderApp() {
     const unifiedFixed = uniqueSubs.map((sub) => ({ kind: "manual", due: fixedDueDate(sub), item: sub }))
       .sort((a, b) => a.due - b.due);
 
-    unifiedFixed.forEach((entry) => {
+    const renderSubRow = (entry) => {
       const sub = entry.item;
+      let h = "";
       if (state.confirmDeleteSubId === sub.id) {
-        html += '<div class="confirm-row"><span>' + esc(t("confirmDeleteSubMsg")(sub.nombre || t("subNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeSub" data-id="' + sub.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteSub">' + t("cancel") + '</button></div></div>';
+        h += '<div class="confirm-row"><span>' + esc(t("confirmDeleteSubMsg")(sub.nombre || t("subNombrePh"))) + '</span><div class="confirm-row-btns"><button class="pill-btn confirm" data-action="removeSub" data-id="' + sub.id + '">' + t("yesDelete") + '</button><button class="pill-btn" data-action="cancelDeleteSub">' + t("cancel") + '</button></div></div>';
       } else if (state.editingSubs) {
         const icoActual = sub.icono || CATEGORY_ICON[sub.categoria] || CATEGORY_ICON.otro;
-        html += '<div class="sub-edit"><button class="sub-ico-btn" id="sub-icon-' + sub.id + '" data-action="abrirIconPicker" data-id="' + sub.id + '">' + icon(icoActual) + '<span class="sub-ico-edit">' + icon("pencil") + '</span></button>';
-        html += '<div class="sub-edit-fields"><input type="text" placeholder="' + t("subNombrePh") + '" data-scope="sub" data-id="' + sub.id + '" data-field="nombre" value="' + esc(sub.nombre) + '">';
-        html += '<div class="sub-edit-row2"><div class="amount-field"><span class="amount-sym">' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" data-scope="sub" data-id="' + sub.id + '" data-field="monto" value="' + esc(sub.monto) + '"></div>';
-        html += '<input class="sub-due-day" type="number" inputmode="numeric" min="1" max="31" placeholder="' + (LANG === "es" ? "Día" : "Day") + '" data-scope="sub" data-id="' + sub.id + '" data-field="diaPago" value="' + esc(sub.diaPago || "") + '">';
-        html += '<select data-scope="sub" data-id="' + sub.id + '" data-field="categoria">';
-        CATEGORIES.forEach((cat) => { html += '<option value="' + cat + '"' + (sub.categoria === cat ? " selected" : "") + '>' + t("cat_" + cat) + '</option>'; });
-        html += '</select></div></div><button class="icon-del" data-action="askDeleteSub" data-id="' + sub.id + '">' + icon("close") + '</button></div>';
+        h += '<div class="sub-edit"><button class="sub-ico-btn" id="sub-icon-' + sub.id + '" data-action="abrirIconPicker" data-id="' + sub.id + '">' + icon(icoActual) + '<span class="sub-ico-edit">' + icon("pencil") + '</span></button>';
+        h += '<div class="sub-edit-fields"><input type="text" placeholder="' + t("subNombrePh") + '" data-scope="sub" data-id="' + sub.id + '" data-field="nombre" value="' + esc(sub.nombre) + '">';
+        h += '<div class="sub-edit-row2"><div class="amount-field"><span class="amount-sym">' + sym() + '</span><input type="text" inputmode="decimal" placeholder="0" data-scope="sub" data-id="' + sub.id + '" data-field="monto" value="' + esc(sub.monto) + '"></div>';
+        h += '<input class="sub-due-day" type="number" inputmode="numeric" min="1" max="31" placeholder="' + (LANG === "es" ? "Día" : "Day") + '" data-scope="sub" data-id="' + sub.id + '" data-field="diaPago" value="' + esc(sub.diaPago || "") + '">';
+        h += '<select data-scope="sub" data-id="' + sub.id + '" data-field="categoria">';
+        CATEGORIES.forEach((cat) => { h += '<option value="' + cat + '"' + (sub.categoria === cat ? " selected" : "") + '>' + t("cat_" + cat) + '</option>'; });
+        h += '</select></div></div><button class="icon-del" data-action="askDeleteSub" data-id="' + sub.id + '">' + icon("close") + '</button></div>';
+        if (state.coupleMode) {
+          const selfLabel = state.coupleNameSelf || (LANG === "es" ? "Yo" : "Me");
+          const partnerLabel = state.coupleNamePartner || (LANG === "es" ? "Mi pareja" : "Partner");
+          h += '<div class="seg" style="width:100%;margin:6px 0 4px;"><span role="button" style="flex:1;" class="' + (sub.owner !== "partner" ? "active" : "") + '" data-action="setSubOwnerSelf" data-id="' + sub.id + '">' + esc(selfLabel) + '</span><span role="button" style="flex:1;" class="' + (sub.owner === "partner" ? "active" : "") + '" data-action="setSubOwnerPartner" data-id="' + sub.id + '">' + esc(partnerLabel) + '</span></div>';
+        }
         if (state.iconPickerSubId === sub.id) {
-          html += '<div class="icon-picker"><div class="icon-picker-head"><span>' + t("elegirIconoLbl") + '</span><button class="icon-del" data-action="cerrarIconPicker">' + icon("close") + '</button></div><div class="icon-grid">';
-          ICON_PICKER.forEach((ik) => { html += '<button class="icon-opt' + (icoActual === ik ? " sel" : "") + '" data-action="elegirIconoSub" data-id="' + sub.id + '|' + ik + '">' + icon(ik) + '</button>'; });
-          html += '</div></div>';
+          h += '<div class="icon-picker"><div class="icon-picker-head"><span>' + t("elegirIconoLbl") + '</span><button class="icon-del" data-action="cerrarIconPicker">' + icon("close") + '</button></div><div class="icon-grid">';
+          ICON_PICKER.forEach((ik) => { h += '<button class="icon-opt' + (icoActual === ik ? " sel" : "") + '" data-action="elegirIconoSub" data-id="' + sub.id + '|' + ik + '">' + icon(ik) + '</button>'; });
+          h += '</div></div>';
         }
       } else {
         const pagado = sub.pagadoMes === monthKey();
         if (state.payingSubId === sub.id) {
-          html += '<div class="pay-form" style="margin:8px 0;"><p class="opt-row-sub">' + esc(sub.nombre || t("subNombrePh")) + '</p>';
-          html += '<input type="text" inputmode="decimal" placeholder="0" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
-          html += '<div style="display:flex;gap:8px;margin-top:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmPagoSub">' + t("confirmarPago") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelPagoSub">' + t("cancel") + '</button></div></div>';
+          h += '<div class="pay-form" style="margin:8px 0;"><p class="opt-row-sub">' + esc(sub.nombre || t("subNombrePh")) + '</p>';
+          h += '<input type="text" inputmode="decimal" placeholder="0" data-scope="payFormMonto" value="' + esc(state.payFormMonto) + '" style="width:100%;margin-top:8px;font-size:18px;font-weight:700;">';
+          h += '<div style="display:flex;gap:8px;margin-top:8px;"><button class="pill-btn confirm" style="flex:1;" data-action="confirmPagoSub">' + t("confirmarPago") + '</button><button class="pill-btn" style="flex:1;" data-action="cancelPagoSub">' + t("cancel") + '</button></div></div>';
         } else {
           const ico = sub.icono || CATEGORY_ICON[sub.categoria] || CATEGORY_ICON.otro;
-          html += '<div class="sub-item' + (pagado ? " pagado" : "") + '" data-action="toggleSubPagado" data-id="' + sub.id + '" style="cursor:pointer;"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + sub.id + '">' + (pagado ? icon("check") : "") + '</button>';
-          html += '<span class="sub-item-ico">' + icon(ico) + '</span><div class="sub-item-mid"><span class="sub-item-name">' + esc(sub.nombre || t("subNombrePh")) + '</span><span class="sub-item-cat">' + t("cat_" + (sub.categoria || "otro")) + (sub.diaPago ? ' · ' + esc(formatDate(entry.due)) : "") + (state.coupleMode && sub.owner ? ' · ' + esc(sub.owner === "partner" ? (state.coupleNamePartner || "") : (state.coupleNameSelf || (LANG === "es" ? "tú" : "you"))) : "") + '</span></div>';
-          html += '<span class="sub-item-amt">' + sym() + fmt0(toNum(sub.monto)) + '</span></div>';
+          const revisar = sub.needsReview && !pagado;
+          h += '<div class="sub-item' + (pagado ? " pagado" : "") + '" data-action="toggleSubPagado" data-id="' + sub.id + '" style="cursor:pointer;"><button class="paid-check' + (pagado ? " checked" : "") + '" data-action="toggleSubPagado" data-id="' + sub.id + '">' + (pagado ? icon("check") : "") + '</button>';
+          h += '<span class="sub-item-ico">' + icon(ico) + '</span><div class="sub-item-mid"><span class="sub-item-name">' + esc(sub.nombre || t("subNombrePh")) + '</span><span class="sub-item-cat' + (revisar ? "" : "") + '" style="' + (revisar ? "color:var(--negative);font-weight:700;" : "") + '">' + (revisar ? (LANG === "es" ? "Revisar manualmente" : "Check manually") : t("cat_" + (sub.categoria || "otro")) + (sub.diaPago ? ' · ' + esc(formatDate(entry.due)) : "")) + '</span></div>';
+          h += '<span class="sub-item-amt">' + sym() + fmt0(toNum(sub.monto)) + '</span></div>';
         }
       }
-    });
-    if (unifiedFixed.length === 0 && !state.editingSubs) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
+      return h;
+    };
+
+    const selfSubs = unifiedFixed.filter((e) => e.item.owner !== "partner");
+    const partnerSubs = unifiedFixed.filter((e) => e.item.owner === "partner");
+    const showSeparatePartnerPanel = state.coupleMode && state.coupleNamePartner && partnerSubs.length > 0;
+    const mainList = showSeparatePartnerPanel ? selfSubs : unifiedFixed;
+
+    mainList.forEach((entry) => { html += renderSubRow(entry); });
+    if (mainList.length === 0 && !state.editingSubs) html += '<div class="empty-state">' + t("subsEmpty") + '</div>';
     if (state.editingSubs) html += '<button class="add-btn" data-action="toggleSubPresetPicker">' + t("addSub") + '</button>';
     if (state.subs.length > 0) {
       const paidCount = state.subs.filter((sub) => sub.pagadoMes === monthKey()).length;
       html += '<div class="mini-total"><span>' + t("subsPagados")(paidCount, state.subs.length) + '</span></div>';
     }
-    const unifiedTotal = state.subs.reduce((sum, sub) => sum + toNum(sub.monto), 0);
+    const unifiedTotal = mainList.reduce((sum, e) => sum + toNum(e.item.monto), 0);
     html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(unifiedTotal) + '</b></div></div>';
+
+    if (showSeparatePartnerPanel) {
+      html += '<div class="panel"><div class="panel-head-row"><div><h2 style="margin-bottom:0;">' + esc(state.coupleNamePartner) + '</h2></div></div>';
+      partnerSubs.forEach((entry) => { html += renderSubRow(entry); });
+      const partnerTotal = partnerSubs.reduce((sum, e) => sum + toNum(e.item.monto), 0);
+      html += '<div class="mini-total"><span>' + t("totalPagosFijos") + '</span><b>' + sym() + fmt0(partnerTotal) + '</b></div></div>';
+    }
 
     html += '<button class="section-collapser" data-action="togglePlazos"><span>' + icon("bills") + ' ' + t("loansTitle") + '</span><span class="chev' + (state.plazosAbierto ? " open" : "") + '">' + icon("chevron") + '</span></button>';
     if (state.plazosAbierto) {
@@ -1068,7 +1091,9 @@ function renderApp() {
         html += '<div class="break-ring-wrap"><svg width="132" height="132" viewBox="0 0 132 132" style="transform:rotate(-90deg);">';
         html += '<circle cx="66" cy="66" r="54" stroke="var(--pill-bg)" stroke-width="10" fill="none"/>';
         html += '<circle cx="66" cy="66" r="54" stroke="' + ringColor + '" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="' + circ + '" stroke-dashoffset="' + offset + '"/>';
-        html += '</svg><div class="break-ring-text"><div class="break-ring-time">' + fmtBreakMS(breakMs) + '</div><div class="break-ring-limit">' + t("enBreakLbl") + ' \u00b7 ' + limiteMin + ' min</div></div></div>';
+        const restanteMs = Math.max(limiteMs - breakMs, 0);
+        const restanteTxt = breakMs >= limiteMs ? (LANG === "es" ? "Ya pasaste el límite" : "You're past the limit") : (LANG === "es" ? "Faltan " : "") + fmtBreakMS(restanteMs) + (LANG === "es" ? " para " + limiteMin + " min" : " left of " + limiteMin + " min");
+        html += '</svg><div class="break-ring-text"><div class="break-ring-time">' + fmtBreakMS(breakMs) + '</div><div class="break-ring-limit">' + restanteTxt + '</div></div></div>';
         if (state.job.descansoPagado) html += '<div class="opt-row-sub" style="margin:8px 0 0;">' + t("brutoAcumuladoLbl") + ': ' + sym() + bruto.toFixed(2) + '</div>';
       } else {
         html += '<p class="hint" style="margin-bottom:4px;">' + t("empezarTrabajoBtn") + '</p>';

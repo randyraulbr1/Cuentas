@@ -63,6 +63,7 @@ function agruparPorMes(transacciones) {
     if (!grupos[mk]) grupos[mk] = [];
     grupos[mk].push(tx);
   });
+  Object.keys(grupos).forEach((mk) => { grupos[mk].sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || ""))); });
   return Object.keys(grupos).sort((a, b) => (a < b ? 1 : -1)).map((mk) => ({ monthKey: mk, label: monthLabel(mk), items: grupos[mk] }));
 }
 

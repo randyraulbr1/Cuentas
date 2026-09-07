@@ -883,12 +883,14 @@ root.addEventListener("click", (e) => {
     loanAutoOn: () => setLoanAuto(id, true), loanAutoOff: () => setLoanAuto(id, false),
     toggleLoanBankPicker: () => { state.loanBankPicker = state.loanBankPicker === id ? null : id; state.bankExpenseSearch = ""; render(); },
     toggleCoupleMode: () => { state.coupleMode = !state.coupleMode; scheduleSave(); render(); },
-    toggleEditCoupleNames: () => { state.editingCoupleNames = !state.editingCoupleNames; render(); },
+    toggleEditCoupleNames: () => { state.editingCoupleNames = !state.editingCoupleNames; if (!state.editingCoupleNames) saveUserDataNow(); render(); },
     setInstOwnerSelf: () => { const inst = state.cloudInstitutions.find((i) => i.id === id); if (inst) { inst.owner = "self"; } state.editingInstOwner = null; scheduleSave(); render(); },
     setInstOwnerPartner: () => { const inst = state.cloudInstitutions.find((i) => i.id === id); if (inst) { inst.owner = "partner"; } state.editingInstOwner = null; scheduleSave(); render(); },
     toggleEditInstOwner: () => { state.editingInstOwner = state.editingInstOwner === id ? null : id; render(); },
     setAccountOwnerSelf: () => { state.accountOwner[id] = "self"; scheduleSave(); render(); },
     setAccountOwnerPartner: () => { state.accountOwner[id] = "partner"; scheduleSave(); render(); },
+    setSubOwnerSelf: () => { const sub = state.subs.find((s) => s.id === id); if (sub) { sub.owner = "self"; scheduleSave(); render(); } },
+    setSubOwnerPartner: () => { const sub = state.subs.find((s) => s.id === id); if (sub) { sub.owner = "partner"; scheduleSave(); render(); } },
     requestChangePinNative: () => {
       if (window.AndroidBridge && window.AndroidBridge.requestChangePin) {
         try { window.AndroidBridge.requestChangePin(); return; } catch (e) {}
@@ -919,6 +921,7 @@ root.addEventListener("click", (e) => {
     setHistorialFiltro: () => { state.historialCategoriaFiltro = id || ""; render(); },
     setHistorialVista: () => { state.historialVista = id; state.historialCategoriaFiltro = ""; state.historialMesAbierto = null; render(); },
     setHistorialQuien: () => { state.historialQuien = id; state.historialMesAbierto = null; render(); },
+    toggleCalTiempoMedio: () => { state.trabajoCalTiempoMedio = !state.trabajoCalTiempoMedio; render(); },
     verMasMesesHistorial: () => { state.historialMesesVisibles += 3; render(); },
     toggleMesHistorial: () => { state.historialMesAbierto = state.historialMesAbierto === id ? null : id; render(); },
     verMesTendencia: () => verMesTendencia(id),
