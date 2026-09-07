@@ -223,7 +223,9 @@ function renderLoanBankPicker(loanId) {
     expenses.forEach((tx) => {
       h += '<button class="bank-expense-choice" data-action="setLoanPagoFromTx" data-id="' + loanId + '" data-tx-id="' + esc(tx.id) + '">';
       h += renderTxChip(tx.categoria);
-      h += '<span class="bank-expense-choice-info"><b>' + esc(tx.merchant_name || tx.descripcion || "") + '</b><small>' + esc(String(tx.fecha || "").slice(0, 10)) + '</small></span>';
+      const dueñoTxt2 = state.coupleMode && state.coupleNamePartner ? ((state.accountOwner[tx.account_id] === "partner") ? state.coupleNamePartner : (state.coupleNameSelf || (LANG === "es" ? "tú" : "you"))) : "";
+      const dueñoTag2 = dueñoTxt2 ? ' <span style="display:inline-block;padding:1px 7px;border-radius:8px;background:color-mix(in srgb,var(--accent) 16%,var(--pill-bg));color:var(--accent);font-weight:800;">' + esc(dueñoTxt2) + '</span>' : "";
+      h += '<span class="bank-expense-choice-info"><b>' + esc(tx.merchant_name || tx.descripcion || "") + '</b><small>' + esc(String(tx.fecha || "").slice(0, 10)) + dueñoTag2 + '</small></span>';
       h += '<strong>\u2212' + sym() + fmt0(Math.abs(toNum(tx.monto))) + '</strong></button>';
     });
   }
@@ -729,7 +731,9 @@ function renderApp() {
         filteredBankExpenses.forEach((tx) => {
           html += '<button class="bank-expense-choice" data-action="addSubFromBankTx" data-id="' + esc(tx.id) + '">';
           html += renderTxChip(tx.categoria);
-          html += '<span class="bank-expense-choice-info"><b>' + esc(tx.merchant_name || tx.descripcion || "") + '</b><small>' + esc(String(tx.fecha || "").slice(0, 10)) + ' · ' + t("cat_" + (tx.categoria || "otro")) + '</small></span>';
+          const dueñoTxt = state.coupleMode && state.coupleNamePartner ? ((state.accountOwner[tx.account_id] === "partner") ? state.coupleNamePartner : (state.coupleNameSelf || (LANG === "es" ? "tú" : "you"))) : "";
+          const dueñoTag = dueñoTxt ? ' <span style="display:inline-block;padding:1px 7px;border-radius:8px;background:color-mix(in srgb,var(--accent) 16%,var(--pill-bg));color:var(--accent);font-weight:800;">' + esc(dueñoTxt) + '</span>' : "";
+          html += '<span class="bank-expense-choice-info"><b>' + esc(tx.merchant_name || tx.descripcion || "") + '</b><small>' + esc(String(tx.fecha || "").slice(0, 10)) + ' · ' + t("cat_" + (tx.categoria || "otro")) + dueñoTag + '</small></span>';
           html += '<strong>−' + sym() + fmt0(Math.abs(toNum(tx.monto))) + '</strong></button>';
         });
       }
