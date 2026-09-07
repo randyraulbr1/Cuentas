@@ -248,6 +248,55 @@ function renderTxRow(descripcion, categoria, monto, fecha, rightExtraHtml, txId)
   return h;
 }
 
+function renderPartnerDashboardSheet() {
+  const nombre = state.coupleNamePartner || (LANG === "es" ? "Tu pareja" : "Your partner");
+  let h = '<div class="options-overlay"><div class="options-sheet" style="max-height:88vh;">';
+  h += '<div class="options-head"><h2>' + esc(nombre) + '</h2><button class="options-close" data-action="closePartnerDashboard">' + icon("close") + '</button></div>';
+
+  const depositoCuentas = state.cloudAccounts.filter((a) => String(a.type || "").toLowerCase() === "depository" && state.accountOwner[a.account_id] === "partner");
+  const debito = depositoCuentas.reduce((sum, a) => sum + Math.max(toNum(a.balance_available != null ? a.balance_available : a.balance_current), 0), 0);
+  const cards = state.cloudAccounts.filter((a) => a.type === "credit" && state.accountOwner[a.account_id] === "partner");
+  const deuda = cards.reduce((sum, c) => sum + Math.max(toNum(c.balance_current), 0), 0);
+  const limite = cards.reduce((sum, c) => sum + Math.max(toNum(c.balance_limit), 0), 0);
+  const disponible = Math.max(limite - deuda, 0);
+
+  h += '<div class="summary" style="margin-top:4px;">';
+  h += '<div class="sum-card"><div class="sum-label">' + t("debitoLbl") + '</div><div class="sum-val blue">' + sym() + fmt0(debito) + '</div></div>';
+  h += '<div class="sum-card"><div class="sum-label">' + t("debesTarjetas") + '</div><div class="sum-val red">' + sym() + fmt0(deuda) + '</div></div>';
+  h += '</div>';
+  if (limite > 0) h += '<div class="mini-total" style="border-top:none;padding-top:0;"><span>' + t("creditoDisponible") + '</span><b>' + sym() + fmt0(disponible) + '</b></div>';
+
+  if (cards.length > 0) {
+    h += '<p class="opt-section-title" style="margin-top:18px;">' + (LANG === "es" ? "Sus tarjetas" : "Her/his cards") + '</p>';
+    cards.forEach((c) => {
+      const saldo = toNum(c.balance_current), lim = toNum(c.balance_limit);
+      const uso = lim > 0 ? Math.min((saldo / lim) * 100, 100) : null;
+      h += '<div class="cc-line" style="padding:8px 0;border-bottom:1px solid var(--border);"><span>' + esc(c.name || t("cardNombrePh")) + '</span><span>' + sym() + fmt0(saldo) + (uso !== null ? ' · ' + Math.round(uso) + '%' : '') + '</span></div>';
+    });
+  }
+
+  const txsPartner = state.cloudTransactions.filter((tx) => state.accountOwner[tx.account_id] === "partner");
+  const gastosPartner = txsPartner.filter((tx) => toNum(tx.monto) < 0 && String(tx.fecha || "").slice(0, 7) === monthKey());
+  if (gastosPartner.length > 0) {
+    const porCategoria = {};
+    gastosPartner.forEach((tx) => { const cat = tx.categoria || "otro"; porCategoria[cat] = (porCategoria[cat] || 0) + Math.abs(toNum(tx.monto)); });
+    const items = Object.keys(porCategoria).map((cat) => ({ label: t("cat_" + cat), value: porCategoria[cat] })).sort((a, b) => b.value - a.value).slice(0, 6);
+    h += '<p class="opt-section-title" style="margin-top:18px;">' + (LANG === "es" ? "En qué gasta este mes" : "What they spend on this month") + '</p>';
+    h += renderBarChart(items, 90);
+  }
+
+  const recientes = txsPartner.slice().sort((a, b) => String(b.fecha || "").localeCompare(String(a.fecha || ""))).slice(0, 25);
+  h += '<p class="opt-section-title" style="margin-top:18px;">' + (LANG === "es" ? "Movimientos recientes" : "Recent activity") + '</p>';
+  if (recientes.length === 0) {
+    h += '<div class="empty-state">' + (LANG === "es" ? "Aún no hay movimientos de esta cuenta." : "No transactions from this account yet.") + '</div>';
+  } else {
+    recientes.forEach((tx) => { h += renderTxRow(tx.descripcion, tx.categoria, tx.monto, String(tx.fecha).slice(0, 10), "", tx.id); });
+  }
+
+  h += '</div></div>';
+  return h;
+}
+
 function renderExportSheet() {
   const json = JSON.stringify(buildExportData(), null, 2);
   let h = '<div class="options-overlay">';
@@ -326,6 +375,9 @@ function renderOpcionesTab() {
     } else {
       h += '<div class="goal-grid" style="margin-top:12px;"><div class="goal-field"><label>' + (LANG === "es" ? "Tu nombre" : "Your name") + '</label><input type="text" id="couple-name-self" data-scope="coupleNameSelf" placeholder="' + (LANG === "es" ? "Randy" : "Your name") + '" value="' + esc(state.coupleNameSelf) + '"></div><div class="goal-field"><label>' + (LANG === "es" ? "Nombre de tu pareja" : "Partner's name") + '</label><input type="text" id="couple-name-partner" data-scope="coupleNamePartner" placeholder="' + (LANG === "es" ? "Su nombre" : "Partner's name") + '" value="' + esc(state.coupleNamePartner) + '"></div></div>';
       h += '<button class="pill-btn confirm wide" style="margin-top:10px;" data-action="toggleEditCoupleNames">' + (LANG === "es" ? "Listo" : "Done") + '</button>';
+    }
+    if (state.coupleNamePartner) {
+      h += '<button class="pill-btn wide" style="margin-top:10px;" data-action="openPartnerDashboard">' + icon("bank") + ' ' + (LANG === "es" ? "Ver cuenta de " + state.coupleNamePartner : "View " + state.coupleNamePartner + "'s account") + '</button>';
     }
   }
   h += '</div>';
@@ -1286,6 +1338,7 @@ function renderApp() {
   html += '</div>';
   html += renderTabBar();
   if (state.showExport) html += renderExportSheet();
+  if (state.showPartnerDashboard) html += renderPartnerDashboardSheet();
   if (state.showTxDetalle) html += renderTxDetalleSheet();
   if (state.subscriptionAssistKey) html += renderSubscriptionAssistSheet();
   if (state.showConsentimiento) html += renderConsentimientoSheet();

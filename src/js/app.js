@@ -922,6 +922,8 @@ root.addEventListener("click", (e) => {
     setHistorialVista: () => { state.historialVista = id; state.historialCategoriaFiltro = ""; state.historialMesAbierto = null; render(); },
     setHistorialQuien: () => { state.historialQuien = id; state.historialMesAbierto = null; render(); },
     toggleCalTiempoMedio: () => { state.trabajoCalTiempoMedio = !state.trabajoCalTiempoMedio; render(); },
+    openPartnerDashboard: () => { state.showPartnerDashboard = true; render(); },
+    closePartnerDashboard: () => { state.showPartnerDashboard = false; render(); },
     verMasMesesHistorial: () => { state.historialMesesVisibles += 3; render(); },
     toggleMesHistorial: () => { state.historialMesAbierto = state.historialMesAbierto === id ? null : id; render(); },
     verMesTendencia: () => verMesTendencia(id),
