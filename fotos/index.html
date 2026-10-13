@@ -5,11 +5,11 @@
 <meta name="theme-color" content="#c8102e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Fotos">
+<meta name="apple-mobile-web-app-title" content="Receiving">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
-<title>Fotos a WhatsApp</title>
+<title>Receiving</title>
 <style>
 :root{--bg:#faf6ef;--card:#fff;--text:#2a2220;--muted:#9a8c78;--blue:#c8102e;--green:#c8102e;--red:#c8102e;--gold:#a98f5b;--line:#e6dcc8}
 @media(prefers-color-scheme:dark){:root{--bg:#140c0e;--card:#211416;--text:#f5eee0;--muted:#a8997f;--line:#3d2c2a;--gold:#c4a96d}}
@@ -107,7 +107,7 @@ input[type=file]{display:none}
 #busy{background:rgba(20,12,14,.55);z-index:60;display:none;color:#fff;font-size:17px}
 #busy.show{display:flex}
 #splash.out{opacity:0;pointer-events:none}
-#splash .lg{width:92px;height:92px;border-radius:24px;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 0 0 3px var(--bg),0 0 0 4px var(--gold)}
+#splash .lg{width:104px;height:104px;border-radius:26px;box-shadow:0 8px 24px rgba(120,6,28,.35)}
 #splash .lg svg{width:48px;height:48px}
 #splash h2{margin:0;font-family:'Cormorant Garamond',Didot,Georgia,serif;font-weight:500;letter-spacing:5px;text-transform:uppercase;color:var(--gold);font-size:24px}
 .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--blue);animation:sp .8s linear infinite}
@@ -117,7 +117,7 @@ input[type=file]{display:none}
 .net.off{background:#6e6259;color:#fff}.net.q{background:var(--blue);color:#fff}
 .net button{background:#fff;color:var(--blue);border:0;border-radius:10px;padding:8px 14px;font-weight:700;font-size:15px}
 </style></head><body>
-<div id="splash"><div class="lg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg></div><h2 id="sptit">Receiving</h2><div class="spin"></div></div>
+<div id="splash"><img class="lg" src="icon-192.png" alt=""><h2 id="sptit">Receiving</h2><div class="spin"></div></div>
 <div id="busy"><div class="spin"></div><span id="btxt">Preparando…</span></div>
 <main id="m"></main>
 <div class="dock"><div class="send" id="sendbox"><button class="btn wa" id="send" disabled>Compartir</button><button class="btn camb" id="bcam" aria-label="Abrir cámara"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg>Cámara</button></div>
