@@ -65,6 +65,8 @@ select{font-size:16px;border:0;background:var(--bg);color:var(--text);padding:8p
 #done{background:var(--blue);color:#fff;border:0;border-radius:20px;padding:10px 20px;font-size:17px;font-weight:600}
 #flip,#count{width:72px;color:#fff;font-size:15px;text-align:center;background:none;border:0}
 #flip{font-size:30px}
+#strip{position:absolute;left:0;right:0;bottom:140px;display:flex;gap:6px;padding:0 12px;overflow-x:auto}
+#strip img{width:56px;height:56px;border-radius:10px;object-fit:cover;border:2px solid #fff;flex:none;animation:pop .25s}
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
 #flash.on{animation:fl .25s}@keyframes fl{from{opacity:.8}to{opacity:0}}
 input[type=file]{display:none}
@@ -72,7 +74,7 @@ input[type=file]{display:none}
 <main id="m"></main>
 <div class="dock"><div class="send" id="sendbox"><button class="btn wa" id="send" disabled>Compartir por WhatsApp</button><button class="btn camb" id="bcam" aria-label="Abrir cámara">📷</button></div>
 <div class="tabs"><button data-t="fotos"><span>📷</span>Fotos</button><button data-t="hist"><span>🕘</span>Historial</button><button data-t="opc"><span>⚙️</span>Opciones</button></div></div>
-<div id="cam"><video id="vid" playsinline muted autoplay></video><div id="flash"></div>
+<div id="cam"><video id="vid" playsinline muted autoplay></video><div id="flash"></div><div id="strip"></div>
 <div class="ctl"><div id="count">0</div><button id="shut" aria-label="Foto"></button><div style="display:flex;flex-direction:column;align-items:center;gap:6px"><button id="flip">🔄</button><button id="done">Listo</button></div></div></div>
 <input id="fcam" type="file" accept="image/*" capture="environment">
 <div class="toast" id="toast"></div>
@@ -129,7 +131,7 @@ async function openCam(){
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('fcam').click();return}
  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:cfg.camara},width:{ideal:2560},height:{ideal:1440}},audio:false});}
  catch(e){toast('Sin permiso de cámara');$('fcam').click();return}
- $('vid').srcObject=stream;session=0;$('count').textContent='0';$('cam').classList.add('show');
+ $('vid').srcObject=stream;session=0;$('count').textContent='0';$('strip').innerHTML='';$('cam').classList.add('show');
 }
 function closeCam(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$('cam').classList.remove('show');load()}
 $('shut').onclick=async()=>{
@@ -139,6 +141,8 @@ $('shut').onclick=async()=>{
  const b=await blobOf(v,v.videoWidth,v.videoHeight,cfg.calidad,.85);
  await tx('p','readwrite',s=>s.put({id:Date.now()+Math.random(),blob:b,on:cfg.auto}));
  $('count').textContent=++session;
+ const im=new Image();im.src=URL.createObjectURL(b);$('strip').appendChild(im);
+ load();
 };
 $('done').onclick=closeCam;
 $('flip').onclick=()=>{cfg.camara=cfg.camara==='user'?'environment':'user';save();if(stream)stream.getTracks().forEach(t=>t.stop());openCam()};
