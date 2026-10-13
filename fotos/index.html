@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f2f2f7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fotos">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<title>Fotos a WhatsApp</title>
+<style>
+:root{--bg:#f2f2f7;--card:#fff;--text:#1c1c1e;--muted:#8e8e93;--blue:#007aff;--green:#25d366;--red:#ff3b30;--line:#e5e5ea}
+@media(prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--text:#fff;--line:#38383a}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+main{padding:env(safe-area-inset-top) 16px calc(170px + env(safe-area-inset-bottom))}
+h1{font-size:34px;font-weight:800;letter-spacing:-.5px;margin:22px 0 14px}
+.card{background:var(--card);border-radius:18px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);margin-bottom:14px}
+label.t{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+input[type=text]{width:100%;border:0;background:transparent;font-size:19px;color:var(--text);outline:none;padding:4px 0}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;border:0;border-radius:16px;padding:16px;font-size:18px;font-weight:600;color:#fff;background:var(--blue);cursor:pointer;transition:transform .1s,opacity .2s;margin-bottom:14px}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.4}
+.btn.wa{background:var(--green);margin:0}
+.btn.red{background:var(--card);color:var(--red);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.head{display:flex;justify-content:space-between;align-items:center;margin:18px 4px 8px}
+.head b{font-size:20px}.head button{background:none;border:0;color:var(--blue);font-size:16px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ph{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--line);animation:pop .25s}
+@keyframes pop{from{transform:scale(.8);opacity:0}}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.chk{position:absolute;left:6px;top:6px;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.25);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700}
+.ph.on .chk{background:var(--blue);border-color:var(--blue)}
+.del{position:absolute;right:6px;top:6px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:14px}
+.empty{text-align:center;color:var(--muted);padding:40px 10px}.empty .big{font-size:56px}
+.dock{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.send{padding:12px 16px 4px}
+.tabs{display:flex}.tabs button{flex:1;background:none;border:0;padding:8px 0 10px;color:var(--muted);font-size:11px;cursor:pointer}
+.tabs button span{display:block;font-size:22px}.tabs button.on{color:var(--blue)}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-100px);background:#1c1c1e;color:#fff;padding:10px 18px;border-radius:20px;transition:transform .3s;z-index:30;font-size:15px}
+.toast.show{transform:translateX(-50%)}
+.grp{background:var(--card);border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.grp .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.grp .top b{font-size:18px}.grp .top small{color:var(--muted)}
+.strip{display:flex;gap:6px;overflow-x:auto}.strip img{width:64px;height:64px;border-radius:10px;object-fit:cover;flex:none}
+.opt{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}.opt:last-child{border:0}
+select{font-size:16px;border:0;background:var(--bg);color:var(--text);padding:8px 10px;border-radius:10px}
+.sw{position:relative;width:51px;height:31px;flex:none}.sw input{display:none}
+.sw i{position:absolute;inset:0;background:#c7c7cc;border-radius:16px;transition:.2s}
+.sw i:after{content:"";position:absolute;left:2px;top:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:.2s}
+.sw input:checked+i{background:var(--green)}.sw input:checked+i:after{transform:translateX(20px)}
+#cam{position:fixed;inset:0;background:#000;z-index:20;display:none;flex-direction:column}
+#cam.show{display:flex}
+#cam video{flex:1;min-height:0;width:100%;object-fit:cover}
+#cam .ctl{height:130px;display:flex;align-items:center;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom);background:#000}
+#shut{width:76px;height:76px;border-radius:50%;border:5px solid #fff;background:transparent;padding:0;position:relative}
+#shut:after{content:"";position:absolute;inset:5px;border-radius:50%;background:#fff;transition:transform .1s}
+#shut:active:after{transform:scale(.85)}
+#done{background:var(--blue);color:#fff;border:0;border-radius:20px;padding:10px 20px;font-size:17px;font-weight:600}
+#flip,#count{width:72px;color:#fff;font-size:15px;text-align:center;background:none;border:0}
+#flip{font-size:30px}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+#flash.on{animation:fl .25s}@keyframes fl{from{opacity:.8}to{opacity:0}}
+input[type=file]{display:none}
+</style></head><body>
+<main id="m"></main>
+<div class="dock"><div class="send" id="sendbox"><button class="btn wa" id="send" disabled>Compartir por WhatsApp</button></div>
+<div class="tabs"><button data-t="fotos"><span>📷</span>Fotos</button><button data-t="hist"><span>🕘</span>Historial</button><button data-t="opc"><span>⚙️</span>Opciones</button></div></div>
+<div id="cam"><video id="vid" playsinline muted autoplay></video><div id="flash"></div>
+<div class="ctl"><div id="count">0</div><button id="shut" aria-label="Foto"></button><div style="display:flex;flex-direction:column;align-items:center;gap:6px"><button id="flip">🔄</button><button id="done">Listo</button></div></div></div>
+<input id="fcam" type="file" accept="image/*" capture="environment">
+<div class="toast" id="toast"></div>
+<script>
+const $=id=>document.getElementById(id);
+const S=JSON.parse(localStorage.getItem('cfg')||'{}');
+const cfg=Object.assign({nombre:'',calidad:1600,camara:'environment',vibrar:true,auto:true},S);
+const save=()=>localStorage.setItem('cfg',JSON.stringify(cfg));
+let db,photos=[],hist=[],urls={},tab='fotos',stream=null,session=0;
+const open=()=>new Promise((res,rej)=>{const r=indexedDB.open('fotos',2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('p'))d.createObjectStore('p',{keyPath:'id'});if(!d.objectStoreNames.contains('h'))d.createObjectStore('h',{keyPath:'id'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const tx=(st,m,f)=>new Promise((res,rej)=>{const t=db.transaction(st,m);const r=f(t.objectStore(st));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)});
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+const blobOf=(src,w,h,max,q)=>new Promise(res=>{const s=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*s);c.height=Math.round(h*s);c.getContext('2d').drawImage(src,0,0,c.width,c.height);c.toBlob(b=>res(b),'image/jpeg',q)});
+const thumb=blob=>new Promise(res=>{const i=new Image(),u=URL.createObjectURL(blob);i.onload=()=>{const s=Math.min(1,160/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.6))};i.src=u});
+async function addBlob(b){await tx('p','readwrite',s=>s.put({id:Date.now()+Math.random(),blob:b,on:true}));await load()}
+async function fromFile(f){const i=new Image(),u=URL.createObjectURL(f);await new Promise(r=>{i.onload=r;i.onerror=r;i.src=u});const b=i.width?await blobOf(i,i.width,i.height,cfg.calidad,.85):f;URL.revokeObjectURL(u);await addBlob(b)}
+async function load(){photos=(await tx('p','readonly',s=>s.getAll())||[]).sort((a,b)=>a.id-b.id);hist=(await tx('h','readonly',s=>s.getAll())||[]).sort((a,b)=>b.id-a.id);draw()}
+function draw(){
+ document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+ $('sendbox').style.display=tab==='fotos'?'':'none';
+ const n=photos.filter(p=>p.on).length;
+ $('send').disabled=!n;$('send').textContent=n?`Compartir ${n} por WhatsApp`:'Compartir por WhatsApp';
+ const m=$('m');
+ if(tab==='fotos'){
+  m.innerHTML=`<h1>Fotos</h1><div class="card"><label class="t">Tu nombre</label><input id="nombre" type="text" placeholder="Escribe tu nombre" value="${cfg.nombre.replace(/"/g,'&quot;')}"></div>
+  <button class="btn" id="bcam">📷 Abrir cámara</button>
+  <div class="head"><b>${photos.length?`${photos.length} foto${photos.length>1?'s':''} · ${n} seleccionada${n!=1?'s':''}`:'Sin fotos'}</b>${photos.length?`<button id="all">${n===photos.length?'Quitar todas':'Seleccionar todas'}</button>`:''}</div>
+  ${photos.length?'<div class="grid" id="grid"></div>':'<div class="empty"><div class="big">📸</div>Abre la cámara y toma las fotos.<br>Cada foto se guarda sola, sin internet.</div>'}`;
+  $('nombre').oninput=e=>{cfg.nombre=e.target.value;save()};
+  $('bcam').onclick=openCam;
+  if($('all'))$('all').onclick=async()=>{const v=!photos.every(p=>p.on);for(const p of photos){p.on=v;await tx('p','readwrite',s=>s.put(p))}draw()};
+  const g=$('grid');if(g)photos.forEach(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));const d=document.createElement('div');d.className='ph'+(p.on?' on':'');d.innerHTML=`<img src="${u}"><div class="chk">${p.on?'✓':''}</div><button class="del">✕</button>`;
+   d.onclick=async e=>{if(e.target.classList.contains('del')){await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id];return load()}p.on=!p.on;await tx('p','readwrite',s=>s.put(p));draw()};g.appendChild(d)});
+ }else if(tab==='hist'){
+  m.innerHTML=`<h1>Historial</h1>`+(hist.length?hist.map(h=>`<div class="grp"><div class="top"><b>${esc(h.nombre||'Sin nombre')}</b><small>${new Date(h.id).toLocaleString('es',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} · ${h.n} foto${h.n>1?'s':''}</small></div><div class="strip">${h.thumbs.map(t=>`<img src="${t}">`).join('')}</div></div>`).join(''):'<div class="empty"><div class="big">🕘</div>Aquí verás cada envío agrupado con el nombre de quien lo mandó.</div>');
+ }else{
+  m.innerHTML=`<h1>Opciones</h1><div class="card">
+  <div class="opt"><span>Calidad de foto</span><select id="o1"><option value="1000">Baja (rápida)</option><option value="1600">Media</option><option value="2600">Alta</option></select></div>
+  <div class="opt"><span>Cámara</span><select id="o2"><option value="environment">Trasera</option><option value="user">Frontal</option></select></div>
+  <div class="opt"><span>Vibrar al tomar foto</span><label class="sw"><input type="checkbox" id="o3"><i></i></label></div>
+  <div class="opt"><span>Fotos nuevas seleccionadas</span><label class="sw"><input type="checkbox" id="o4"><i></i></label></div></div>
+  <button class="btn red" id="clh">Borrar historial</button><button class="btn red" id="clp">Vaciar fotos pendientes</button>`;
+  $('o1').value=cfg.calidad;$('o2').value=cfg.camara;$('o3').checked=cfg.vibrar;$('o4').checked=cfg.auto;
+  $('o1').onchange=e=>{cfg.calidad=+e.target.value;save()};$('o2').onchange=e=>{cfg.camara=e.target.value;save()};
+  $('o3').onchange=e=>{cfg.vibrar=e.target.checked;save()};$('o4').onchange=e=>{cfg.auto=e.target.checked;save()};
+  $('clh').onclick=async()=>{if(confirm('¿Borrar todo el historial?')){await tx('h','readwrite',s=>s.clear());load();toast('Historial borrado')}};
+  $('clp').onclick=async()=>{if(confirm('¿Borrar las fotos pendientes?')){await tx('p','readwrite',s=>s.clear());photos.forEach(p=>URL.revokeObjectURL(urls[p.id]));urls={};load()}};
+ }
+}
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw();scrollTo(0,0)});
+// ---- cámara: cada toque guarda al instante ----
+async function openCam(){
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('fcam').click();return}
+ try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:cfg.camara},width:{ideal:2560},height:{ideal:1440}},audio:false});}
+ catch(e){toast('Sin permiso de cámara');$('fcam').click();return}
+ $('vid').srcObject=stream;session=0;$('count').textContent='0';$('cam').classList.add('show');
+}
+function closeCam(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$('cam').classList.remove('show');load()}
+$('shut').onclick=async()=>{
+ const v=$('vid');if(!v.videoWidth)return;
+ $('flash').classList.remove('on');void $('flash').offsetWidth;$('flash').classList.add('on');
+ if(cfg.vibrar&&navigator.vibrate)navigator.vibrate(30);
+ const b=await blobOf(v,v.videoWidth,v.videoHeight,cfg.calidad,.85);
+ await tx('p','readwrite',s=>s.put({id:Date.now()+Math.random(),blob:b,on:cfg.auto}));
+ $('count').textContent=++session;
+};
+$('done').onclick=closeCam;
+$('flip').onclick=()=>{cfg.camara=cfg.camara==='user'?'environment':'user';save();if(stream)stream.getTracks().forEach(t=>t.stop());openCam()};
+$('fcam').onchange=async e=>{for(const f of e.target.files)await fromFile(f);e.target.value='';toast('Foto guardada ✓')};
+// ---- compartir ----
+$('send').onclick=async()=>{
+ const nombre=cfg.nombre.trim();
+ if(!nombre){toast('Escribe tu nombre primero');return}
+ const sel=photos.filter(p=>p.on);
+ const base=nombre.replace(/[^\w]+/g,'_');
+ const files=sel.map((p,i)=>new File([p.blob],`${base}_${i+1}.jpg`,{type:'image/jpeg'}));
+ const data={files,text:`📸 ${nombre} — ${files.length} foto${files.length>1?'s':''}`};
+ try{
+  if(navigator.canShare&&navigator.canShare({files}))await navigator.share(data);
+  else{window.open('https://wa.me/?text='+encodeURIComponent(data.text),'_blank');toast('Este navegador no envía fotos directo');return}
+ }catch(e){if(e.name==='AbortError')return;toast('No se pudo compartir');return}
+ const thumbs=[];for(const p of sel)thumbs.push(await thumb(p.blob));
+ await tx('h','readwrite',s=>s.put({id:Date.now(),nombre,n:sel.length,thumbs}));
+ for(const p of sel){await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id]}
+ await load();toast('Enviado ✓ Lista vacía');
+};
+open().then(d=>{db=d;load()});
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+</script></body></html>
