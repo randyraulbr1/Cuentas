@@ -121,9 +121,15 @@ input[type=file]{display:none}
 .seg button i{font-style:normal;font-size:12px;margin-left:5px;background:var(--bg);color:var(--text);border-radius:9px;padding:1px 7px}
 .seg button.on{background:var(--blue);color:#fff}.seg button.on i{background:rgba(255,255,255,.25);color:#fff}
 .grp.bad{border-color:var(--blue)}.mot{color:var(--blue);font-size:14px;margin:-4px 0 10px}
+#chip{position:fixed;top:calc(8px + env(safe-area-inset-top));right:10px;z-index:15;display:flex;align-items:center;gap:6px;max-width:48vw;background:var(--card);color:var(--text);border:1px solid var(--gold);border-radius:20px;padding:6px 12px 6px 9px;font-size:14px;font-weight:600;box-shadow:0 2px 8px rgba(120,90,40,.15)}
+#chip svg{width:17px;height:17px;flex:none;color:var(--gold)}
+#chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#chip.none{border-color:var(--blue);color:var(--blue)}#chip.none svg{color:var(--blue)}
+main{padding-top:calc(env(safe-area-inset-top) + 40px)!important}
 </style></head><body>
 <div id="splash"><img class="lg" src="icon-192.png" alt=""><h2 id="sptit">Receiving</h2><div class="spin"></div></div>
 <div id="busy"><div class="spin"></div><span id="btxt">Preparando…</span></div>
+<button id="chip" aria-label="Cambiar nombre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span id="chn"></span></button>
 <main id="m"></main>
 <div class="dock"><div class="send" id="sendbox"><button class="btn wa" id="send" disabled>Compartir</button><button class="btn camb" id="bcam" aria-label="Abrir cámara"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg>Cámara</button></div>
 <div class="tabs"><button data-t="fotos"><span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg></span>Fotos</button><button data-t="hist"><span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></span>Historial</button><button data-t="opc"><span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>Opciones</button></div></div>
@@ -159,11 +165,12 @@ function draw(){
  const n=photos.filter(p=>p.on).length;
  $('send').disabled=!n;$('send').textContent=n?`Compartir (${n})`:'Compartir';
  const m=$('m');
+ $('chn').textContent=cfg.nombre||'Elegir nombre';$('chip').classList.toggle('none',!cfg.nombre);
  if(tab==='fotos'){
-  m.innerHTML=`${cfg.logo?`<img class="logo" src="${cfg.logo}">`:''}<h1>${esc(cfg.titulo||'Receiving')}</h1>${netBar()}<div class="card who" id="who"><div><label class="t">Tu nombre</label><span class="${cfg.nombre?'':'ph0'}">${cfg.nombre?esc(cfg.nombre):'Selecciona tu nombre'}</span></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+  m.innerHTML=`${cfg.logo?`<img class="logo" src="${cfg.logo}">`:''}<h1>${esc(cfg.titulo||'Receiving')}</h1>${netBar()}
   <div class="head"><b>${photos.length?`${photos.length} foto${photos.length>1?'s':''} · ${n} seleccionada${n!=1?'s':''}`:'Sin fotos'}</b>${photos.length?`<button id="all">${n===photos.length?'Quitar todas':'Seleccionar todas'}</button>`:''}</div>
   ${photos.length?'<div class="grid" id="grid"></div>':'<div class="empty"><div class="big"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg></div>Abre la cámara y toma las fotos.<br>Cada foto se guarda sola, sin internet.</div>'}`;
-  $('who').onclick=pickName;if($('nsend'))$('nsend').onclick=enviar;
+  if($('nsend'))$('nsend').onclick=enviar;
   if($('all'))$('all').onclick=async()=>{const v=!photos.every(p=>p.on);for(const p of photos){p.on=v;await tx('p','readwrite',s=>s.put(p))}draw()};
   const g=$('grid');if(g)photos.forEach(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));const d=document.createElement('div');d.className='ph'+(p.on?' on':'');d.innerHTML=`<img src="${u}"><div class="chk">${p.on?'✓':''}</div><span class="bd">${p.q?'En cola':'Pendiente'}</span><button class="del">✕</button>`;
    d.onclick=async e=>{if(e.target.classList.contains('del')){e.stopPropagation();pedir(async()=>{await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id];load();toast('Foto borrada')});return}p.on=!p.on;await tx('p','readwrite',s=>s.put(p));draw()};g.appendChild(d)});
@@ -229,7 +236,7 @@ function adminPanel(){
   $('aadd').onclick=add;$('anew').onkeydown=e=>{if(e.key==='Enter')add()};
   document.querySelectorAll('#mbx .emp button').forEach(b=>b.onclick=()=>{const n=cfg.empleados[+b.dataset.i];pedir(()=>{cfg.empleados.splice(+b.dataset.i,1);if(cfg.nombre===n){cfg.nombre='';cfg.nombreTs=0}save();adminPanel();draw()},'¿Quitar a '+n+'?')})})}
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-$('bcam').onclick=openCam;
+$('bcam').onclick=openCam;$('chip').onclick=pickName;
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw();scrollTo(0,0)});
 // ---- cámara: cada toque guarda al instante ----
 async function openCam(){
