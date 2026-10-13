@@ -180,7 +180,7 @@ function draw(){
   <div class="opt"><span>Fotos nuevas seleccionadas</span><label class="sw"><input type="checkbox" id="o4"><i></i></label></div></div>
   <button class="btn" id="inst" ${standalone()?'disabled':''}>${standalone()?'App ya instalada ✓':'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg> Instalar en el teléfono'}</button>
   <div id="iosh" class="card" style="display:none;line-height:1.7"></div>
-  <button class="btn red" id="clh">Borrar historial</button><button class="btn red" id="clp">Vaciar fotos pendientes</button>`;
+  <button class="btn red" id="clp">Vaciar fotos pendientes</button>`;
   $('inst').onclick=async()=>{
    if(dip){dip.prompt();await dip.userChoice;dip=null;return}
    const h=$('iosh');h.style.display='block';
@@ -192,11 +192,10 @@ function draw(){
   $('o1').value=cfg.calidad;$('o2').value=cfg.camara;$('o3').checked=cfg.vibrar;$('o4').checked=cfg.auto;$('o6').checked=cfg.volver;$('o6').onchange=e=>{cfg.volver=e.target.checked;save()};
   $('o1').onchange=e=>{cfg.calidad=+e.target.value;save()};$('o2').onchange=e=>{cfg.camara=e.target.value;save()};
   $('o3').onchange=e=>{cfg.vibrar=e.target.checked;save()};$('o4').onchange=e=>{cfg.auto=e.target.checked;save()};
-  $('clh').onclick=async()=>{if(confirm('¿Borrar todo el historial?')){await tx('h','readwrite',s=>s.clear());load();toast('Historial borrado')}};
   $('clp').onclick=async()=>{if(confirm('¿Borrar las fotos pendientes?')){await tx('p','readwrite',s=>s.clear());photos.forEach(p=>URL.revokeObjectURL(urls[p.id]));urls={};load()}};
  }
 }
-function pedir(fn,t){const d=$('dlg');d.querySelector('b').textContent=t||'¿Borrar esta foto?';d.querySelector('p').style.display=t?'none':'';d.classList.add('show');$('dno').onclick=()=>d.classList.remove('show');$('dyes').onclick=()=>{d.classList.remove('show');fn()};$('dyes').textContent=t?'Sí, quitar':'Sí, borrar';d.onclick=e=>{if(e.target===d)d.classList.remove('show')}}
+function pedir(fn,t,sub,lbl){const d=$('dlg');d.querySelector('b').textContent=t||'¿Borrar esta foto?';d.querySelector('p').style.display=(t&&!sub)?'none':'';d.querySelector('p').textContent=sub||'No se puede deshacer.';d.classList.add('show');$('dno').onclick=()=>d.classList.remove('show');$('dyes').onclick=()=>{d.classList.remove('show');fn()};$('dyes').textContent=lbl||(t?'Sí, quitar':'Sí, borrar');d.onclick=e=>{if(e.target===d)d.classList.remove('show')}}
 function modal(html,bind){const m=$('mdl');$('mbx').innerHTML=html;m.classList.add('show');m.onclick=e=>{if(e.target===m)m.classList.remove('show')};bind&&bind(()=>m.classList.remove('show'))}
 function vencido(ts){const d=new Date(),b=new Date(d);b.setHours(2,0,0,0);if(d<b)b.setDate(b.getDate()-1);return ts<b.getTime()}
 function revisa2am(){if(cfg.nombre&&vencido(cfg.nombreTs)){cfg.nombre='';cfg.nombreTs=0;save();if(!stream)draw()}}
@@ -210,7 +209,8 @@ function adminLogin(){
   const go=()=>{if($('apw').value==='1010'){adminPanel()}else{toast('Contraseña incorrecta');$('apw').value=''}};
   $('aok').onclick=go;$('apw').onkeydown=e=>{if(e.key==='Enter')go()};setTimeout(()=>$('apw').focus(),150)})}
 function adminPanel(){
- modal(`<h3>Empleados</h3><div class="row2"><input type="text" id="anew" placeholder="Nombre nuevo" autocomplete="off"><button class="btn" id="aadd">Agregar</button></div>${cfg.empleados.length?cfg.empleados.map((n,i)=>`<div class="emp"><span>${esc(n)}</span><button data-i="${i}">Quitar</button></div>`).join(''):'<p style="text-align:center;color:var(--muted)">Sin empleados todavía.</p>'}`,close=>{
+ modal(`<h3>Empleados</h3><div class="row2"><input type="text" id="anew" placeholder="Nombre nuevo" autocomplete="off"><button class="btn" id="aadd">Agregar</button></div>${cfg.empleados.length?cfg.empleados.map((n,i)=>`<div class="emp"><span>${esc(n)}</span><button data-i="${i}">Quitar</button></div>`).join(''):'<p style="text-align:center;color:var(--muted)">Sin empleados todavía.</p>'}<button class="btn red" id="aclh" style="margin:16px 0 0">Borrar historial de envíos</button>`,close=>{
+  $('aclh').onclick=()=>pedir(async()=>{await tx('h','readwrite',s=>s.clear());await load();toast('Historial borrado')},'¿Borrar todo el historial?','Se borrarán todos los envíos y sus fotos. No se puede deshacer.','Sí, borrar todo');
   const add=()=>{const v=$('anew').value.trim();if(!v)return;if(cfg.empleados.some(x=>x.toLowerCase()===v.toLowerCase())){toast('Ya existe');return}cfg.empleados.push(v);cfg.empleados.sort((a,b)=>a.localeCompare(b));save();adminPanel();draw()};
   $('aadd').onclick=add;$('anew').onkeydown=e=>{if(e.key==='Enter')add()};
   document.querySelectorAll('#mbx .emp button').forEach(b=>b.onclick=()=>{const n=cfg.empleados[+b.dataset.i];pedir(()=>{cfg.empleados.splice(+b.dataset.i,1);if(cfg.nombre===n){cfg.nombre='';cfg.nombreTs=0}save();adminPanel();draw()},'¿Quitar a '+n+'?')})})}
