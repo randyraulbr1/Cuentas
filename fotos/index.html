@@ -145,7 +145,7 @@ main{padding-top:calc(env(safe-area-inset-top) + 40px)!important}
 <script>
 const $=id=>document.getElementById(id);
 const S=JSON.parse(localStorage.getItem('cfg')||'{}');
-const cfg=Object.assign({nombre:'',calidad:1600,titulo:'Receiving',camara:'environment',vibrar:true,auto:true,volver:true,sello:true,wlink:'',wabrir:true,empleados:[],nombreTs:0},S);
+const cfg=Object.assign({nombre:'',calidad:1600,titulo:'Receiving',camara:'environment',vibrar:true,auto:true,volver:true,copia:false,sello:true,wlink:'',wabrir:true,empleados:[],nombreTs:0},S);
 const save=()=>localStorage.setItem('cfg',JSON.stringify(cfg));
 let dip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;if(tab==='opc')draw()});
 addEventListener('appinstalled',()=>{dip=null;toast('App instalada ✓');if(tab==='opc')draw()});
@@ -205,6 +205,8 @@ function draw(){
   <div class="opt"><span>Cámara</span><select id="o2"><option value="environment">Trasera</option><option value="user">Frontal</option></select></div>
   <div class="opt"><span>Vibrar al tomar foto</span><label class="sw"><input type="checkbox" id="o3"><i></i></label></div>
   <div class="opt"><span>Fecha, hora y nombre en la foto</span><label class="sw"><input type="checkbox" id="o7"><i></i></label></div>
+  <div class="opt"><span>Guardar copia en el teléfono (descargas)</span><label class="sw"><input type="checkbox" id="o8"><i></i></label></div>
+  <div class="opt"><span>Almacenamiento de fotos</span><span style="color:${persistido?'var(--blue)':'var(--muted)'};font-size:14px">${persistido?'Protegido ✓':'Normal'}</span></div>
   <div class="opt"><span>Volver tras cada foto</span><label class="sw"><input type="checkbox" id="o6"><i></i></label></div>
   <div class="opt"><span>Fotos nuevas seleccionadas</span><label class="sw"><input type="checkbox" id="o4"><i></i></label></div></div>
   <button class="btn" id="inst" ${standalone()?'disabled':''}>${standalone()?'Abierta como app ✓':'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg> Instalar en el teléfono'}</button>
@@ -217,7 +219,7 @@ function draw(){
   $('oprf').onclick=pickName;$('oadm').onclick=adminLogin;
   $('o5').value=cfg.titulo;$('o5').oninput=e=>{cfg.titulo=e.target.value;save()};
   $('lg').onclick=()=>$('flogo').click();if($('lgx'))$('lgx').onclick=()=>{delete cfg.logo;save();draw()};
-  $('o1').value=cfg.calidad;$('o2').value=cfg.camara;$('o3').checked=cfg.vibrar;$('o4').checked=cfg.auto;$('o7').checked=cfg.sello;$('o7').onchange=e=>{cfg.sello=e.target.checked;save()};$('o6').checked=cfg.volver;$('o6').onchange=e=>{cfg.volver=e.target.checked;save()};
+  $('o1').value=cfg.calidad;$('o2').value=cfg.camara;$('o3').checked=cfg.vibrar;$('o4').checked=cfg.auto;$('o8').checked=cfg.copia;$('o8').onchange=e=>{cfg.copia=e.target.checked;save()};$('o7').checked=cfg.sello;$('o7').onchange=e=>{cfg.sello=e.target.checked;save()};$('o6').checked=cfg.volver;$('o6').onchange=e=>{cfg.volver=e.target.checked;save()};
   $('o1').onchange=e=>{cfg.calidad=+e.target.value;save()};$('o2').onchange=e=>{cfg.camara=e.target.value;save()};
   $('o3').onchange=e=>{cfg.vibrar=e.target.checked;save()};$('o4').onchange=e=>{cfg.auto=e.target.checked;save()};
  }
@@ -260,7 +262,8 @@ $('shut').onclick=async()=>{
  if(cfg.vibrar&&navigator.vibrate)navigator.vibrate(30);
  const id=Date.now()+Math.random(),ts=Math.floor(id);
  const b=await blobOf(v,v.videoWidth,v.videoHeight,cfg.calidad,.85,cfg.sello?stampTxt(ts,cfg.nombre):null);
- await tx('p','readwrite',s=>s.put({id,ts,por:cfg.nombre||'',blob:b,on:cfg.auto}));
+ try{await tx('p','readwrite',s=>s.put({id,ts,por:cfg.nombre||'',blob:b,on:cfg.auto}))}catch(e){toast('No se pudo guardar la foto (poco espacio)');return}
+ if(cfg.copia){try{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`Receiving_${(cfg.nombre||'foto').replace(/[^\w]+/g,'_')}_${ts}.jpg`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}catch(e){}}
  $('count').textContent=++session;
  const im=new Image();im.src=URL.createObjectURL(b);$('strip').appendChild(im);
  if(cfg.volver){setTimeout(closeCam,350);return}
@@ -305,6 +308,7 @@ async function enviar(){
 $('send').onclick=enviar;
 addEventListener('offline',()=>draw());
 addEventListener('online',()=>{draw();const q=photos.filter(p=>p.q).length;if(q){toast('Hay conexión: '+q+' en cola');try{if(window.Notification&&Notification.permission==='granted')new Notification('Receiving',{body:q+' foto(s) listas para enviar'})}catch(e){}}});
+let persistido=false;if(navigator.storage&&navigator.storage.persist){navigator.storage.persisted().then(v=>v?v:navigator.storage.persist()).then(v=>{persistido=!!v;if(tab==='opc')draw()}).catch(()=>{})}
 revisa2am();setInterval(revisa2am,30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)revisa2am()});
 open().then(d=>{db=d;return load()}).then(()=>{$('sptit').textContent=cfg.titulo||'Receiving';setTimeout(()=>{$('splash').classList.add('out');setTimeout(()=>$('splash').remove(),500)},600);if(photos.some(p=>p.q)&&navigator.onLine&&window.Notification&&Notification.permission==='default')Notification.requestPermission()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
