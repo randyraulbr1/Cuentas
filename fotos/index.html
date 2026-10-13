@@ -178,7 +178,7 @@ function draw(){
   <div class="opt"><span>Vibrar al tomar foto</span><label class="sw"><input type="checkbox" id="o3"><i></i></label></div>
   <div class="opt"><span>Volver tras cada foto</span><label class="sw"><input type="checkbox" id="o6"><i></i></label></div>
   <div class="opt"><span>Fotos nuevas seleccionadas</span><label class="sw"><input type="checkbox" id="o4"><i></i></label></div></div>
-  <button class="btn" id="inst" ${standalone()?'disabled':''}>${standalone()?'App ya instalada ✓':'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg> Instalar en el teléfono'}</button>
+  <button class="btn" id="inst" ${standalone()?'disabled':''}>${standalone()?'Abierta como app ✓':'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg> Instalar en el teléfono'}</button>
   <div id="iosh" class="card" style="display:none;line-height:1.7"></div>
   <button class="btn red" id="clp">Vaciar fotos pendientes</button>`;
   $('inst').onclick=async()=>{
