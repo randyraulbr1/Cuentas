@@ -102,7 +102,23 @@ input[type=file]{display:none}
 .row2 .btn{width:auto;margin:0;padding:0 18px;font-size:16px}
 .emp{display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line)}
 .emp button{background:none;border:0;color:var(--blue);font-size:15px}
+#splash,#busy{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .4s}
+#splash{background:var(--bg)}
+#busy{background:rgba(20,12,14,.55);z-index:60;display:none;color:#fff;font-size:17px}
+#busy.show{display:flex}
+#splash.out{opacity:0;pointer-events:none}
+#splash .lg{width:92px;height:92px;border-radius:24px;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 0 0 3px var(--bg),0 0 0 4px var(--gold)}
+#splash .lg svg{width:48px;height:48px}
+#splash h2{margin:0;font-family:'Cormorant Garamond',Didot,Georgia,serif;font-weight:500;letter-spacing:5px;text-transform:uppercase;color:var(--gold);font-size:24px}
+.spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--blue);animation:sp .8s linear infinite}
+#busy .spin{border-color:rgba(255,255,255,.3);border-top-color:#fff}
+@keyframes sp{to{transform:rotate(360deg)}}
+.net{display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:15px}
+.net.off{background:#6e6259;color:#fff}.net.q{background:var(--blue);color:#fff}
+.net button{background:#fff;color:var(--blue);border:0;border-radius:10px;padding:8px 14px;font-weight:700;font-size:15px}
 </style></head><body>
+<div id="splash"><div class="lg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg></div><h2 id="sptit">Receiving</h2><div class="spin"></div></div>
+<div id="busy"><div class="spin"></div><span id="btxt">Preparando…</span></div>
 <main id="m"></main>
 <div class="dock"><div class="send" id="sendbox"><button class="btn wa" id="send" disabled>Compartir</button><button class="btn camb" id="bcam" aria-label="Abrir cámara"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg>Cámara</button></div>
 <div class="tabs"><button data-t="fotos"><span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg></span>Fotos</button><button data-t="hist"><span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></span>Historial</button><button data-t="opc"><span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>Opciones</button></div></div>
@@ -116,7 +132,7 @@ input[type=file]{display:none}
 <script>
 const $=id=>document.getElementById(id);
 const S=JSON.parse(localStorage.getItem('cfg')||'{}');
-const cfg=Object.assign({nombre:'',calidad:1600,titulo:'Receiving',camara:'environment',vibrar:true,auto:true,volver:true,empleados:[],nombreTs:0},S);
+const cfg=Object.assign({nombre:'',calidad:1600,titulo:'Receiving',camara:'environment',vibrar:true,auto:true,volver:true,wlink:'',wabrir:true,empleados:[],nombreTs:0},S);
 const save=()=>localStorage.setItem('cfg',JSON.stringify(cfg));
 let dip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;if(tab==='opc')draw()});
 addEventListener('appinstalled',()=>{dip=null;toast('App instalada ✓');if(tab==='opc')draw()});
@@ -138,12 +154,12 @@ function draw(){
  $('send').disabled=!n;$('send').textContent=n?`Compartir (${n})`:'Compartir';
  const m=$('m');
  if(tab==='fotos'){
-  m.innerHTML=`${cfg.logo?`<img class="logo" src="${cfg.logo}">`:''}<h1>${esc(cfg.titulo||'Receiving')}</h1><div class="card who" id="who"><div><label class="t">Tu nombre</label><span class="${cfg.nombre?'':'ph0'}">${cfg.nombre?esc(cfg.nombre):'Selecciona tu nombre'}</span></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+  m.innerHTML=`${cfg.logo?`<img class="logo" src="${cfg.logo}">`:''}<h1>${esc(cfg.titulo||'Receiving')}</h1>${netBar()}<div class="card who" id="who"><div><label class="t">Tu nombre</label><span class="${cfg.nombre?'':'ph0'}">${cfg.nombre?esc(cfg.nombre):'Selecciona tu nombre'}</span></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
   <div class="head"><b>${photos.length?`${photos.length} foto${photos.length>1?'s':''} · ${n} seleccionada${n!=1?'s':''}`:'Sin fotos'}</b>${photos.length?`<button id="all">${n===photos.length?'Quitar todas':'Seleccionar todas'}</button>`:''}</div>
   ${photos.length?'<div class="grid" id="grid"></div>':'<div class="empty"><div class="big"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg></div>Abre la cámara y toma las fotos.<br>Cada foto se guarda sola, sin internet.</div>'}`;
-  $('who').onclick=pickName;
+  $('who').onclick=pickName;if($('nsend'))$('nsend').onclick=enviar;
   if($('all'))$('all').onclick=async()=>{const v=!photos.every(p=>p.on);for(const p of photos){p.on=v;await tx('p','readwrite',s=>s.put(p))}draw()};
-  const g=$('grid');if(g)photos.forEach(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));const d=document.createElement('div');d.className='ph'+(p.on?' on':'');d.innerHTML=`<img src="${u}"><div class="chk">${p.on?'✓':''}</div><span class="bd">Pendiente</span><button class="del">✕</button>`;
+  const g=$('grid');if(g)photos.forEach(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));const d=document.createElement('div');d.className='ph'+(p.on?' on':'');d.innerHTML=`<img src="${u}"><div class="chk">${p.on?'✓':''}</div><span class="bd">${p.q?'En cola':'Pendiente'}</span><button class="del">✕</button>`;
    d.onclick=async e=>{if(e.target.classList.contains('del')){e.stopPropagation();pedir(async()=>{await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id];load();toast('Foto borrada')});return}p.on=!p.on;await tx('p','readwrite',s=>s.put(p));draw()};g.appendChild(d)});
  }else if(tab==='hist'){
   m.innerHTML=`<h1>Historial</h1>`+(hist.length?hist.map(h=>`<div class="grp"><div class="top"><b>${esc(h.nombre||'Sin nombre')}</b><small>${new Date(h.id).toLocaleString('es',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} · ${h.n} foto${h.n>1?'s':''}</small></div><div class="strip">${h.thumbs.map(t=>`<img src="${t}">`).join('')}</div></div>`).join(''):'<div class="empty"><div class="big"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></div>Aquí verás cada envío agrupado con el nombre de quien lo mandó.</div>');
@@ -152,6 +168,9 @@ function draw(){
   m.innerHTML=`<h1>Opciones</h1><div class="card">
   <div class="opt"><span>Perfil</span><button class="btn" id="oprf" style="display:inline-flex;width:auto;padding:8px 14px;font-size:15px;margin:0">${cfg.nombre?esc(cfg.nombre):'Elegir'}</button></div>
   <div class="opt"><span>Administrador</span><button class="btn" id="oadm" style="display:inline-flex;width:auto;padding:8px 14px;font-size:15px;margin:0;background:var(--gold)">Entrar</button></div>
+  <div class="opt"><span>Link del grupo de WhatsApp</span></div>
+  <div class="opt" style="border:0;padding-top:0"><input type="text" id="ow" placeholder="https://chat.whatsapp.com/..." inputmode="url" style="text-align:left;width:100%;background:var(--bg);border-radius:12px;padding:11px 12px;font-size:15px"></div>
+  <div class="opt"><span>Abrir el grupo después de compartir</span><label class="sw"><input type="checkbox" id="oa"><i></i></label></div>
   <div class="opt"><span>Título</span><input type="text" id="o5" placeholder="Receiving"></div>
   <div class="opt"><span>Logo</span><span><button class="btn" id="lg" style="display:inline-flex;width:auto;padding:8px 14px;font-size:15px;margin:0">Elegir</button> ${cfg.logo?'<button class="btn red" id="lgx" style="display:inline-flex;width:auto;padding:8px 14px;font-size:15px;margin:0 0 0 6px">Quitar</button>':''}</span></div>
   <div class="opt"><span>Calidad de foto</span><select id="o1"><option value="1000">Baja (rápida)</option><option value="1600">Media</option><option value="2600">Alta</option></select></div>
@@ -166,6 +185,7 @@ function draw(){
    if(dip){dip.prompt();await dip.userChoice;dip=null;return}
    const h=$('iosh');h.style.display='block';
    h.innerHTML=isIOS()?'<b>En iPhone / iPad:</b><br>1. Abre este link en <b>Safari</b>.<br>2. Toca el botón Compartir <b>⬆️</b> (abajo).<br>3. Elige <b>Añadir a pantalla de inicio</b>.<br>4. Toca <b>Añadir</b>.':'<b>En Android:</b><br>1. Abre este link en <b>Chrome</b>.<br>2. Toca el menú <b>⋮</b> (arriba a la derecha).<br>3. Elige <b>Instalar app</b> o <b>Añadir a pantalla de inicio</b>.'};
+  $('ow').value=cfg.wlink;$('ow').oninput=e=>{cfg.wlink=e.target.value.trim();save()};$('oa').checked=cfg.wabrir;$('oa').onchange=e=>{cfg.wabrir=e.target.checked;save()};
   $('oprf').onclick=pickName;$('oadm').onclick=adminLogin;
   $('o5').value=cfg.titulo;$('o5').oninput=e=>{cfg.titulo=e.target.value;save()};
   $('lg').onclick=()=>$('flogo').click();if($('lgx'))$('lgx').onclick=()=>{delete cfg.logo;save();draw()};
@@ -221,23 +241,40 @@ $('flip').onclick=()=>{cfg.camara=cfg.camara==='user'?'environment':'user';save(
 $('flogo').onchange=e=>{const f=e.target.files[0];if(!f)return;const i=new Image(),u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,500/i.width),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);cfg.logo=c.toDataURL('image/png');save();URL.revokeObjectURL(u);draw();toast('Logo guardado ✓')};i.src=u;e.target.value=''};
 $('fcam').onchange=async e=>{for(const f of e.target.files)await fromFile(f);e.target.value='';toast('Foto guardada ✓')};
 // ---- compartir ----
-$('send').onclick=async()=>{
+const busy=(on,t)=>{$('btxt').textContent=t||'Preparando…';$('busy').classList.toggle('show',on)};
+function netBar(){
+ if(tab!=='fotos')return'';
+ const q=photos.filter(p=>p.q).length;
+ if(!navigator.onLine)return`<div class="net off"><span>Sin conexión${q?` · ${q} en cola`:''}</span></div>`;
+ if(q)return`<div class="net q"><span>Hay conexión · ${q} foto${q>1?'s':''} en cola</span><button id="nsend">Enviar ahora</button></div>`;
+ return'';
+}
+async function enviar(){
  const nombre=cfg.nombre.trim();
  if(!nombre){toast('Selecciona tu nombre primero');pickName();return}
- const sel=photos.filter(p=>p.on);
+ const sel=photos.filter(p=>p.on||p.q);
+ if(!sel.length)return;
+ if(!navigator.onLine){
+  for(const p of sel){p.q=true;p.on=true;await tx('p','readwrite',s=>s.put(p))}
+  draw();toast('Sin internet: quedó en cola');return}
  const base=nombre.replace(/[^\w]+/g,'_');
  const files=sel.map((p,i)=>new File([p.blob],`${base}_${i+1}.jpg`,{type:'image/jpeg'}));
  const data={files,text:`📸 ${nombre} — ${files.length} foto${files.length>1?'s':''}`};
  try{
   if(navigator.canShare&&navigator.canShare({files}))await navigator.share(data);
-  else{window.open('https://wa.me/?text='+encodeURIComponent(data.text),'_blank');toast('Este navegador no envía fotos directo');return}
+  else{if(cfg.wlink)window.open(cfg.wlink,'_blank');else window.open('https://wa.me/?text='+encodeURIComponent(data.text),'_blank');toast('Este navegador no envía fotos directo');return}
  }catch(e){if(e.name==='AbortError')return;toast('No se pudo compartir');return}
+ busy(true,'Guardando envío…');
  const thumbs=[];for(const p of sel)thumbs.push(await thumb(p.blob));
  await tx('h','readwrite',s=>s.put({id:Date.now(),nombre,n:sel.length,thumbs}));
  for(const p of sel){await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id]}
- await load();toast('Enviado ✓ Lista vacía');
-};
+ await load();busy(false);toast('Enviado ✓ Lista vacía');
+ if(cfg.wlink&&cfg.wabrir)setTimeout(()=>window.open(cfg.wlink,'_blank'),600);
+}
+$('send').onclick=enviar;
+addEventListener('offline',()=>draw());
+addEventListener('online',()=>{draw();const q=photos.filter(p=>p.q).length;if(q){toast('Hay conexión: '+q+' en cola');try{if(window.Notification&&Notification.permission==='granted')new Notification('Receiving',{body:q+' foto(s) listas para enviar'})}catch(e){}}});
 revisa2am();setInterval(revisa2am,30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)revisa2am()});
-open().then(d=>{db=d;load()});
+open().then(d=>{db=d;return load()}).then(()=>{$('sptit').textContent=cfg.titulo||'Receiving';setTimeout(()=>{$('splash').classList.add('out');setTimeout(()=>$('splash').remove(),500)},600);if(photos.some(p=>p.q)&&navigator.onLine&&window.Notification&&Notification.permission==='default')Notification.requestPermission()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 </script></body></html>
