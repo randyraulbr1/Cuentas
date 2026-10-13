@@ -98,8 +98,7 @@ function draw(){
   m.innerHTML=`<h1>Fotos</h1><div class="card"><label class="t">Tu nombre</label><input id="nombre" type="text" placeholder="Escribe tu nombre" value="${cfg.nombre.replace(/"/g,'&quot;')}"></div>
   <button class="btn" id="bcam">📷 Abrir cámara</button>
   <div class="head"><b>${photos.length?`${photos.length} foto${photos.length>1?'s':''} · ${n} seleccionada${n!=1?'s':''}`:'Sin fotos'}</b>${photos.length?`<button id="all">${n===photos.length?'Quitar todas':'Seleccionar todas'}</button>`:''}</div>
-  ${photos.length?'<div class="grid" id="grid"></div>':'<div class="empty"><div class="big">📸</div>Abre la cámara y toma las fotos.<br>Cada foto se guarda sola, sin internet.</div>'}
-  ${hist.length?`<div class="head"><b>Enviadas · ${hist.reduce((a,h)=>a+h.n,0)}</b></div><div class="grid">${hist.slice(0,10).flatMap(h=>h.thumbs.map(t=>`<div class="ph sent"><img src="${t}"><span class="bd ok">Enviado ✓</span></div>`)).join('')}</div>`:''}`;
+  ${photos.length?'<div class="grid" id="grid"></div>':'<div class="empty"><div class="big">📸</div>Abre la cámara y toma las fotos.<br>Cada foto se guarda sola, sin internet.</div>'}`;
   $('nombre').oninput=e=>{cfg.nombre=e.target.value;save()};
   $('bcam').onclick=openCam;
   if($('all'))$('all').onclick=async()=>{const v=!photos.every(p=>p.on);for(const p of photos){p.on=v;await tx('p','readwrite',s=>s.put(p))}draw()};
@@ -107,6 +106,7 @@ function draw(){
    d.onclick=async e=>{if(e.target.classList.contains('del')){await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id];return load()}p.on=!p.on;await tx('p','readwrite',s=>s.put(p));draw()};g.appendChild(d)});
  }else if(tab==='hist'){
   m.innerHTML=`<h1>Historial</h1>`+(hist.length?hist.map(h=>`<div class="grp"><div class="top"><b>${esc(h.nombre||'Sin nombre')}</b><small>${new Date(h.id).toLocaleString('es',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} · ${h.n} foto${h.n>1?'s':''}</small></div><div class="strip">${h.thumbs.map(t=>`<img src="${t}">`).join('')}</div></div>`).join(''):'<div class="empty"><div class="big">🕘</div>Aquí verás cada envío agrupado con el nombre de quien lo mandó.</div>');
+  if(hist.length)m.innerHTML+=`<div class="head"><b>Enviadas · ${hist.reduce((a,h)=>a+h.n,0)}</b></div><div class="grid">${hist.flatMap(h=>h.thumbs.map(t=>`<div class="ph sent"><img src="${t}"><span class="bd ok">Enviado ✓</span></div>`)).join('')}</div>`;
  }else{
   m.innerHTML=`<h1>Opciones</h1><div class="card">
   <div class="opt"><span>Calidad de foto</span><select id="o1"><option value="1000">Baja (rápida)</option><option value="1600">Media</option><option value="2600">Alta</option></select></div>
