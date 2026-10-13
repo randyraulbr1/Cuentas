@@ -126,6 +126,8 @@ input[type=file]{display:none}
 #chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #chip.none{border-color:var(--blue);color:var(--blue)}#chip.none svg{color:var(--blue)}
 main{padding-top:calc(env(safe-area-inset-top) + 40px)!important}
+.cap{font-size:10.5px;line-height:1.25;color:var(--muted);margin-top:4px;text-align:center}.cap b{display:block;color:var(--text);font-weight:600;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.strip .tile{flex:none;width:78px}.strip .tile img{width:78px;height:78px}
 </style></head><body>
 <div id="splash"><img class="lg" src="icon-192.png" alt=""><h2 id="sptit">Receiving</h2><div class="spin"></div></div>
 <div id="busy"><div class="spin"></div><span id="btxt">Preparando…</span></div>
@@ -143,7 +145,7 @@ main{padding-top:calc(env(safe-area-inset-top) + 40px)!important}
 <script>
 const $=id=>document.getElementById(id);
 const S=JSON.parse(localStorage.getItem('cfg')||'{}');
-const cfg=Object.assign({nombre:'',calidad:1600,titulo:'Receiving',camara:'environment',vibrar:true,auto:true,volver:true,wlink:'',wabrir:true,empleados:[],nombreTs:0},S);
+const cfg=Object.assign({nombre:'',calidad:1600,titulo:'Receiving',camara:'environment',vibrar:true,auto:true,volver:true,sello:true,wlink:'',wabrir:true,empleados:[],nombreTs:0},S);
 const save=()=>localStorage.setItem('cfg',JSON.stringify(cfg));
 let dip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;if(tab==='opc')draw()});
 addEventListener('appinstalled',()=>{dip=null;toast('App instalada ✓');if(tab==='opc')draw()});
@@ -154,10 +156,14 @@ let db,photos=[],hist=[],urls={},tab='fotos',stream=null,session=0;
 const open=()=>new Promise((res,rej)=>{const r=indexedDB.open('fotos',2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('p'))d.createObjectStore('p',{keyPath:'id'});if(!d.objectStoreNames.contains('h'))d.createObjectStore('h',{keyPath:'id'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
 const tx=(st,m,f)=>new Promise((res,rej)=>{const t=db.transaction(st,m);const r=f(t.objectStore(st));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)});
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
-const blobOf=(src,w,h,max,q)=>new Promise(res=>{const s=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*s);c.height=Math.round(h*s);c.getContext('2d').drawImage(src,0,0,c.width,c.height);c.toBlob(b=>res(b),'image/jpeg',q)});
+const fD=ts=>new Date(ts).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
+const fT=ts=>new Date(ts).toLocaleTimeString('es',{hour:'numeric',minute:'2-digit',hour12:true}).replace(/\s/g,' ').toUpperCase().replace('A. M.','AM').replace('P. M.','PM');
+const stampTxt=(ts,por)=>`${fD(ts)} · ${fT(ts)} · ${por||'Sin nombre'}`;
+const blobOf=(src,w,h,max,q,txt)=>new Promise(res=>{const s=Math.min(1,max/Math.max(w,h));const c=document.createElement('canvas');c.width=Math.round(w*s);c.height=Math.round(h*s);const g=c.getContext('2d');g.drawImage(src,0,0,c.width,c.height);
+ if(txt){const fs=Math.max(16,Math.round(c.width*.034));g.font=`600 ${fs}px -apple-system,Arial,sans-serif`;const pad=fs*.6,bh=fs+pad*1.4;g.fillStyle='rgba(20,8,10,.62)';g.fillRect(0,c.height-bh,c.width,bh);g.fillStyle='#fff';g.textBaseline='middle';g.fillText(txt,pad,c.height-bh/2)}c.toBlob(b=>res(b),'image/jpeg',q)});
 const thumb=blob=>new Promise(res=>{const i=new Image(),u=URL.createObjectURL(blob);i.onload=()=>{const s=Math.min(1,160/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.6))};i.src=u});
-async function addBlob(b){await tx('p','readwrite',s=>s.put({id:Date.now()+Math.random(),blob:b,on:true}));await load()}
-async function fromFile(f){const i=new Image(),u=URL.createObjectURL(f);await new Promise(r=>{i.onload=r;i.onerror=r;i.src=u});const b=i.width?await blobOf(i,i.width,i.height,cfg.calidad,.85):f;URL.revokeObjectURL(u);await addBlob(b)}
+async function addBlob(b,ts){const id=Date.now()+Math.random();await tx('p','readwrite',s=>s.put({id,ts:ts||Math.floor(id),por:cfg.nombre||'',blob:b,on:true}));await load()}
+async function fromFile(f){const i=new Image(),u=URL.createObjectURL(f);await new Promise(r=>{i.onload=r;i.onerror=r;i.src=u});const ts=f.lastModified||Date.now();const b=i.width?await blobOf(i,i.width,i.height,cfg.calidad,.85,cfg.sello?stampTxt(ts,cfg.nombre):null):f;URL.revokeObjectURL(u);await addBlob(b,ts)}
 async function load(){photos=(await tx('p','readonly',s=>s.getAll())||[]).sort((a,b)=>a.id-b.id);hist=(await tx('h','readonly',s=>s.getAll())||[]).sort((a,b)=>b.id-a.id);draw()}
 function draw(){
  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
@@ -172,16 +178,16 @@ function draw(){
   ${photos.length?'<div class="grid" id="grid"></div>':'<div class="empty"><div class="big"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg></div>Abre la cámara y toma las fotos.<br>Cada foto se guarda sola, sin internet.</div>'}`;
   if($('nsend'))$('nsend').onclick=enviar;
   if($('all'))$('all').onclick=async()=>{const v=!photos.every(p=>p.on);for(const p of photos){p.on=v;await tx('p','readwrite',s=>s.put(p))}draw()};
-  const g=$('grid');if(g)photos.forEach(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));const d=document.createElement('div');d.className='ph'+(p.on?' on':'');d.innerHTML=`<img src="${u}"><div class="chk">${p.on?'✓':''}</div><span class="bd">${p.q?'En cola':'Pendiente'}</span><button class="del">✕</button>`;
+  const g=$('grid');if(g)photos.forEach(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));const d=document.createElement('div');d.className='tile';d.innerHTML=`<div class="ph${p.on?' on':''}"><img src="${u}"><div class="chk">${p.on?'✓':''}</div><span class="bd">${p.q?'En cola':'Pendiente'}</span><button class="del">✕</button></div>${capOf(p)}`;
    d.onclick=async e=>{if(e.target.classList.contains('del')){e.stopPropagation();pedir(async()=>{await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id];load();toast('Foto borrada')});return}p.on=!p.on;await tx('p','readwrite',s=>s.put(p));draw()};g.appendChild(d)});
  }else if(tab==='hist'){
   const ok=hist.filter(h=>h.estado!=='error'),er=hist.filter(h=>h.estado==='error');
   const okN=ok.reduce((a,h)=>a+h.n,0),erN=er.reduce((a,h)=>a+h.n,0);
   const fmt=id=>new Date(id).toLocaleString('es',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
-  const grp=(h,bad)=>`<div class="grp${bad?' bad':''}"><div class="top"><b>${esc(h.nombre||'Sin nombre')}</b><small>${fmt(h.id)} · ${h.n} foto${h.n>1?'s':''}</small></div>${bad&&h.motivo?`<div class="mot">${esc(h.motivo)}</div>`:''}<div class="strip">${h.thumbs.map(t=>`<img src="${t}">`).join('')}</div></div>`;
+  const grp=(h,bad)=>`<div class="grp${bad?' bad':''}"><div class="top"><b>${esc(h.nombre||'Sin nombre')}</b><small>${fD(h.id)} · ${fT(h.id)} · ${h.n} foto${h.n>1?'s':''}</small></div>${bad&&h.motivo?`<div class="mot">${esc(h.motivo)}</div>`:''}<div class="strip">${h.thumbs.map((t,i)=>{const f=(h.info||[])[i]||{ts:h.id,por:h.nombre};return`<div class="tile"><img src="${t}" style="border-radius:10px;object-fit:cover"><div class="cap"><b>${esc(f.por||'Sin nombre')}</b>${fD(f.ts)}<br>${fT(f.ts)}</div></div>`}).join('')}</div></div>`;
   const empty=(t,x)=>`<div class="empty"><div class="big">${t}</div>${x}</div>`;
   let body;
-  if(hTab==='pend')body=photos.length?`<div class="grid">${photos.map(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));return`<div class="ph"><img src="${u}"><span class="bd">${p.q?'En cola':'Pendiente'}</span></div>`}).join('')}</div>`:empty(CLK,'No hay fotos pendientes.');
+  if(hTab==='pend')body=photos.length?`<div class="grid">${photos.map(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));return`<div class="tile"><div class="ph"><img src="${u}"><span class="bd">${p.q?'En cola':'Pendiente'}</span></div>${capOf(p)}</div>`}).join('')}</div>`:empty(CLK,'No hay fotos pendientes.');
   else if(hTab==='env')body=ok.length?ok.map(h=>grp(h,false)).join(''):empty(CLK,'Aquí verás cada envío agrupado con el nombre de quien lo mandó.');
   else body=er.length?er.map(h=>grp(h,true)).join(''):empty(CLK,'Sin errores.');
   m.innerHTML=`<h1>Historial</h1><div class="seg"><button data-h="pend" class="${hTab==='pend'?'on':''}">Pendientes<i>${photos.length}</i></button><button data-h="env" class="${hTab==='env'?'on':''}">Enviadas<i>${okN}</i></button><button data-h="err" class="${hTab==='err'?'on':''}">Errores<i>${erN}</i></button></div>${body}`;
@@ -198,6 +204,7 @@ function draw(){
   <div class="opt"><span>Calidad de foto</span><select id="o1"><option value="1000">Baja (rápida)</option><option value="1600">Media</option><option value="2600">Alta</option></select></div>
   <div class="opt"><span>Cámara</span><select id="o2"><option value="environment">Trasera</option><option value="user">Frontal</option></select></div>
   <div class="opt"><span>Vibrar al tomar foto</span><label class="sw"><input type="checkbox" id="o3"><i></i></label></div>
+  <div class="opt"><span>Fecha, hora y nombre en la foto</span><label class="sw"><input type="checkbox" id="o7"><i></i></label></div>
   <div class="opt"><span>Volver tras cada foto</span><label class="sw"><input type="checkbox" id="o6"><i></i></label></div>
   <div class="opt"><span>Fotos nuevas seleccionadas</span><label class="sw"><input type="checkbox" id="o4"><i></i></label></div></div>
   <button class="btn" id="inst" ${standalone()?'disabled':''}>${standalone()?'Abierta como app ✓':'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg> Instalar en el teléfono'}</button>
@@ -210,7 +217,7 @@ function draw(){
   $('oprf').onclick=pickName;$('oadm').onclick=adminLogin;
   $('o5').value=cfg.titulo;$('o5').oninput=e=>{cfg.titulo=e.target.value;save()};
   $('lg').onclick=()=>$('flogo').click();if($('lgx'))$('lgx').onclick=()=>{delete cfg.logo;save();draw()};
-  $('o1').value=cfg.calidad;$('o2').value=cfg.camara;$('o3').checked=cfg.vibrar;$('o4').checked=cfg.auto;$('o6').checked=cfg.volver;$('o6').onchange=e=>{cfg.volver=e.target.checked;save()};
+  $('o1').value=cfg.calidad;$('o2').value=cfg.camara;$('o3').checked=cfg.vibrar;$('o4').checked=cfg.auto;$('o7').checked=cfg.sello;$('o7').onchange=e=>{cfg.sello=e.target.checked;save()};$('o6').checked=cfg.volver;$('o6').onchange=e=>{cfg.volver=e.target.checked;save()};
   $('o1').onchange=e=>{cfg.calidad=+e.target.value;save()};$('o2').onchange=e=>{cfg.camara=e.target.value;save()};
   $('o3').onchange=e=>{cfg.vibrar=e.target.checked;save()};$('o4').onchange=e=>{cfg.auto=e.target.checked;save()};
  }
@@ -220,6 +227,7 @@ function modal(html,bind){const m=$('mdl');$('mbx').innerHTML=html;m.classList.a
 function vencido(ts){const d=new Date(),b=new Date(d);b.setHours(2,0,0,0);if(d<b)b.setDate(b.getDate()-1);return ts<b.getTime()}
 function revisa2am(){if(cfg.nombre&&vencido(cfg.nombreTs)){cfg.nombre='';cfg.nombreTs=0;save();if(!stream)draw()}}
 function setName(n){cfg.nombre=n;cfg.nombreTs=Date.now();save();draw()}
+const capOf=p=>`<div class="cap"><b>${esc(p.por||'Sin nombre')}</b>${fD(p.ts||Math.floor(p.id))}<br>${fT(p.ts||Math.floor(p.id))}</div>`;
 function pickName(){
  const l=cfg.empleados;
  modal(`<h3>¿Quién eres?</h3>${l.length?l.map((n,i)=>`<button class="pk${n===cfg.nombre?' on':''}" data-i="${i}">${esc(n)}${n===cfg.nombre?'<span>✓</span>':''}</button>`).join(''):'<p style="text-align:center;color:var(--muted)">Todavía no hay nombres.<br>Pide al administrador que los agregue en Opciones.</p>'}`,close=>{
@@ -250,8 +258,9 @@ $('shut').onclick=async()=>{
  const v=$('vid');if(!v.videoWidth)return;
  $('flash').classList.remove('on');void $('flash').offsetWidth;$('flash').classList.add('on');
  if(cfg.vibrar&&navigator.vibrate)navigator.vibrate(30);
- const b=await blobOf(v,v.videoWidth,v.videoHeight,cfg.calidad,.85);
- await tx('p','readwrite',s=>s.put({id:Date.now()+Math.random(),blob:b,on:cfg.auto}));
+ const id=Date.now()+Math.random(),ts=Math.floor(id);
+ const b=await blobOf(v,v.videoWidth,v.videoHeight,cfg.calidad,.85,cfg.sello?stampTxt(ts,cfg.nombre):null);
+ await tx('p','readwrite',s=>s.put({id,ts,por:cfg.nombre||'',blob:b,on:cfg.auto}));
  $('count').textContent=++session;
  const im=new Image();im.src=URL.createObjectURL(b);$('strip').appendChild(im);
  if(cfg.volver){setTimeout(closeCam,350);return}
@@ -270,7 +279,7 @@ function netBar(){
  if(q)return`<div class="net q"><span>Hay conexión · ${q} foto${q>1?'s':''} en cola</span><button id="nsend">Enviar ahora</button></div>`;
  return'';
 }
-async function logErr(nombre,sel,motivo){const thumbs=[];for(const p of sel)thumbs.push(await thumb(p.blob));await tx('h','readwrite',s=>s.put({id:Date.now(),nombre,n:sel.length,thumbs,estado:'error',motivo}));await load()}
+async function logErr(nombre,sel,motivo){const thumbs=[];for(const p of sel)thumbs.push(await thumb(p.blob));await tx('h','readwrite',s=>s.put({id:Date.now(),nombre,n:sel.length,thumbs,info:sel.map(p=>({ts:p.ts||Math.floor(p.id),por:p.por||nombre})),estado:'error',motivo}));await load()}
 async function enviar(){
  const nombre=cfg.nombre.trim();
  if(!nombre){toast('Selecciona tu nombre primero');pickName();return}
@@ -288,7 +297,7 @@ async function enviar(){
  }catch(e){if(e.name==='AbortError')return;await logErr(nombre,sel,'No se pudo compartir: '+(e.message||e.name));toast('No se pudo compartir');return}
  busy(true,'Guardando envío…');
  const thumbs=[];for(const p of sel)thumbs.push(await thumb(p.blob));
- await tx('h','readwrite',s=>s.put({id:Date.now(),nombre,n:sel.length,thumbs}));
+ await tx('h','readwrite',s=>s.put({id:Date.now(),nombre,n:sel.length,thumbs,info:sel.map(p=>({ts:p.ts||Math.floor(p.id),por:p.por||nombre}))}));
  for(const p of sel){await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id]}
  await load();busy(false);toast('Enviado ✓ Lista vacía');
  if(cfg.wlink&&cfg.wabrir)setTimeout(()=>window.open(cfg.wlink,'_blank'),600);
