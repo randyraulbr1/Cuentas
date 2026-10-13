@@ -38,7 +38,9 @@ input[type=text]{width:100%;border:0;background:transparent;font-size:19px;color
 .ph.sent img{opacity:.75}
 .empty{text-align:center;color:var(--muted);padding:40px 10px}.empty .big{font-size:56px}
 .dock{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-.send{padding:12px 16px 4px}
+.send{padding:12px 16px 4px;display:flex;gap:10px}
+.send .wa{flex:1;font-size:16px;padding:16px 10px}
+.camb{width:64px;flex:none;margin:0;padding:0;font-size:28px}
 .tabs{display:flex}.tabs button{flex:1;background:none;border:0;padding:8px 0 10px;color:var(--muted);font-size:11px;cursor:pointer}
 .tabs button span{display:block;font-size:22px}.tabs button.on{color:var(--blue)}
 .toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-100px);background:#1c1c1e;color:#fff;padding:10px 18px;border-radius:20px;transition:transform .3s;z-index:30;font-size:15px}
@@ -68,7 +70,7 @@ select{font-size:16px;border:0;background:var(--bg);color:var(--text);padding:8p
 input[type=file]{display:none}
 </style></head><body>
 <main id="m"></main>
-<div class="dock"><div class="send" id="sendbox"><button class="btn wa" id="send" disabled>Compartir por WhatsApp</button></div>
+<div class="dock"><div class="send" id="sendbox"><button class="btn wa" id="send" disabled>Compartir por WhatsApp</button><button class="btn camb" id="bcam" aria-label="Abrir cámara">📷</button></div>
 <div class="tabs"><button data-t="fotos"><span>📷</span>Fotos</button><button data-t="hist"><span>🕘</span>Historial</button><button data-t="opc"><span>⚙️</span>Opciones</button></div></div>
 <div id="cam"><video id="vid" playsinline muted autoplay></video><div id="flash"></div>
 <div class="ctl"><div id="count">0</div><button id="shut" aria-label="Foto"></button><div style="display:flex;flex-direction:column;align-items:center;gap:6px"><button id="flip">🔄</button><button id="done">Listo</button></div></div></div>
@@ -96,11 +98,9 @@ function draw(){
  const m=$('m');
  if(tab==='fotos'){
   m.innerHTML=`<h1>Fotos</h1><div class="card"><label class="t">Tu nombre</label><input id="nombre" type="text" placeholder="Escribe tu nombre" value="${cfg.nombre.replace(/"/g,'&quot;')}"></div>
-  <button class="btn" id="bcam">📷 Abrir cámara</button>
   <div class="head"><b>${photos.length?`${photos.length} foto${photos.length>1?'s':''} · ${n} seleccionada${n!=1?'s':''}`:'Sin fotos'}</b>${photos.length?`<button id="all">${n===photos.length?'Quitar todas':'Seleccionar todas'}</button>`:''}</div>
   ${photos.length?'<div class="grid" id="grid"></div>':'<div class="empty"><div class="big">📸</div>Abre la cámara y toma las fotos.<br>Cada foto se guarda sola, sin internet.</div>'}`;
   $('nombre').oninput=e=>{cfg.nombre=e.target.value;save()};
-  $('bcam').onclick=openCam;
   if($('all'))$('all').onclick=async()=>{const v=!photos.every(p=>p.on);for(const p of photos){p.on=v;await tx('p','readwrite',s=>s.put(p))}draw()};
   const g=$('grid');if(g)photos.forEach(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));const d=document.createElement('div');d.className='ph'+(p.on?' on':'');d.innerHTML=`<img src="${u}"><div class="chk">${p.on?'✓':''}</div><span class="bd">Pendiente</span><button class="del">✕</button>`;
    d.onclick=async e=>{if(e.target.classList.contains('del')){await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id];return load()}p.on=!p.on;await tx('p','readwrite',s=>s.put(p));draw()};g.appendChild(d)});
@@ -122,6 +122,7 @@ function draw(){
  }
 }
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+$('bcam').onclick=openCam;
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw();scrollTo(0,0)});
 // ---- cámara: cada toque guarda al instante ----
 async function openCam(){
