@@ -76,6 +76,13 @@ input[type=file]{display:none}
 .logo{display:block;max-width:230px;max-height:110px;margin:22px auto -6px;object-fit:contain}
 .logo+h1{margin-top:12px}
 .opt input[type=text]{text-align:right;width:55%;font-size:16px}
+#dlg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:40;padding:24px}
+#dlg.show{display:flex}
+#dlg .bx{background:var(--card);border-radius:20px;padding:22px 20px 16px;width:100%;max-width:320px;text-align:center;border:1px solid var(--line);animation:pop .2s}
+#dlg b{font-family:'Cormorant Garamond',Didot,Georgia,serif;font-size:22px;display:block;margin-bottom:6px}
+#dlg p{margin:0 0 16px;color:var(--muted)}
+#dlg .r{display:flex;gap:10px}#dlg .r .btn{margin:0;padding:13px 0;font-size:16px;flex:1}
+#dlg .btn.no{background:var(--bg);color:var(--text)}
 </style></head><body>
 <main id="m"></main>
 <div class="dock"><div class="send" id="sendbox"><button class="btn wa" id="send" disabled>Compartir</button><button class="btn camb" id="bcam" aria-label="Abrir cámara">📷 Cámara</button></div>
@@ -84,6 +91,7 @@ input[type=file]{display:none}
 <div class="ctl"><div id="count">0</div><button id="shut" aria-label="Foto"></button><div style="display:flex;flex-direction:column;align-items:center;gap:6px"><button id="flip">🔄</button><button id="done">Listo</button></div></div></div>
 <input id="flogo" type="file" accept="image/*">
 <input id="fcam" type="file" accept="image/*" capture="environment">
+<div id="dlg"><div class="bx"><b>¿Borrar esta foto?</b><p>No se puede deshacer.</p><div class="r"><button class="btn no" id="dno">Cancelar</button><button class="btn" id="dyes">Sí, borrar</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -116,7 +124,7 @@ function draw(){
   $('nombre').oninput=e=>{cfg.nombre=e.target.value;save()};
   if($('all'))$('all').onclick=async()=>{const v=!photos.every(p=>p.on);for(const p of photos){p.on=v;await tx('p','readwrite',s=>s.put(p))}draw()};
   const g=$('grid');if(g)photos.forEach(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));const d=document.createElement('div');d.className='ph'+(p.on?' on':'');d.innerHTML=`<img src="${u}"><div class="chk">${p.on?'✓':''}</div><span class="bd">Pendiente</span><button class="del">✕</button>`;
-   d.onclick=async e=>{if(e.target.classList.contains('del')){await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id];return load()}p.on=!p.on;await tx('p','readwrite',s=>s.put(p));draw()};g.appendChild(d)});
+   d.onclick=async e=>{if(e.target.classList.contains('del')){e.stopPropagation();pedir(async()=>{await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id];load();toast('Foto borrada')});return}p.on=!p.on;await tx('p','readwrite',s=>s.put(p));draw()};g.appendChild(d)});
  }else if(tab==='hist'){
   m.innerHTML=`<h1>Historial</h1>`+(hist.length?hist.map(h=>`<div class="grp"><div class="top"><b>${esc(h.nombre||'Sin nombre')}</b><small>${new Date(h.id).toLocaleString('es',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} · ${h.n} foto${h.n>1?'s':''}</small></div><div class="strip">${h.thumbs.map(t=>`<img src="${t}">`).join('')}</div></div>`).join(''):'<div class="empty"><div class="big">🕘</div>Aquí verás cada envío agrupado con el nombre de quien lo mandó.</div>');
   if(hist.length)m.innerHTML+=`<div class="head"><b>Enviadas · ${hist.reduce((a,h)=>a+h.n,0)}</b></div><div class="grid">${hist.flatMap(h=>h.thumbs.map(t=>`<div class="ph sent"><img src="${t}"><span class="bd ok">Enviado ✓</span></div>`)).join('')}</div>`;
@@ -145,6 +153,7 @@ function draw(){
   $('clp').onclick=async()=>{if(confirm('¿Borrar las fotos pendientes?')){await tx('p','readwrite',s=>s.clear());photos.forEach(p=>URL.revokeObjectURL(urls[p.id]));urls={};load()}};
  }
 }
+function pedir(fn){const d=$('dlg');d.classList.add('show');$('dno').onclick=()=>d.classList.remove('show');$('dyes').onclick=()=>{d.classList.remove('show');fn()};d.onclick=e=>{if(e.target===d)d.classList.remove('show')}}
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 $('bcam').onclick=openCam;
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw();scrollTo(0,0)});
