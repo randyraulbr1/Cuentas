@@ -116,6 +116,11 @@ input[type=file]{display:none}
 .net{display:flex;align-items:center;justify-content:space-between;gap:10px;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:15px}
 .net.off{background:#6e6259;color:#fff}.net.q{background:var(--blue);color:#fff}
 .net button{background:#fff;color:var(--blue);border:0;border-radius:10px;padding:8px 14px;font-weight:700;font-size:15px}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:14px}
+.seg button{flex:1;border:0;background:none;color:var(--muted);padding:9px 2px;border-radius:10px;font-size:14px;font-weight:600}
+.seg button i{font-style:normal;font-size:12px;margin-left:5px;background:var(--bg);color:var(--text);border-radius:9px;padding:1px 7px}
+.seg button.on{background:var(--blue);color:#fff}.seg button.on i{background:rgba(255,255,255,.25);color:#fff}
+.grp.bad{border-color:var(--blue)}.mot{color:var(--blue);font-size:14px;margin:-4px 0 10px}
 </style></head><body>
 <div id="splash"><img class="lg" src="icon-192.png" alt=""><h2 id="sptit">Receiving</h2><div class="spin"></div></div>
 <div id="busy"><div class="spin"></div><span id="btxt">Preparando…</span></div>
@@ -138,6 +143,7 @@ let dip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e
 addEventListener('appinstalled',()=>{dip=null;toast('App instalada ✓');if(tab==='opc')draw()});
 const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const CLK='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>';let hTab='pend';
 let db,photos=[],hist=[],urls={},tab='fotos',stream=null,session=0;
 const open=()=>new Promise((res,rej)=>{const r=indexedDB.open('fotos',2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('p'))d.createObjectStore('p',{keyPath:'id'});if(!d.objectStoreNames.contains('h'))d.createObjectStore('h',{keyPath:'id'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
 const tx=(st,m,f)=>new Promise((res,rej)=>{const t=db.transaction(st,m);const r=f(t.objectStore(st));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)});
@@ -162,8 +168,17 @@ function draw(){
   const g=$('grid');if(g)photos.forEach(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));const d=document.createElement('div');d.className='ph'+(p.on?' on':'');d.innerHTML=`<img src="${u}"><div class="chk">${p.on?'✓':''}</div><span class="bd">${p.q?'En cola':'Pendiente'}</span><button class="del">✕</button>`;
    d.onclick=async e=>{if(e.target.classList.contains('del')){e.stopPropagation();pedir(async()=>{await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id];load();toast('Foto borrada')});return}p.on=!p.on;await tx('p','readwrite',s=>s.put(p));draw()};g.appendChild(d)});
  }else if(tab==='hist'){
-  m.innerHTML=`<h1>Historial</h1>`+(hist.length?hist.map(h=>`<div class="grp"><div class="top"><b>${esc(h.nombre||'Sin nombre')}</b><small>${new Date(h.id).toLocaleString('es',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})} · ${h.n} foto${h.n>1?'s':''}</small></div><div class="strip">${h.thumbs.map(t=>`<img src="${t}">`).join('')}</div></div>`).join(''):'<div class="empty"><div class="big"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></div>Aquí verás cada envío agrupado con el nombre de quien lo mandó.</div>');
-  if(hist.length)m.innerHTML+=`<div class="head"><b>Enviadas · ${hist.reduce((a,h)=>a+h.n,0)}</b></div><div class="grid">${hist.flatMap(h=>h.thumbs.map(t=>`<div class="ph sent"><img src="${t}"><span class="bd ok">Enviado ✓</span></div>`)).join('')}</div>`;
+  const ok=hist.filter(h=>h.estado!=='error'),er=hist.filter(h=>h.estado==='error');
+  const okN=ok.reduce((a,h)=>a+h.n,0),erN=er.reduce((a,h)=>a+h.n,0);
+  const fmt=id=>new Date(id).toLocaleString('es',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+  const grp=(h,bad)=>`<div class="grp${bad?' bad':''}"><div class="top"><b>${esc(h.nombre||'Sin nombre')}</b><small>${fmt(h.id)} · ${h.n} foto${h.n>1?'s':''}</small></div>${bad&&h.motivo?`<div class="mot">${esc(h.motivo)}</div>`:''}<div class="strip">${h.thumbs.map(t=>`<img src="${t}">`).join('')}</div></div>`;
+  const empty=(t,x)=>`<div class="empty"><div class="big">${t}</div>${x}</div>`;
+  let body;
+  if(hTab==='pend')body=photos.length?`<div class="grid">${photos.map(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));return`<div class="ph"><img src="${u}"><span class="bd">${p.q?'En cola':'Pendiente'}</span></div>`}).join('')}</div>`:empty(CLK,'No hay fotos pendientes.');
+  else if(hTab==='env')body=ok.length?ok.map(h=>grp(h,false)).join(''):empty(CLK,'Aquí verás cada envío agrupado con el nombre de quien lo mandó.');
+  else body=er.length?er.map(h=>grp(h,true)).join(''):empty(CLK,'Sin errores.');
+  m.innerHTML=`<h1>Historial</h1><div class="seg"><button data-h="pend" class="${hTab==='pend'?'on':''}">Pendientes<i>${photos.length}</i></button><button data-h="env" class="${hTab==='env'?'on':''}">Enviadas<i>${okN}</i></button><button data-h="err" class="${hTab==='err'?'on':''}">Errores<i>${erN}</i></button></div>${body}`;
+  m.querySelectorAll('.seg button').forEach(x=>x.onclick=()=>{hTab=x.dataset.h;draw()});
  }else{
   m.innerHTML=`<h1>Opciones</h1><div class="card">
   <div class="opt"><span>Perfil</span><button class="btn" id="oprf" style="display:inline-flex;width:auto;padding:8px 14px;font-size:15px;margin:0">${cfg.nombre?esc(cfg.nombre):'Elegir'}</button></div>
@@ -179,8 +194,7 @@ function draw(){
   <div class="opt"><span>Volver tras cada foto</span><label class="sw"><input type="checkbox" id="o6"><i></i></label></div>
   <div class="opt"><span>Fotos nuevas seleccionadas</span><label class="sw"><input type="checkbox" id="o4"><i></i></label></div></div>
   <button class="btn" id="inst" ${standalone()?'disabled':''}>${standalone()?'Abierta como app ✓':'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg> Instalar en el teléfono'}</button>
-  <div id="iosh" class="card" style="display:none;line-height:1.7"></div>
-  <button class="btn red" id="clp">Vaciar fotos pendientes</button>`;
+  <div id="iosh" class="card" style="display:none;line-height:1.7"></div>`;
   $('inst').onclick=async()=>{
    if(dip){dip.prompt();await dip.userChoice;dip=null;return}
    const h=$('iosh');h.style.display='block';
@@ -192,7 +206,6 @@ function draw(){
   $('o1').value=cfg.calidad;$('o2').value=cfg.camara;$('o3').checked=cfg.vibrar;$('o4').checked=cfg.auto;$('o6').checked=cfg.volver;$('o6').onchange=e=>{cfg.volver=e.target.checked;save()};
   $('o1').onchange=e=>{cfg.calidad=+e.target.value;save()};$('o2').onchange=e=>{cfg.camara=e.target.value;save()};
   $('o3').onchange=e=>{cfg.vibrar=e.target.checked;save()};$('o4').onchange=e=>{cfg.auto=e.target.checked;save()};
-  $('clp').onclick=async()=>{if(confirm('¿Borrar las fotos pendientes?')){await tx('p','readwrite',s=>s.clear());photos.forEach(p=>URL.revokeObjectURL(urls[p.id]));urls={};load()}};
  }
 }
 function pedir(fn,t,sub,lbl){const d=$('dlg');d.querySelector('b').textContent=t||'¿Borrar esta foto?';d.querySelector('p').style.display=(t&&!sub)?'none':'';d.querySelector('p').textContent=sub||'No se puede deshacer.';d.classList.add('show');$('dno').onclick=()=>d.classList.remove('show');$('dyes').onclick=()=>{d.classList.remove('show');fn()};$('dyes').textContent=lbl||(t?'Sí, quitar':'Sí, borrar');d.onclick=e=>{if(e.target===d)d.classList.remove('show')}}
@@ -209,7 +222,8 @@ function adminLogin(){
   const go=()=>{if($('apw').value==='1010'){adminPanel()}else{toast('Contraseña incorrecta');$('apw').value=''}};
   $('aok').onclick=go;$('apw').onkeydown=e=>{if(e.key==='Enter')go()};setTimeout(()=>$('apw').focus(),150)})}
 function adminPanel(){
- modal(`<h3>Empleados</h3><div class="row2"><input type="text" id="anew" placeholder="Nombre nuevo" autocomplete="off"><button class="btn" id="aadd">Agregar</button></div>${cfg.empleados.length?cfg.empleados.map((n,i)=>`<div class="emp"><span>${esc(n)}</span><button data-i="${i}">Quitar</button></div>`).join(''):'<p style="text-align:center;color:var(--muted)">Sin empleados todavía.</p>'}<button class="btn red" id="aclh" style="margin:16px 0 0">Borrar historial de envíos</button>`,close=>{
+ modal(`<h3>Empleados</h3><div class="row2"><input type="text" id="anew" placeholder="Nombre nuevo" autocomplete="off"><button class="btn" id="aadd">Agregar</button></div>${cfg.empleados.length?cfg.empleados.map((n,i)=>`<div class="emp"><span>${esc(n)}</span><button data-i="${i}">Quitar</button></div>`).join(''):'<p style="text-align:center;color:var(--muted)">Sin empleados todavía.</p>'}<button class="btn red" id="aclh" style="margin:16px 0 0">Borrar historial de envíos</button><button class="btn red" id="aclp" style="margin:10px 0 0">Vaciar fotos pendientes</button>`,close=>{
+  $('aclp').onclick=()=>pedir(async()=>{await tx('p','readwrite',s=>s.clear());photos.forEach(p=>URL.revokeObjectURL(urls[p.id]));urls={};await load();toast('Pendientes vaciadas')},'¿Vaciar fotos pendientes?','Se borrarán '+photos.length+' foto(s) que aún no se enviaron. No se puede deshacer.','Sí, vaciar');
   $('aclh').onclick=()=>pedir(async()=>{await tx('h','readwrite',s=>s.clear());await load();toast('Historial borrado')},'¿Borrar todo el historial?','Se borrarán todos los envíos y sus fotos. No se puede deshacer.','Sí, borrar todo');
   const add=()=>{const v=$('anew').value.trim();if(!v)return;if(cfg.empleados.some(x=>x.toLowerCase()===v.toLowerCase())){toast('Ya existe');return}cfg.empleados.push(v);cfg.empleados.sort((a,b)=>a.localeCompare(b));save();adminPanel();draw()};
   $('aadd').onclick=add;$('anew').onkeydown=e=>{if(e.key==='Enter')add()};
@@ -249,6 +263,7 @@ function netBar(){
  if(q)return`<div class="net q"><span>Hay conexión · ${q} foto${q>1?'s':''} en cola</span><button id="nsend">Enviar ahora</button></div>`;
  return'';
 }
+async function logErr(nombre,sel,motivo){const thumbs=[];for(const p of sel)thumbs.push(await thumb(p.blob));await tx('h','readwrite',s=>s.put({id:Date.now(),nombre,n:sel.length,thumbs,estado:'error',motivo}));await load()}
 async function enviar(){
  const nombre=cfg.nombre.trim();
  if(!nombre){toast('Selecciona tu nombre primero');pickName();return}
@@ -262,8 +277,8 @@ async function enviar(){
  const data={files,text:`📸 ${nombre} — ${files.length} foto${files.length>1?'s':''}`};
  try{
   if(navigator.canShare&&navigator.canShare({files}))await navigator.share(data);
-  else{if(cfg.wlink)window.open(cfg.wlink,'_blank');else window.open('https://wa.me/?text='+encodeURIComponent(data.text),'_blank');toast('Este navegador no envía fotos directo');return}
- }catch(e){if(e.name==='AbortError')return;toast('No se pudo compartir');return}
+  else{await logErr(nombre,sel,'Este navegador no puede enviar fotos directo');if(cfg.wlink)window.open(cfg.wlink,'_blank');else window.open('https://wa.me/?text='+encodeURIComponent(data.text),'_blank');toast('Este navegador no envía fotos directo');return}
+ }catch(e){if(e.name==='AbortError')return;await logErr(nombre,sel,'No se pudo compartir: '+(e.message||e.name));toast('No se pudo compartir');return}
  busy(true,'Guardando envío…');
  const thumbs=[];for(const p of sel)thumbs.push(await thumb(p.blob));
  await tx('h','readwrite',s=>s.put({id:Date.now(),nombre,n:sel.length,thumbs}));
