@@ -76,7 +76,7 @@ input[type=file]{display:none}
 .logo{display:block;max-width:230px;max-height:110px;margin:22px auto -6px;object-fit:contain}
 .logo+h1{margin-top:12px}
 .opt input[type=text]{text-align:right;width:55%;font-size:16px}
-#dlg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:40;padding:24px}
+#dlg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:24px}
 #dlg.show{display:flex}
 #dlg .bx{background:var(--card);border-radius:20px;padding:22px 20px 16px;width:100%;max-width:320px;text-align:center;border:1px solid var(--line);animation:pop .2s}
 #dlg b{font-family:'Cormorant Garamond',Didot,Georgia,serif;font-size:22px;display:block;margin-bottom:6px}
@@ -87,6 +87,21 @@ input[type=file]{display:none}
 .tabs button span{display:flex;justify-content:center;margin-bottom:2px}
 .tabs .ic{width:25px;height:25px}
 #flip .ic{width:30px;height:30px}
+#mdl{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:45}
+#mdl.show{display:flex}
+#mdl .bx{background:var(--card);border-radius:22px 22px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:520px;max-height:80vh;overflow:auto;animation:up .25s}
+@keyframes up{from{transform:translateY(60px);opacity:0}}
+#mdl h3{font-family:'Cormorant Garamond',Didot,Georgia,serif;font-size:24px;font-weight:500;margin:0 0 12px;text-align:center;color:var(--gold)}
+.pk{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:var(--bg);color:var(--text);font-size:18px;padding:14px 16px;border-radius:14px;margin-bottom:8px;text-align:left}
+.pk.on{background:var(--blue);color:#fff}
+.who{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.who span{font-size:20px}.who .ph0{color:var(--muted)}
+.who svg{width:18px;height:18px;color:var(--gold)}
+.row2{display:flex;gap:8px;margin-bottom:12px}
+.row2 input{flex:1;background:var(--bg);border-radius:12px;padding:12px;font-size:17px}
+.row2 .btn{width:auto;margin:0;padding:0 18px;font-size:16px}
+.emp{display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line)}
+.emp button{background:none;border:0;color:var(--blue);font-size:15px}
 </style></head><body>
 <main id="m"></main>
 <div class="dock"><div class="send" id="sendbox"><button class="btn wa" id="send" disabled>Compartir</button><button class="btn camb" id="bcam" aria-label="Abrir cámara"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg>Cámara</button></div>
@@ -95,12 +110,13 @@ input[type=file]{display:none}
 <div class="ctl"><div id="count">0</div><button id="shut" aria-label="Foto"></button><div style="display:flex;flex-direction:column;align-items:center;gap:6px"><button id="flip"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.9-3M4 5v3.5h3.5"/><path d="M4 13a8 8 0 0 0 14.9 3M20 19v-3.5h-3.5"/></svg></button><button id="done">Listo</button></div></div></div>
 <input id="flogo" type="file" accept="image/*">
 <input id="fcam" type="file" accept="image/*" capture="environment">
+<div id="mdl"><div class="bx" id="mbx"></div></div>
 <div id="dlg"><div class="bx"><b>¿Borrar esta foto?</b><p>No se puede deshacer.</p><div class="r"><button class="btn no" id="dno">Cancelar</button><button class="btn" id="dyes">Sí, borrar</button></div></div></div>
 <div class="toast" id="toast"></div>
 <script>
 const $=id=>document.getElementById(id);
 const S=JSON.parse(localStorage.getItem('cfg')||'{}');
-const cfg=Object.assign({nombre:'',calidad:1600,titulo:'Receiving',camara:'environment',vibrar:true,auto:true,volver:true},S);
+const cfg=Object.assign({nombre:'',calidad:1600,titulo:'Receiving',camara:'environment',vibrar:true,auto:true,volver:true,empleados:[],nombreTs:0},S);
 const save=()=>localStorage.setItem('cfg',JSON.stringify(cfg));
 let dip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;if(tab==='opc')draw()});
 addEventListener('appinstalled',()=>{dip=null;toast('App instalada ✓');if(tab==='opc')draw()});
@@ -122,10 +138,10 @@ function draw(){
  $('send').disabled=!n;$('send').textContent=n?`Compartir (${n})`:'Compartir';
  const m=$('m');
  if(tab==='fotos'){
-  m.innerHTML=`${cfg.logo?`<img class="logo" src="${cfg.logo}">`:''}<h1>${esc(cfg.titulo||'Receiving')}</h1><div class="card"><label class="t">Tu nombre</label><input id="nombre" type="text" placeholder="Escribe tu nombre" value="${cfg.nombre.replace(/"/g,'&quot;')}"></div>
+  m.innerHTML=`${cfg.logo?`<img class="logo" src="${cfg.logo}">`:''}<h1>${esc(cfg.titulo||'Receiving')}</h1><div class="card who" id="who"><div><label class="t">Tu nombre</label><span class="${cfg.nombre?'':'ph0'}">${cfg.nombre?esc(cfg.nombre):'Selecciona tu nombre'}</span></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
   <div class="head"><b>${photos.length?`${photos.length} foto${photos.length>1?'s':''} · ${n} seleccionada${n!=1?'s':''}`:'Sin fotos'}</b>${photos.length?`<button id="all">${n===photos.length?'Quitar todas':'Seleccionar todas'}</button>`:''}</div>
   ${photos.length?'<div class="grid" id="grid"></div>':'<div class="empty"><div class="big"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.6"/></svg></div>Abre la cámara y toma las fotos.<br>Cada foto se guarda sola, sin internet.</div>'}`;
-  $('nombre').oninput=e=>{cfg.nombre=e.target.value;save()};
+  $('who').onclick=pickName;
   if($('all'))$('all').onclick=async()=>{const v=!photos.every(p=>p.on);for(const p of photos){p.on=v;await tx('p','readwrite',s=>s.put(p))}draw()};
   const g=$('grid');if(g)photos.forEach(p=>{const u=urls[p.id]||(urls[p.id]=URL.createObjectURL(p.blob));const d=document.createElement('div');d.className='ph'+(p.on?' on':'');d.innerHTML=`<img src="${u}"><div class="chk">${p.on?'✓':''}</div><span class="bd">Pendiente</span><button class="del">✕</button>`;
    d.onclick=async e=>{if(e.target.classList.contains('del')){e.stopPropagation();pedir(async()=>{await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id];load();toast('Foto borrada')});return}p.on=!p.on;await tx('p','readwrite',s=>s.put(p));draw()};g.appendChild(d)});
@@ -134,6 +150,8 @@ function draw(){
   if(hist.length)m.innerHTML+=`<div class="head"><b>Enviadas · ${hist.reduce((a,h)=>a+h.n,0)}</b></div><div class="grid">${hist.flatMap(h=>h.thumbs.map(t=>`<div class="ph sent"><img src="${t}"><span class="bd ok">Enviado ✓</span></div>`)).join('')}</div>`;
  }else{
   m.innerHTML=`<h1>Opciones</h1><div class="card">
+  <div class="opt"><span>Perfil</span><button class="btn" id="oprf" style="display:inline-flex;width:auto;padding:8px 14px;font-size:15px;margin:0">${cfg.nombre?esc(cfg.nombre):'Elegir'}</button></div>
+  <div class="opt"><span>Administrador</span><button class="btn" id="oadm" style="display:inline-flex;width:auto;padding:8px 14px;font-size:15px;margin:0;background:var(--gold)">Entrar</button></div>
   <div class="opt"><span>Título</span><input type="text" id="o5" placeholder="Receiving"></div>
   <div class="opt"><span>Logo</span><span><button class="btn" id="lg" style="display:inline-flex;width:auto;padding:8px 14px;font-size:15px;margin:0">Elegir</button> ${cfg.logo?'<button class="btn red" id="lgx" style="display:inline-flex;width:auto;padding:8px 14px;font-size:15px;margin:0 0 0 6px">Quitar</button>':''}</span></div>
   <div class="opt"><span>Calidad de foto</span><select id="o1"><option value="1000">Baja (rápida)</option><option value="1600">Media</option><option value="2600">Alta</option></select></div>
@@ -148,6 +166,7 @@ function draw(){
    if(dip){dip.prompt();await dip.userChoice;dip=null;return}
    const h=$('iosh');h.style.display='block';
    h.innerHTML=isIOS()?'<b>En iPhone / iPad:</b><br>1. Abre este link en <b>Safari</b>.<br>2. Toca el botón Compartir <b>⬆️</b> (abajo).<br>3. Elige <b>Añadir a pantalla de inicio</b>.<br>4. Toca <b>Añadir</b>.':'<b>En Android:</b><br>1. Abre este link en <b>Chrome</b>.<br>2. Toca el menú <b>⋮</b> (arriba a la derecha).<br>3. Elige <b>Instalar app</b> o <b>Añadir a pantalla de inicio</b>.'};
+  $('oprf').onclick=pickName;$('oadm').onclick=adminLogin;
   $('o5').value=cfg.titulo;$('o5').oninput=e=>{cfg.titulo=e.target.value;save()};
   $('lg').onclick=()=>$('flogo').click();if($('lgx'))$('lgx').onclick=()=>{delete cfg.logo;save();draw()};
   $('o1').value=cfg.calidad;$('o2').value=cfg.camara;$('o3').checked=cfg.vibrar;$('o4').checked=cfg.auto;$('o6').checked=cfg.volver;$('o6').onchange=e=>{cfg.volver=e.target.checked;save()};
@@ -157,7 +176,24 @@ function draw(){
   $('clp').onclick=async()=>{if(confirm('¿Borrar las fotos pendientes?')){await tx('p','readwrite',s=>s.clear());photos.forEach(p=>URL.revokeObjectURL(urls[p.id]));urls={};load()}};
  }
 }
-function pedir(fn){const d=$('dlg');d.classList.add('show');$('dno').onclick=()=>d.classList.remove('show');$('dyes').onclick=()=>{d.classList.remove('show');fn()};d.onclick=e=>{if(e.target===d)d.classList.remove('show')}}
+function pedir(fn,t){const d=$('dlg');d.querySelector('b').textContent=t||'¿Borrar esta foto?';d.querySelector('p').style.display=t?'none':'';d.classList.add('show');$('dno').onclick=()=>d.classList.remove('show');$('dyes').onclick=()=>{d.classList.remove('show');fn()};$('dyes').textContent=t?'Sí, quitar':'Sí, borrar';d.onclick=e=>{if(e.target===d)d.classList.remove('show')}}
+function modal(html,bind){const m=$('mdl');$('mbx').innerHTML=html;m.classList.add('show');m.onclick=e=>{if(e.target===m)m.classList.remove('show')};bind&&bind(()=>m.classList.remove('show'))}
+function vencido(ts){const d=new Date(),b=new Date(d);b.setHours(2,0,0,0);if(d<b)b.setDate(b.getDate()-1);return ts<b.getTime()}
+function revisa2am(){if(cfg.nombre&&vencido(cfg.nombreTs)){cfg.nombre='';cfg.nombreTs=0;save();if(!stream)draw()}}
+function setName(n){cfg.nombre=n;cfg.nombreTs=Date.now();save();draw()}
+function pickName(){
+ const l=cfg.empleados;
+ modal(`<h3>¿Quién eres?</h3>${l.length?l.map((n,i)=>`<button class="pk${n===cfg.nombre?' on':''}" data-i="${i}">${esc(n)}${n===cfg.nombre?'<span>✓</span>':''}</button>`).join(''):'<p style="text-align:center;color:var(--muted)">Todavía no hay nombres.<br>Pide al administrador que los agregue en Opciones.</p>'}`,close=>{
+  document.querySelectorAll('#mbx .pk').forEach(b=>b.onclick=()=>{setName(l[+b.dataset.i]);close();toast('Hola, '+l[+b.dataset.i])})})}
+function adminLogin(){
+ modal(`<h3>Administrador</h3><div class="row2"><input type="password" id="apw" inputmode="numeric" placeholder="Contraseña" autocomplete="off"><button class="btn" id="aok">Entrar</button></div>`,close=>{
+  const go=()=>{if($('apw').value==='1010'){adminPanel()}else{toast('Contraseña incorrecta');$('apw').value=''}};
+  $('aok').onclick=go;$('apw').onkeydown=e=>{if(e.key==='Enter')go()};setTimeout(()=>$('apw').focus(),150)})}
+function adminPanel(){
+ modal(`<h3>Empleados</h3><div class="row2"><input type="text" id="anew" placeholder="Nombre nuevo" autocomplete="off"><button class="btn" id="aadd">Agregar</button></div>${cfg.empleados.length?cfg.empleados.map((n,i)=>`<div class="emp"><span>${esc(n)}</span><button data-i="${i}">Quitar</button></div>`).join(''):'<p style="text-align:center;color:var(--muted)">Sin empleados todavía.</p>'}`,close=>{
+  const add=()=>{const v=$('anew').value.trim();if(!v)return;if(cfg.empleados.some(x=>x.toLowerCase()===v.toLowerCase())){toast('Ya existe');return}cfg.empleados.push(v);cfg.empleados.sort((a,b)=>a.localeCompare(b));save();adminPanel();draw()};
+  $('aadd').onclick=add;$('anew').onkeydown=e=>{if(e.key==='Enter')add()};
+  document.querySelectorAll('#mbx .emp button').forEach(b=>b.onclick=()=>{const n=cfg.empleados[+b.dataset.i];pedir(()=>{cfg.empleados.splice(+b.dataset.i,1);if(cfg.nombre===n){cfg.nombre='';cfg.nombreTs=0}save();adminPanel();draw()},'¿Quitar a '+n+'?')})})}
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 $('bcam').onclick=openCam;
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw();scrollTo(0,0)});
@@ -187,7 +223,7 @@ $('fcam').onchange=async e=>{for(const f of e.target.files)await fromFile(f);e.t
 // ---- compartir ----
 $('send').onclick=async()=>{
  const nombre=cfg.nombre.trim();
- if(!nombre){toast('Escribe tu nombre primero');return}
+ if(!nombre){toast('Selecciona tu nombre primero');pickName();return}
  const sel=photos.filter(p=>p.on);
  const base=nombre.replace(/[^\w]+/g,'_');
  const files=sel.map((p,i)=>new File([p.blob],`${base}_${i+1}.jpg`,{type:'image/jpeg'}));
@@ -201,6 +237,7 @@ $('send').onclick=async()=>{
  for(const p of sel){await tx('p','readwrite',s=>s.delete(p.id));URL.revokeObjectURL(urls[p.id]);delete urls[p.id]}
  await load();toast('Enviado ✓ Lista vacía');
 };
+revisa2am();setInterval(revisa2am,30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)revisa2am()});
 open().then(d=>{db=d;load()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 </script></body></html>
