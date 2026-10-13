@@ -73,18 +73,22 @@ select{font-size:16px;border:0;background:var(--bg);color:var(--text);padding:8p
 #flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
 #flash.on{animation:fl .25s}@keyframes fl{from{opacity:.8}to{opacity:0}}
 input[type=file]{display:none}
+.logo{display:block;max-width:230px;max-height:110px;margin:22px auto -6px;object-fit:contain}
+.logo+h1{margin-top:12px}
+.opt input[type=text]{text-align:right;width:55%;font-size:16px}
 </style></head><body>
 <main id="m"></main>
 <div class="dock"><div class="send" id="sendbox"><button class="btn wa" id="send" disabled>Compartir por WhatsApp</button><button class="btn camb" id="bcam" aria-label="Abrir cámara">📷</button></div>
 <div class="tabs"><button data-t="fotos"><span>📷</span>Fotos</button><button data-t="hist"><span>🕘</span>Historial</button><button data-t="opc"><span>⚙️</span>Opciones</button></div></div>
 <div id="cam"><video id="vid" playsinline muted autoplay></video><div id="flash"></div><div id="strip"></div>
 <div class="ctl"><div id="count">0</div><button id="shut" aria-label="Foto"></button><div style="display:flex;flex-direction:column;align-items:center;gap:6px"><button id="flip">🔄</button><button id="done">Listo</button></div></div></div>
+<input id="flogo" type="file" accept="image/*">
 <input id="fcam" type="file" accept="image/*" capture="environment">
 <div class="toast" id="toast"></div>
 <script>
 const $=id=>document.getElementById(id);
 const S=JSON.parse(localStorage.getItem('cfg')||'{}');
-const cfg=Object.assign({nombre:'',calidad:1600,camara:'environment',vibrar:true,auto:true},S);
+const cfg=Object.assign({nombre:'',calidad:1600,titulo:'Fotos',camara:'environment',vibrar:true,auto:true},S);
 const save=()=>localStorage.setItem('cfg',JSON.stringify(cfg));
 let db,photos=[],hist=[],urls={},tab='fotos',stream=null,session=0;
 const open=()=>new Promise((res,rej)=>{const r=indexedDB.open('fotos',2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('p'))d.createObjectStore('p',{keyPath:'id'});if(!d.objectStoreNames.contains('h'))d.createObjectStore('h',{keyPath:'id'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
@@ -102,7 +106,7 @@ function draw(){
  $('send').disabled=!n;$('send').textContent=n?`Compartir ${n} por WhatsApp`:'Compartir por WhatsApp';
  const m=$('m');
  if(tab==='fotos'){
-  m.innerHTML=`<h1>Fotos</h1><div class="card"><label class="t">Tu nombre</label><input id="nombre" type="text" placeholder="Escribe tu nombre" value="${cfg.nombre.replace(/"/g,'&quot;')}"></div>
+  m.innerHTML=`${cfg.logo?`<img class="logo" src="${cfg.logo}">`:''}<h1>${esc(cfg.titulo||'Fotos')}</h1><div class="card"><label class="t">Tu nombre</label><input id="nombre" type="text" placeholder="Escribe tu nombre" value="${cfg.nombre.replace(/"/g,'&quot;')}"></div>
   <div class="head"><b>${photos.length?`${photos.length} foto${photos.length>1?'s':''} · ${n} seleccionada${n!=1?'s':''}`:'Sin fotos'}</b>${photos.length?`<button id="all">${n===photos.length?'Quitar todas':'Seleccionar todas'}</button>`:''}</div>
   ${photos.length?'<div class="grid" id="grid"></div>':'<div class="empty"><div class="big">📸</div>Abre la cámara y toma las fotos.<br>Cada foto se guarda sola, sin internet.</div>'}`;
   $('nombre').oninput=e=>{cfg.nombre=e.target.value;save()};
@@ -114,11 +118,15 @@ function draw(){
   if(hist.length)m.innerHTML+=`<div class="head"><b>Enviadas · ${hist.reduce((a,h)=>a+h.n,0)}</b></div><div class="grid">${hist.flatMap(h=>h.thumbs.map(t=>`<div class="ph sent"><img src="${t}"><span class="bd ok">Enviado ✓</span></div>`)).join('')}</div>`;
  }else{
   m.innerHTML=`<h1>Opciones</h1><div class="card">
+  <div class="opt"><span>Título</span><input type="text" id="o5" placeholder="Fotos"></div>
+  <div class="opt"><span>Logo</span><span><button class="btn" id="lg" style="display:inline-flex;width:auto;padding:8px 14px;font-size:15px;margin:0">Elegir</button> ${cfg.logo?'<button class="btn red" id="lgx" style="display:inline-flex;width:auto;padding:8px 14px;font-size:15px;margin:0 0 0 6px">Quitar</button>':''}</span></div>
   <div class="opt"><span>Calidad de foto</span><select id="o1"><option value="1000">Baja (rápida)</option><option value="1600">Media</option><option value="2600">Alta</option></select></div>
   <div class="opt"><span>Cámara</span><select id="o2"><option value="environment">Trasera</option><option value="user">Frontal</option></select></div>
   <div class="opt"><span>Vibrar al tomar foto</span><label class="sw"><input type="checkbox" id="o3"><i></i></label></div>
   <div class="opt"><span>Fotos nuevas seleccionadas</span><label class="sw"><input type="checkbox" id="o4"><i></i></label></div></div>
   <button class="btn red" id="clh">Borrar historial</button><button class="btn red" id="clp">Vaciar fotos pendientes</button>`;
+  $('o5').value=cfg.titulo;$('o5').oninput=e=>{cfg.titulo=e.target.value;save()};
+  $('lg').onclick=()=>$('flogo').click();if($('lgx'))$('lgx').onclick=()=>{delete cfg.logo;save();draw()};
   $('o1').value=cfg.calidad;$('o2').value=cfg.camara;$('o3').checked=cfg.vibrar;$('o4').checked=cfg.auto;
   $('o1').onchange=e=>{cfg.calidad=+e.target.value;save()};$('o2').onchange=e=>{cfg.camara=e.target.value;save()};
   $('o3').onchange=e=>{cfg.vibrar=e.target.checked;save()};$('o4').onchange=e=>{cfg.auto=e.target.checked;save()};
@@ -149,6 +157,7 @@ $('shut').onclick=async()=>{
 };
 $('done').onclick=closeCam;
 $('flip').onclick=()=>{cfg.camara=cfg.camara==='user'?'environment':'user';save();if(stream)stream.getTracks().forEach(t=>t.stop());openCam()};
+$('flogo').onchange=e=>{const f=e.target.files[0];if(!f)return;const i=new Image(),u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,500/i.width),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);cfg.logo=c.toDataURL('image/png');save();URL.revokeObjectURL(u);draw();toast('Logo guardado ✓')};i.src=u;e.target.value=''};
 $('fcam').onchange=async e=>{for(const f of e.target.files)await fromFile(f);e.target.value='';toast('Foto guardada ✓')};
 // ---- compartir ----
 $('send').onclick=async()=>{
