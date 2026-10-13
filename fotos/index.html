@@ -88,7 +88,7 @@ input[type=file]{display:none}
 <script>
 const $=id=>document.getElementById(id);
 const S=JSON.parse(localStorage.getItem('cfg')||'{}');
-const cfg=Object.assign({nombre:'',calidad:1600,titulo:'Receiving',camara:'environment',vibrar:true,auto:true},S);
+const cfg=Object.assign({nombre:'',calidad:1600,titulo:'Receiving',camara:'environment',vibrar:true,auto:true,volver:true},S);
 const save=()=>localStorage.setItem('cfg',JSON.stringify(cfg));
 let dip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;if(tab==='opc')draw()});
 addEventListener('appinstalled',()=>{dip=null;toast('App instalada ✓');if(tab==='opc')draw()});
@@ -127,6 +127,7 @@ function draw(){
   <div class="opt"><span>Calidad de foto</span><select id="o1"><option value="1000">Baja (rápida)</option><option value="1600">Media</option><option value="2600">Alta</option></select></div>
   <div class="opt"><span>Cámara</span><select id="o2"><option value="environment">Trasera</option><option value="user">Frontal</option></select></div>
   <div class="opt"><span>Vibrar al tomar foto</span><label class="sw"><input type="checkbox" id="o3"><i></i></label></div>
+  <div class="opt"><span>Volver tras cada foto</span><label class="sw"><input type="checkbox" id="o6"><i></i></label></div>
   <div class="opt"><span>Fotos nuevas seleccionadas</span><label class="sw"><input type="checkbox" id="o4"><i></i></label></div></div>
   <button class="btn" id="inst" ${standalone()?'disabled':''}>${standalone()?'✓ App ya instalada':'📲 Instalar en el teléfono'}</button>
   <div id="iosh" class="card" style="display:none;line-height:1.7"></div>
@@ -137,7 +138,7 @@ function draw(){
    h.innerHTML=isIOS()?'<b>En iPhone / iPad:</b><br>1. Abre este link en <b>Safari</b>.<br>2. Toca el botón Compartir <b>⬆️</b> (abajo).<br>3. Elige <b>Añadir a pantalla de inicio</b>.<br>4. Toca <b>Añadir</b>.':'<b>En Android:</b><br>1. Abre este link en <b>Chrome</b>.<br>2. Toca el menú <b>⋮</b> (arriba a la derecha).<br>3. Elige <b>Instalar app</b> o <b>Añadir a pantalla de inicio</b>.'};
   $('o5').value=cfg.titulo;$('o5').oninput=e=>{cfg.titulo=e.target.value;save()};
   $('lg').onclick=()=>$('flogo').click();if($('lgx'))$('lgx').onclick=()=>{delete cfg.logo;save();draw()};
-  $('o1').value=cfg.calidad;$('o2').value=cfg.camara;$('o3').checked=cfg.vibrar;$('o4').checked=cfg.auto;
+  $('o1').value=cfg.calidad;$('o2').value=cfg.camara;$('o3').checked=cfg.vibrar;$('o4').checked=cfg.auto;$('o6').checked=cfg.volver;$('o6').onchange=e=>{cfg.volver=e.target.checked;save()};
   $('o1').onchange=e=>{cfg.calidad=+e.target.value;save()};$('o2').onchange=e=>{cfg.camara=e.target.value;save()};
   $('o3').onchange=e=>{cfg.vibrar=e.target.checked;save()};$('o4').onchange=e=>{cfg.auto=e.target.checked;save()};
   $('clh').onclick=async()=>{if(confirm('¿Borrar todo el historial?')){await tx('h','readwrite',s=>s.clear());load();toast('Historial borrado')}};
@@ -163,6 +164,7 @@ $('shut').onclick=async()=>{
  await tx('p','readwrite',s=>s.put({id:Date.now()+Math.random(),blob:b,on:cfg.auto}));
  $('count').textContent=++session;
  const im=new Image();im.src=URL.createObjectURL(b);$('strip').appendChild(im);
+ if(cfg.volver){setTimeout(closeCam,350);return}
  load();
 };
 $('done').onclick=closeCam;
